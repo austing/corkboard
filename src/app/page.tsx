@@ -125,6 +125,38 @@ export default function HomePage() {
     };
   }, [isShiftPressed]);
 
+  // Handle escape key to close modals
+  useEffect(() => {
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (fullscreenScrap) {
+          setFullscreenScrap(null);
+          window.history.pushState(null, '', window.location.pathname);
+        } else if (showNewScrapModal) {
+          setShowNewScrapModal(false);
+          setNewScrapForm({ content: '', x: 0, y: 0 });
+          setNewScrapError('');
+          window.history.pushState(null, '', window.location.pathname);
+        } else if (showEditScrapModal) {
+          setShowEditScrapModal(false);
+          setEditingScrap(null);
+          setEditScrapForm({ content: '', x: 0, y: 0 });
+          setEditScrapError('');
+          window.history.pushState(null, '', window.location.pathname);
+        }
+      }
+    };
+
+    // Only add listener if a modal is open
+    if (fullscreenScrap || showNewScrapModal || showEditScrapModal) {
+      window.addEventListener('keydown', handleEscapeKey);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [fullscreenScrap, showNewScrapModal, showEditScrapModal]);
+
   useEffect(() => {
     if (scraps.length > 0 && !loading) {
       calculateCanvasSize();
@@ -635,7 +667,7 @@ export default function HomePage() {
                         e.stopPropagation();
                         handleEditScrapClick(scrap);
                       }}
-                      className="text-indigo-600 hover:text-indigo-800 p-1 rounded hover:bg-indigo-50 cursor-pointer"
+                      className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-100 cursor-pointer"
                       title="Edit this scrap"
                     >
                       <PencilIcon className="h-4 w-4" />
@@ -697,7 +729,7 @@ export default function HomePage() {
                       handleEditScrapClick(fullscreenScrap);
                       setFullscreenScrap(null); // Close fullscreen modal
                     }}
-                    className="text-indigo-600 hover:text-indigo-800 p-2 rounded hover:bg-indigo-50 cursor-pointer"
+                    className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
                     title="Edit this scrap"
                   >
                     <PencilIcon className="h-5 w-5" />
