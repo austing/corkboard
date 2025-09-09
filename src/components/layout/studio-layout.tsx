@@ -140,7 +140,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
                     await signOut({ redirect: false });
                     window.location.href = '/auth/signin';
                   }}
-                  className="text-sm text-gray-600 hover:text-gray-900"
+                  className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer"
                 >
                   Sign out
                 </button>

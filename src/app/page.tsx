@@ -624,7 +624,7 @@ export default function HomePage() {
                       e.stopPropagation();
                       setFullscreenScrap(scrap);
                     }}
-                    className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-100"
+                    className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-100 cursor-pointer"
                     title="View fullscreen"
                   >
                     <ArrowsPointingOutIcon className="h-4 w-4" />
@@ -635,7 +635,7 @@ export default function HomePage() {
                         e.stopPropagation();
                         handleEditScrapClick(scrap);
                       }}
-                      className="text-indigo-600 hover:text-indigo-800 p-1 rounded hover:bg-indigo-50"
+                      className="text-indigo-600 hover:text-indigo-800 p-1 rounded hover:bg-indigo-50 cursor-pointer"
                       title="Edit this scrap"
                     >
                       <PencilIcon className="h-4 w-4" />
@@ -697,7 +697,7 @@ export default function HomePage() {
                       handleEditScrapClick(fullscreenScrap);
                       setFullscreenScrap(null); // Close fullscreen modal
                     }}
-                    className="text-indigo-600 hover:text-indigo-800 p-2 rounded hover:bg-indigo-50"
+                    className="text-indigo-600 hover:text-indigo-800 p-2 rounded hover:bg-indigo-50 cursor-pointer"
                     title="Edit this scrap"
                   >
                     <PencilIcon className="h-5 w-5" />

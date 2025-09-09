@@ -70,7 +70,7 @@ export default function Sidebar() {
             await signOut({ redirect: false });
             window.location.href = '/auth/signin';
           }}
-          className="flex items-center w-full px-2 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white"
+          className="flex items-center w-full px-2 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white cursor-pointer"
         >
           <LogOut className="mr-3 h-6 w-6" />
           Sign Out
