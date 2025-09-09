@@ -1,4 +1,10 @@
 import AdminLayout from '@/components/layout/admin-layout';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Corkboard Admin',
+  description: 'Admin dashboard for Corkboard'
+};
 
 export default function AdminDashboard() {
   return (

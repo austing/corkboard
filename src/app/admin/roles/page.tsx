@@ -8,6 +8,7 @@ import AddRoleModal from '@/components/admin/add-role-modal';
 import EditRoleModal from '@/components/admin/edit-role-modal';
 import { Trash2 } from 'lucide-react';
 
+
 interface Role {
   id: string;
   name: string;
@@ -24,6 +25,10 @@ export default function RolesPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [_error, setError] = useState('');
+
+  useEffect(() => {
+    document.title = 'Corkboard Admin';
+  }, []);
 
   useEffect(() => {
     fetchRoles();

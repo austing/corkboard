@@ -22,7 +22,7 @@ const config: CorkboardConfig = {
       path: "/admin"
     },
     content: {
-      title: "Content Studio",
+      title: "Scraps and Settings",
       path: "/studio"
     }
   },

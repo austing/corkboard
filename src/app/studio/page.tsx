@@ -8,6 +8,7 @@ import PermissionCheck from '@/components/auth/permission-check';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import config from '../../../corkboard.config';
 
+
 interface Scrap {
   id: string;
   code: string;
@@ -27,6 +28,10 @@ export default function StudioPage() {
   const [scraps, setScraps] = useState<Scrap[]>([]);
   const [loading, setLoading] = useState(true);
   const [_error, setError] = useState('');
+
+  useEffect(() => {
+    document.title = 'Corkboard > Scraps and Settings';
+  }, []);
 
   useEffect(() => {
     fetchScraps();

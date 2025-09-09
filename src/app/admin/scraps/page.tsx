@@ -8,6 +8,7 @@ import AddScrapModal from '@/components/admin/add-scrap-modal';
 import EditScrapModal from '@/components/admin/edit-scrap-modal';
 import { Trash2, MapPin } from 'lucide-react';
 
+
 interface Scrap {
   id: string;
   code: string;
@@ -29,6 +30,10 @@ export default function ScrapsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedScrap, setSelectedScrap] = useState<Scrap | null>(null);
   const [_error, setError] = useState('');
+
+  useEffect(() => {
+    document.title = 'Corkboard Admin';
+  }, []);
 
   useEffect(() => {
     fetchScraps();

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import StudioLayout from '@/components/layout/studio-layout';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+
 
 export default function NewScrapPage() {
   const router = useRouter();
@@ -14,6 +15,10 @@ export default function NewScrapPage() {
   });
   const [loading, setLoading] = useState(false);
   const [_error, setError] = useState('');
+
+  useEffect(() => {
+    document.title = 'Corkboard > Scraps and Settings > New';
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

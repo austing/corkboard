@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import StudioLayout from '@/components/layout/studio-layout';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
+
 export default function ProfilePage() {
   const { data: session, update } = useSession();
   const router = useRouter();
@@ -19,6 +20,10 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [_error, setError] = useState('');
+
+  useEffect(() => {
+    document.title = 'Corkboard > Scraps and Settings > Profile';
+  }, []);
 
   useEffect(() => {
     if (session?.user) {

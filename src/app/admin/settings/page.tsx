@@ -1,12 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layout/admin-layout';
+
 
 export default function SettingsPage() {
   const [indexTitle, setIndexTitle] = useState('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    document.title = 'Corkboard Admin';
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);

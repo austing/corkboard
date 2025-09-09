@@ -8,17 +8,21 @@ import {
   Settings, 
   LayoutDashboard,
   LogOut,
-  Clipboard
+  Clipboard,
+  ChevronLeft,
+  UserCog
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import config from '../../../corkboard.config';
 
 const navigation = [
+  { name: `Back to ${config.app.name}`, href: '/', icon: ChevronLeft, isBack: true },
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Roles', href: '/admin/roles', icon: Shield },
   { name: 'Scraps', href: '/admin/scraps', icon: Clipboard },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
+  { name: 'Profile Settings', href: '/profile', icon: UserCog },
 ];
 
 export default function Sidebar() {
@@ -32,21 +36,27 @@ export default function Sidebar() {
       <nav className="mt-5 flex-1 px-2">
         <div className="space-y-1">
           {navigation.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href && !item.isBack;
             return (
               <Link
                 key={item.name}
                 href={item.href}
                 className={`${
-                  isActive
+                  item.isBack
+                    ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-300 border-b border-gray-700 mb-3 pb-2'
+                    : isActive
                     ? 'bg-gray-900 text-white'
                     : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                 } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
               >
                 <item.icon
                   className={`${
-                    isActive ? 'text-gray-300' : 'text-gray-400 group-hover:text-gray-300'
-                  } mr-3 h-6 w-6`}
+                    item.isBack 
+                      ? 'text-gray-400 group-hover:text-gray-300 mr-3 h-5 w-5'
+                      : isActive 
+                      ? 'text-gray-300 mr-3 h-6 w-6' 
+                      : 'text-gray-400 group-hover:text-gray-300 mr-3 h-6 w-6'
+                  }`}
                 />
                 {item.name}
               </Link>

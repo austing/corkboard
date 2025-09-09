@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import StudioLayout from '@/components/layout/studio-layout';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
+
 interface Scrap {
   id: string;
   code: string;
@@ -33,6 +34,10 @@ export default function EditScrapPage() {
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [_error, setError] = useState('');
+
+  useEffect(() => {
+    document.title = 'Corkboard > Scraps and Settings > Edit';
+  }, []);
 
   useEffect(() => {
     if (scrapId) {

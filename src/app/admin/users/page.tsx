@@ -8,6 +8,7 @@ import AddUserModal from '@/components/admin/add-user-modal';
 import EditUserModal from '@/components/admin/edit-user-modal';
 import { Trash2 } from 'lucide-react';
 
+
 interface User {
   id: string;
   name: string;
@@ -25,6 +26,10 @@ export default function UsersPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [_error, setError] = useState('');
+
+  useEffect(() => {
+    document.title = 'Corkboard Admin';
+  }, []);
 
   useEffect(() => {
     fetchUsers();

@@ -9,11 +9,15 @@ import {
   XMarkIcon,
   UserCircleIcon,
   DocumentTextIcon,
+  ChevronDoubleLeftIcon,
+  Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 import config from '../../../corkboard.config';
 
 const navigation = [
+  { name: `Back to ${config.app.name}`, href: '/', icon: ChevronDoubleLeftIcon, isBack: true },
   { name: 'Content', href: '/studio', icon: DocumentTextIcon },
+  { name: 'Profile Settings', href: '/profile', icon: Cog6ToothIcon },
 ];
 
 function classNames(...classes: string[]) {
@@ -50,14 +54,19 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
                   <Link
                     href={item.href}
                     className={classNames(
-                      pathname === item.href
+                      item.isBack
+                        ? 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 border-b border-gray-200 mb-2 pb-2'
+                        : pathname === item.href
                         ? 'bg-gray-50 text-indigo-600'
                         : 'text-gray-700 hover:text-indigo-600 hover:bg-gray-50',
                       'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
                     )}
                     onClick={() => setSidebarOpen(false)}
                   >
-                    <item.icon className="h-6 w-6 shrink-0" />
+                    <item.icon className={classNames(
+                      item.isBack ? 'h-5 w-5' : 'h-6 w-6',
+                      'shrink-0'
+                    )} />
                     {item.name}
                   </Link>
                 </li>
@@ -84,13 +93,18 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
                       <Link
                         href={item.href}
                         className={classNames(
-                          pathname === item.href
+                          item.isBack
+                            ? 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 border-b border-gray-200 mb-2 pb-2'
+                            : pathname === item.href
                             ? 'bg-gray-50 text-indigo-600'
                             : 'text-gray-700 hover:text-indigo-600 hover:bg-gray-50',
                           'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
                         )}
                       >
-                        <item.icon className="h-6 w-6 shrink-0" />
+                        <item.icon className={classNames(
+                          item.isBack ? 'h-5 w-5' : 'h-6 w-6',
+                          'shrink-0'
+                        )} />
                         {item.name}
                       </Link>
                     </li>

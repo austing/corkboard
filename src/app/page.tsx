@@ -6,6 +6,7 @@ import { PencilIcon, PlusIcon, ArrowsPointingOutIcon, XMarkIcon, CogIcon, ArrowR
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 
+
 // Dynamically import Froala editor to avoid SSR issues
 const FroalaEditor = dynamic(() => import('./components/FroalaEditor'), { 
   ssr: false,
@@ -61,6 +62,10 @@ export default function HomePage() {
       }
     }
   }, [scraps]);
+
+  useEffect(() => {
+    document.title = 'Corkboard';
+  }, []);
 
   useEffect(() => {
     fetchScraps();

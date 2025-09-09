@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Admin Panel",
-  description: "Admin panel with role-based permissions",
+  title: "Corkboard",
+  description: "A collaborative content management platform",
 };
 
 export default function RootLayout({
