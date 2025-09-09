@@ -40,6 +40,28 @@ export default function HomePage() {
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const [isHoveringScrap, setIsHoveringScrap] = useState(false);
 
+  const handleHashNavigation = useCallback(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash && scraps.length > 0) {
+      const targetScrap = scraps.find(scrap => scrap.code === hash);
+      if (targetScrap) {
+        // Scroll to the scrap
+        const scrapElement = document.getElementById(hash);
+        if (scrapElement) {
+          scrapElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'center'
+          });
+        }
+        // Open the modal
+        setTimeout(() => {
+          setFullscreenScrap(targetScrap);
+        }, 500); // Delay to let scroll complete
+      }
+    }
+  }, [scraps]);
+
   useEffect(() => {
     fetchScraps();
     if (session?.user?.id) {
@@ -366,28 +388,6 @@ export default function HomePage() {
   const _quillFormats = [
     'bold', 'italic', 'underline', 'align', 'color'
   ];
-
-  const handleHashNavigation = useCallback(() => {
-    const hash = window.location.hash.replace('#', '');
-    if (hash && scraps.length > 0) {
-      const targetScrap = scraps.find(scrap => scrap.code === hash);
-      if (targetScrap) {
-        // Scroll to the scrap
-        const scrapElement = document.getElementById(hash);
-        if (scrapElement) {
-          scrapElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center',
-            inline: 'center'
-          });
-        }
-        // Open the modal
-        setTimeout(() => {
-          setFullscreenScrap(targetScrap);
-        }, 500); // Delay to let scroll complete
-      }
-    }
-  }, [scraps]);
 
   // Listen for hash changes
   useEffect(() => {

@@ -77,8 +77,8 @@ export default function SignIn() {
             </div>
           </div>
 
-          {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
+          {_error && (
+            <div className="text-red-600 text-sm text-center">{_error}</div>
           )}
 
           <div>

@@ -133,9 +133,9 @@ export default function NewScrapPage() {
                 </div>
               </div>
 
-              {error && (
+              {_error && (
                 <div className="p-4 bg-red-50 border border-red-200 rounded-md">
-                  <div className="text-red-800 text-sm font-medium">{error}</div>
+                  <div className="text-red-800 text-sm font-medium">{_error}</div>
                 </div>
               )}
 

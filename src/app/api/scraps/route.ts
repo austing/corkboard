@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     await requirePermission(session.user.id, 'scraps', 'read');
 
-    let query = db
+    const baseQuery = db
       .select({
         id: scraps.id,
         code: scraps.code,
@@ -36,11 +36,9 @@ export async function GET(request: NextRequest) {
       .leftJoin(users, eq(scraps.userId, users.id));
 
     // Filter to only user's own scraps if requested
-    if (onlyMine) {
-      query = query.where(eq(scraps.userId, session.user.id));
-    }
-
-    const allScraps = await query;
+    const allScraps = onlyMine 
+      ? await baseQuery.where(eq(scraps.userId, session.user.id))
+      : await baseQuery;
 
     return NextResponse.json({ scraps: allScraps });
   } catch (error: unknown) {

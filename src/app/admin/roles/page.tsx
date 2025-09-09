@@ -169,9 +169,9 @@ export default function RolesPage() {
           ))}
         </div>
         
-        {error && (
+        {_error && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-800">{error}</p>
+            <p className="text-red-800">{_error}</p>
           </div>
         )}
       </div>

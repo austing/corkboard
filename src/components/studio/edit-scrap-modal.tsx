@@ -69,7 +69,7 @@ export default function EditScrapModal({ isOpen, scrap, onClose, onScrapUpdated 
         const data = await response.json();
         setError(data.error || 'Failed to update scrap');
       }
-    } catch (error) {
+    } catch (err) {
       setError('An error occurred while updating the scrap');
     } finally {
       setLoading(false);
@@ -145,8 +145,8 @@ export default function EditScrapModal({ isOpen, scrap, onClose, onScrapUpdated 
             </div>
           </div>
 
-          {error && (
-            <div className="text-red-600 text-sm">{error}</div>
+          {_error && (
+            <div className="text-red-600 text-sm">{_error}</div>
           )}
 
           <div className="flex justify-end space-x-3 pt-4">

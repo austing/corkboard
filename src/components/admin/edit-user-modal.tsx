@@ -55,8 +55,8 @@ export default function EditUserModal({ isOpen, user, onClose, onUserUpdated }: 
         const data = await response.json();
         setRoles(data.roles);
       }
-    } catch (error) {
-      console.error('Error fetching roles:', error);
+    } catch (err) {
+      console.error('Error fetching roles:', err);
     }
   };
 
@@ -94,7 +94,7 @@ export default function EditUserModal({ isOpen, user, onClose, onUserUpdated }: 
         const data = await response.json();
         setError(data.error || 'Failed to update user');
       }
-    } catch (error) {
+    } catch (err) {
       setError('An error occurred while updating the user');
     } finally {
       setLoading(false);
@@ -186,8 +186,8 @@ export default function EditUserModal({ isOpen, user, onClose, onUserUpdated }: 
             </select>
           </div>
 
-          {error && (
-            <div className="text-red-600 text-sm">{error}</div>
+          {_error && (
+            <div className="text-red-600 text-sm">{_error}</div>
           )}
 
           <div className="flex justify-end space-x-3 pt-4">

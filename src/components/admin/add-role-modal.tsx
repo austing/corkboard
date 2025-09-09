@@ -41,7 +41,7 @@ export default function AddRoleModal({ isOpen, onClose, onRoleAdded }: AddRoleMo
         setPermissions(data.permissions);
       }
     } catch (err) {
-      console.error('Error fetching permissions:', error);
+      console.error('Error fetching permissions:', err);
     }
   };
 
@@ -174,8 +174,8 @@ export default function AddRoleModal({ isOpen, onClose, onRoleAdded }: AddRoleMo
             </div>
           </div>
 
-          {error && (
-            <div className="text-red-600 text-sm">{error}</div>
+          {_error && (
+            <div className="text-red-600 text-sm">{_error}</div>
           )}
 
           <div className="flex justify-end space-x-3 pt-4">
