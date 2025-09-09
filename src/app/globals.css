@@ -20,7 +20,53 @@
 }
 
 body {
-  background: var(--background);
+  background: #f9fafb !important; /* bg-gray-50 equivalent with !important to override */
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Froala editor styles */
+.fr-box.fr-basic .fr-element {
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 200px;
+}
+
+.fr-toolbar {
+  border-color: #d1d5db;
+}
+
+.fr-second-toolbar {
+  border-color: #d1d5db;
+}
+
+.fr-wrapper {
+  border-color: #d1d5db;
+}
+
+.fr-element {
+  border-color: #d1d5db;
+}
+
+/* Hide Froala branding */
+.fr-wrapper .fr-powered-by,
+.fr-wrapper a[href*="froala"],
+.fr-wrapper .fr-help-popup,
+.fr-logo,
+.fr-footer,
+a#fr-logo,
+#fr-logo,
+div[data-froala],
+span[data-froala] {
+  display: none !important;
+}
+
+.fr-wrapper .fr-view:after {
+  display: none !important;
+}
+
+/* Hide quick insert button */
+.fr-quick-insert,
+.fr-qi-helper {
+  display: none !important;
 }

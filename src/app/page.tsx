@@ -1,103 +1,978 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useSession, signOut } from 'next-auth/react';
+import Link from 'next/link';
+import { PencilIcon, PlusIcon, ArrowsPointingOutIcon, XMarkIcon, CogIcon, ArrowRightOnRectangleIcon, UserIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
+
+// Dynamically import Froala editor to avoid SSR issues
+const FroalaEditor = dynamic(() => import('./components/FroalaEditor'), { 
+  ssr: false,
+  loading: () => <div className="flex-1 border border-gray-300 rounded-md p-3 text-sm">Loading editor...</div>
+});
+
+interface Scrap {
+  id: string;
+  code: string;
+  content: string;
+  x: number;
+  y: number;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export default function HomePage() {
+  const { data: session } = useSession();
+  const [scraps, setScraps] = useState<Scrap[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [_error, setError] = useState('');
+  const [_hasAdminAccess, setHasAdminAccess] = useState(false);
+  const [fullscreenScrap, setFullscreenScrap] = useState<Scrap | null>(null);
+  const [showNewScrapModal, setShowNewScrapModal] = useState(false);
+  const [showEditScrapModal, setShowEditScrapModal] = useState(false);
+  const [editingScrap, setEditingScrap] = useState<Scrap | null>(null);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+  const [isShiftPressed, setIsShiftPressed] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const [isHoveringScrap, setIsHoveringScrap] = useState(false);
+
+  useEffect(() => {
+    fetchScraps();
+    if (session?.user?.id) {
+      checkAdminAccess();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
+  // Prevent body scroll when modals are open
+  useEffect(() => {
+    if (fullscreenScrap || showNewScrapModal || showEditScrapModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [fullscreenScrap, showNewScrapModal, showEditScrapModal]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.shiftKey && !isShiftPressed) {
+        setIsShiftPressed(true);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (!e.shiftKey) {
+        setIsShiftPressed(false);
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Always update cursor position
+      setCursorPosition({ x: e.clientX, y: e.clientY });
+    };
+
+    // Initialize cursor position immediately
+    const initializeCursorPosition = (e: MouseEvent) => {
+      setCursorPosition({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('mousemove', handleMouseMove);
+    // Get initial cursor position
+    window.addEventListener('mousemove', initializeCursorPosition, { once: true });
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [isShiftPressed]);
+
+  useEffect(() => {
+    if (scraps.length > 0 && !loading) {
+      calculateCanvasSize();
+      // Handle hash navigation after scraps are loaded
+      handleHashNavigation();
+    } else if (scraps.length === 0 && !loading) {
+      // No scraps - set minimal canvas size
+      setCanvasSize({ width: Math.max(window.innerWidth, 1000), height: Math.max(window.innerHeight, 800) });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scraps, loading, handleHashNavigation]);
+
+  const calculateCanvasSize = () => {
+    if (scraps.length === 0) return;
+
+    // Calculate bounds of all scraps including their size
+    const scrapWidth = 300; // max-w-sm is roughly 300px
+    const scrapHeight = 200; // estimated height
+    const padding = 100; // padding around edges
+
+    const bounds = scraps.reduce(
+      (acc, scrap) => ({
+        minX: Math.min(acc.minX, scrap.x),
+        maxX: Math.max(acc.maxX, scrap.x + scrapWidth),
+        minY: Math.min(acc.minY, scrap.y),
+        maxY: Math.max(acc.maxY, scrap.y + scrapHeight),
+      }),
+      { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity }
+    );
+
+    // Include origin (0,0) in bounds
+    bounds.minX = Math.min(bounds.minX, 0);
+    bounds.minY = Math.min(bounds.minY, 0);
+    bounds.maxX = Math.max(bounds.maxX, 0);
+    bounds.maxY = Math.max(bounds.maxY, 0);
+
+    // Set canvas size to exactly fit content with padding
+    const canvasWidth = bounds.maxX - bounds.minX + (2 * padding);
+    const canvasHeight = bounds.maxY - bounds.minY + (2 * padding);
+    
+    setCanvasSize({ width: canvasWidth, height: canvasHeight });
+  };
+
+  // Keep centering function for potential future use
+  const _centerViewport = () => {
+    if (scraps.length === 0) return;
+
+    const bounds = scraps.reduce(
+      (acc, scrap) => ({
+        minX: Math.min(acc.minX, scrap.x),
+        maxX: Math.max(acc.maxX, scrap.x + 300),
+        minY: Math.min(acc.minY, scrap.y),
+        maxY: Math.max(acc.maxY, scrap.y + 200),
+      }),
+      { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity }
+    );
+
+    bounds.minX = Math.min(bounds.minX, 0);
+    bounds.minY = Math.min(bounds.minY, 0);
+    bounds.maxX = Math.max(bounds.maxX, 0);
+    bounds.maxY = Math.max(bounds.maxY, 0);
+
+    const centerX = (bounds.minX + bounds.maxX) / 2;
+    const centerY = (bounds.minY + bounds.maxY) / 2;
+    const padding = 100;
+
+    const scrollX = centerX - Math.min(bounds.minX, 0) - window.innerWidth / 2 + padding;
+    const scrollY = centerY - Math.min(bounds.minY, 0) - window.innerHeight / 2 + padding;
+
+    window.scrollTo({
+      left: Math.max(0, scrollX),
+      top: Math.max(0, scrollY),
+      behavior: 'smooth'
+    });
+  };
+  
+  const checkAdminAccess = async () => {
+    if (!session?.user?.id) {
+      setHasAdminAccess(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/permissions/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: session.user.id,
+          resource: 'admin',
+          action: 'access'
+        }),
+      });
+
+      if (response.ok) {
+        const { hasPermission } = await response.json();
+        setHasAdminAccess(hasPermission);
+      } else {
+        setHasAdminAccess(false);
+      }
+    } catch (err) {
+      console.error('Error checking admin permissions:', err);
+      setHasAdminAccess(false);
+    }
+  };
+
+  const fetchScraps = async () => {
+    try {
+      const response = await fetch('/api/scraps/public');
+      if (response.ok) {
+        const data = await response.json();
+        setScraps(data.scraps);
+      } else {
+        // Try to get any scraps we can access
+        const fallbackResponse = await fetch('/api/scraps');
+        if (fallbackResponse.ok) {
+          const data = await fallbackResponse.json();
+          setScraps(data.scraps);
+        } else {
+          setScraps([]);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching scraps:', err);
+      setError('An error occurred while fetching scraps');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const _scrapToText = (scrap: Scrap) => {
+    const scrapData = {
+      id: scrap.id,
+      code: scrap.code,
+      content: scrap.content,
+      position: { x: scrap.x, y: scrap.y },
+      author: scrap.userName || scrap.userEmail,
+      created: new Date(scrap.createdAt).toISOString(),
+      updated: new Date(scrap.updatedAt).toISOString()
+    };
+    
+    return JSON.stringify(scrapData, null, 2);
+  };
+
+  const [newScrapForm, setNewScrapForm] = useState({
+    content: '',
+    x: 0,
+    y: 0,
+  });
+  const [newScrapLoading, setNewScrapLoading] = useState(false);
+  const [newScrapError, setNewScrapError] = useState('');
+
+  const handleNewScrapSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setNewScrapLoading(true);
+    setNewScrapError('');
+
+    try {
+      const response = await fetch('/api/scraps', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: newScrapForm.content,
+          x: newScrapForm.x,
+          y: newScrapForm.y,
+        }),
+      });
+
+      if (response.ok) {
+        setShowNewScrapModal(false);
+        setNewScrapForm({ content: '', x: 0, y: 0 });
+        window.history.pushState(null, '', window.location.pathname);
+        fetchScraps(); // Refresh the scraps
+      } else {
+        const data = await response.json();
+        setNewScrapError(data.error || 'Failed to create scrap');
+      }
+    } catch (err) {
+      setNewScrapError('An error occurred while creating the scrap');
+    } finally {
+      setNewScrapLoading(false);
+    }
+  };
+
+  const handleNewScrapInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNewScrapForm(prev => ({ 
+      ...prev, 
+      [name]: name === 'x' || name === 'y' ? parseInt(value) || 0 : value 
+    }));
+  };
+
+  const [editScrapForm, setEditScrapForm] = useState({
+    content: '',
+    x: 0,
+    y: 0,
+  });
+  const [editScrapLoading, setEditScrapLoading] = useState(false);
+  const [editScrapError, setEditScrapError] = useState('');
+
+  const handleEditScrapClick = (scrap: Scrap) => {
+    setEditingScrap(scrap);
+    setEditScrapForm({
+      content: scrap.content,
+      x: scrap.x,
+      y: scrap.y,
+    });
+    setShowEditScrapModal(true);
+  };
+
+  const handleEditScrapSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingScrap) return;
+    
+    setEditScrapLoading(true);
+    setEditScrapError('');
+
+    try {
+      const response = await fetch(`/api/scraps/${editingScrap.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: editScrapForm.content,
+          x: editScrapForm.x,
+          y: editScrapForm.y,
+        }),
+      });
+
+      if (response.ok) {
+        setShowEditScrapModal(false);
+        setEditingScrap(null);
+        setEditScrapForm({ content: '', x: 0, y: 0 });
+        window.history.pushState(null, '', window.location.pathname);
+        fetchScraps(); // Refresh the scraps
+      } else {
+        const data = await response.json();
+        setEditScrapError(data.error || 'Failed to update scrap');
+      }
+    } catch (err) {
+      setEditScrapError('An error occurred while updating the scrap');
+    } finally {
+      setEditScrapLoading(false);
+    }
+  };
+
+  const handleEditScrapInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEditScrapForm(prev => ({ 
+      ...prev, 
+      [name]: name === 'x' || name === 'y' ? parseInt(value) || 0 : value 
+    }));
+  };
+
+  // Quill editor configuration - only basic formatting, no font size
+  const _quillModules = {
+    toolbar: [
+      ['bold', 'italic', 'underline'],
+      [{ 'align': [] }],
+      [{ 'color': [] }]
+    ],
+  };
+
+  const _quillFormats = [
+    'bold', 'italic', 'underline', 'align', 'color'
+  ];
+
+  const handleHashNavigation = useCallback(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash && scraps.length > 0) {
+      const targetScrap = scraps.find(scrap => scrap.code === hash);
+      if (targetScrap) {
+        // Scroll to the scrap
+        const scrapElement = document.getElementById(hash);
+        if (scrapElement) {
+          scrapElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'center'
+          });
+        }
+        // Open the modal
+        setTimeout(() => {
+          setFullscreenScrap(targetScrap);
+        }, 500); // Delay to let scroll complete
+      }
+    }
+  }, [scraps]);
+
+  // Listen for hash changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      handleHashNavigation();
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [scraps, handleHashNavigation]);
+
+  // Calculate position accounting for negative coordinates
+  const getScrapPosition = (scrap: Scrap) => {
+    if (scraps.length === 0) return { x: scrap.x, y: scrap.y };
+    
+    // Calculate the minimum bounds to offset negative coordinates
+    const minX = Math.min(0, ...scraps.map(s => s.x));
+    const minY = Math.min(0, ...scraps.map(s => s.y));
+    
+    const padding = 100;
+    
+    return { 
+      x: scrap.x - minX + padding, 
+      y: scrap.y - minY + padding 
+    };
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">Loading scraps index...</div>
+      </div>
+    );
+  }
+
+  const handleCanvasClick = (e: React.MouseEvent) => {
+    if (isShiftPressed && session && !isHoveringScrap) {
+      // Calculate click position relative to the canvas
+      const clickX = e.pageX;
+      const clickY = e.pageY;
+      
+      // Convert to canvas coordinates (accounting for padding and negative offset)
+      const minX = scraps.length > 0 ? Math.min(0, ...scraps.map(s => s.x)) : 0;
+      const minY = scraps.length > 0 ? Math.min(0, ...scraps.map(s => s.y)) : 0;
+      const padding = 100;
+      
+      const canvasX = clickX + minX - padding;
+      const canvasY = clickY + minY - padding;
+      
+      setNewScrapForm({ 
+        content: '', 
+        x: Math.max(0, Math.round(canvasX)), 
+        y: Math.max(0, Math.round(canvasY))
+      });
+      setShowNewScrapModal(true);
+      setIsShiftPressed(false); // Reset shift state when modal opens
+    }
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <>
+      {/* Shift key cursor replacement */}
+      {isShiftPressed && session && (
+        <div
+          className={`fixed pointer-events-none inline-flex items-center justify-center w-8 h-8 rounded-full shadow-lg ${
+            isHoveringScrap 
+              ? 'bg-gray-400 text-gray-600' 
+              : 'bg-indigo-600 text-white'
+          }`}
+          style={{
+            left: `${cursorPosition.x - 16}px`,
+            top: `${cursorPosition.y - 16}px`,
+            zIndex: 1002
+          }}
+        >
+          <PlusIcon className="h-4 w-4" />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      )}
+
+      {/* Infinite canvas - no size restrictions */}
+      <div 
+        className="bg-transparent" 
+        style={{ 
+          width: `${canvasSize.width}px`, 
+          height: `${canvasSize.height}px`,
+          position: 'relative',
+          cursor: isShiftPressed && session ? 'none' : 'default'
+        }}
+        onClick={handleCanvasClick}
+      >
+        {/* Centered + button - fixed to viewport, not canvas */}
+        {session && !isShiftPressed && (
+          <button
+            onClick={() => {
+              // Calculate button's center position relative to the canvas
+              const buttonCenterX = window.scrollX + window.innerWidth / 2;
+              const buttonCenterY = window.scrollY + window.innerHeight / 2;
+              
+              // Convert to canvas coordinates (accounting for padding and negative offset)
+              const minX = scraps.length > 0 ? Math.min(0, ...scraps.map(s => s.x)) : 0;
+              const minY = scraps.length > 0 ? Math.min(0, ...scraps.map(s => s.y)) : 0;
+              const padding = 100;
+              
+              const canvasX = buttonCenterX + minX - padding;
+              const canvasY = buttonCenterY + minY - padding;
+              
+              setNewScrapForm({ 
+                content: '', 
+                x: Math.max(0, Math.round(canvasX)), 
+                y: Math.max(0, Math.round(canvasY))
+              });
+              setShowNewScrapModal(true);
+            }}
+            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg transition-all hover:scale-110"
+            title="Create new scrap (or hold Shift and click anywhere)"
+            style={{ zIndex: 1000 }}
+          >
+            <PlusIcon className="h-8 w-8" />
+          </button>
+        )}
+
+        {/* Fixed settings and sign out icons bottom right */}
+        <div className="fixed bottom-6 right-6 flex space-x-2" style={{ zIndex: 999 }}>
+          {session ? (
+            <>
+              <Link
+                href="/studio"
+                className="inline-flex items-center justify-center w-12 h-12 border border-gray-300 rounded-full shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                title="Settings & Studio"
+              >
+                <CogIcon className="h-6 w-6" />
+              </Link>
+              <button
+                onClick={async () => {
+                  await signOut({ redirect: false });
+                  window.location.href = '/';
+                }}
+                className="inline-flex items-center justify-center w-12 h-12 border border-gray-300 rounded-full shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors cursor-pointer"
+                title="Sign Out"
+              >
+                <ArrowRightOnRectangleIcon className="h-6 w-6" />
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/auth/signin"
+              className="inline-flex items-center justify-center w-12 h-12 border border-gray-300 rounded-full shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+              title="Sign In"
+            >
+              <UserIcon className="h-6 w-6" />
+            </Link>
+          )}
+        </div>
+
+        {/* Error message */}
+        {_error && (
+          <div className="fixed top-4 left-4 right-4 p-4 bg-red-50 border border-red-200 rounded-md" style={{ zIndex: 998 }}>
+            <p className="text-red-800">{_error}</p>
+          </div>
+        )}
+
+        {/* Loading state */}
+        {loading && (
+          <div className="fixed inset-0 bg-transparent flex items-center justify-center" style={{ zIndex: 997 }}>
+            <div className="text-center">
+              <div className="text-gray-500 text-lg mb-4">Loading corkboard...</div>
+            </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && scraps.length === 0 && (
+          <div className="fixed inset-0 bg-transparent flex items-center justify-center" style={{ zIndex: 997 }}>
+            <div className="text-center">
+              <div className="text-gray-500 text-lg mb-4">
+                {session ? 'No scraps on the corkboard yet.' : 'No scraps to display.'}
+              </div>
+              {!session && (
+                <Link
+                  href="/auth/signin"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200"
+                >
+                  Sign In to Get Started
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Absolutely positioned scraps */}
+        {!loading && scraps.map((scrap, index) => {
+          const position = getScrapPosition(scrap);
+          return (
+            <div
+              key={scrap.id}
+              id={scrap.code}
+              className="absolute bg-white shadow-lg rounded-lg border border-gray-200 p-4 max-w-sm hover:shadow-xl transition-shadow cursor-pointer"
+              style={{
+                left: `${position.x}px`,
+                top: `${position.y}px`,
+                zIndex: 10 + index
+              }}
+              onMouseEnter={() => setIsHoveringScrap(true)}
+              onMouseLeave={() => setIsHoveringScrap(false)}
+              onClick={() => {
+                const newScrap = fullscreenScrap?.id === scrap.id ? null : scrap;
+                setFullscreenScrap(newScrap);
+                // Update URL hash
+                if (newScrap) {
+                  window.history.pushState(null, '', `#${newScrap.code}`);
+                } else {
+                  window.history.pushState(null, '', window.location.pathname);
+                }
+              }}
+            >
+              {/* Header with code and action buttons */}
+              <div className="flex justify-between items-center mb-3">
+                <a 
+                  href={`#${scrap.code}`}
+                  className="text-sm font-mono font-bold text-indigo-600 hover:text-indigo-800"
+                  title={`Anchor to ${scrap.code}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  #{scrap.code}
+                </a>
+                <div className="flex space-x-1">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFullscreenScrap(scrap);
+                    }}
+                    className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-100"
+                    title="View fullscreen"
+                  >
+                    <ArrowsPointingOutIcon className="h-4 w-4" />
+                  </button>
+                  {session?.user?.id === scrap.userId && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditScrapClick(scrap);
+                      }}
+                      className="text-indigo-600 hover:text-indigo-800 p-1 rounded hover:bg-indigo-50"
+                      title="Edit this scrap"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="mb-3">
+                <div 
+                  className="text-sm text-gray-800 line-clamp-6" 
+                  dangerouslySetInnerHTML={{ __html: scrap.content }}
+                />
+              </div>
+
+              {/* Footer info - simplified */}
+              <div className="text-xs text-gray-500 border-t pt-2 flex justify-between items-center">
+                <div>
+                  {scrap.userName || scrap.userEmail}
+                </div>
+                <div>
+                  {new Date(scrap.createdAt).toLocaleDateString()}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Fullscreen Modal */}
+      {fullscreenScrap && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center" 
+          style={{ 
+            zIndex: 1001,
+            backgroundColor: 'rgba(0, 0, 0, 0.2)'
+          }}
+          onClick={() => {
+            setFullscreenScrap(null);
+            window.history.pushState(null, '', window.location.pathname);
+          }}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full mx-4 flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 flex flex-col h-full overflow-hidden">
+            {/* Header */}
+            <div className="flex justify-between items-center pb-4 border-b border-gray-200 mb-6">
+              <a 
+                href={`#${fullscreenScrap.code}`}
+                className="text-lg font-mono font-bold text-indigo-600 hover:text-indigo-800"
+                title={`Anchor to ${fullscreenScrap.code}`}
+              >
+                #{fullscreenScrap.code}
+              </a>
+              <div className="flex space-x-2">
+                {session?.user?.id === fullscreenScrap.userId && (
+                  <button
+                    onClick={() => {
+                      handleEditScrapClick(fullscreenScrap);
+                      setFullscreenScrap(null); // Close fullscreen modal
+                    }}
+                    className="text-indigo-600 hover:text-indigo-800 p-2 rounded hover:bg-indigo-50"
+                    title="Edit this scrap"
+                  >
+                    <PencilIcon className="h-5 w-5" />
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setFullscreenScrap(null);
+                    window.history.pushState(null, '', window.location.pathname);
+                  }}
+                  className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
+                  title="Close fullscreen"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content - scrollable */}
+            <div className="flex-1 overflow-y-auto mb-6">
+              <div 
+                className="text-base text-gray-800 leading-relaxed" 
+                dangerouslySetInnerHTML={{ __html: fullscreenScrap.content }}
+              />
+            </div>
+
+            {/* Footer */}
+            <div className="text-sm text-gray-500 border-t border-gray-200 pt-4 flex justify-between items-center">
+              <div>
+                {fullscreenScrap.userName || fullscreenScrap.userEmail}
+              </div>
+              <div>
+                {new Date(fullscreenScrap.createdAt).toLocaleDateString()}
+              </div>
+            </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Scrap Modal */}
+      {showNewScrapModal && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center" 
+          style={{ 
+            zIndex: 1001,
+            backgroundColor: 'rgba(0, 0, 0, 0.2)'
+          }}
+          onClick={() => {
+            setShowNewScrapModal(false);
+            setNewScrapForm({ content: '', x: 0, y: 0 });
+            setNewScrapError('');
+            window.history.pushState(null, '', window.location.pathname);
+          }}
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl h-[90vh] w-full mx-4 flex flex-col p-6" onClick={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div className="flex justify-between items-center pb-4 border-b border-gray-200 mb-6 flex-shrink-0">
+                <h2 className="text-lg font-bold text-gray-900">
+                  Create New Scrap
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowNewScrapModal(false);
+                    setNewScrapForm({ content: '', x: 0, y: 0 });
+                    setNewScrapError('');
+                    window.history.pushState(null, '', window.location.pathname);
+                  }}
+                  className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
+                  title="Close"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Content Form */}
+              <div className="flex-1 flex flex-col min-h-0">
+                <form onSubmit={handleNewScrapSubmit} className="flex flex-col h-full">
+                  <div className="flex-1 flex flex-col min-h-0 mb-6">
+                    <label className="block text-sm font-medium text-gray-900 mb-2 flex-shrink-0">
+                      Content
+                    </label>
+                    <div className="flex-1 min-h-0">
+                      <FroalaEditor
+                        content={newScrapForm.content}
+                        onChange={(content) => setNewScrapForm(prev => ({ ...prev, content }))}
+                        height={400}
+                        maxHeight={600}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 flex-shrink-0">
+                    <div>
+                      <label htmlFor="new-x" className="block text-sm font-medium text-gray-900 mb-2">
+                        X Position
+                      </label>
+                      <input
+                        type="number"
+                        name="x"
+                        id="new-x"
+                        value={newScrapForm.x}
+                        onChange={handleNewScrapInputChange}
+                        min={0}
+                        max={999999}
+                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2 border"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="new-y" className="block text-sm font-medium text-gray-900 mb-2">
+                        Y Position
+                      </label>
+                      <input
+                        type="number"
+                        name="y"
+                        id="new-y"
+                        value={newScrapForm.y}
+                        onChange={handleNewScrapInputChange}
+                        min={0}
+                        max={999999}
+                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2 border"
+                      />
+                    </div>
+                  </div>
+
+                  {newScrapError && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-md flex-shrink-0">
+                      <div className="text-red-800 text-sm">{newScrapError}</div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowNewScrapModal(false);
+                        setNewScrapForm({ content: '', x: 0, y: 0 });
+                        setNewScrapError('');
+                        window.history.pushState(null, '', window.location.pathname);
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={newScrapLoading || !newScrapForm.content || newScrapForm.content.trim() === '' || newScrapForm.content === '<p><br></p>'}
+                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {newScrapLoading ? 'Creating...' : 'Create Scrap'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Scrap Modal */}
+      {showEditScrapModal && editingScrap && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center" 
+          style={{ 
+            zIndex: 1001,
+            backgroundColor: 'rgba(0, 0, 0, 0.2)'
+          }}
+          onClick={() => {
+            setShowEditScrapModal(false);
+            setEditingScrap(null);
+            setEditScrapForm({ content: '', x: 0, y: 0 });
+            setEditScrapError('');
+            window.history.pushState(null, '', window.location.pathname);
+          }}
         >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl h-[90vh] w-full mx-4 flex flex-col p-6" onClick={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div className="flex justify-between items-center pb-4 border-b border-gray-200 mb-6 flex-shrink-0">
+                <h2 className="text-lg font-bold text-gray-900">
+                  Edit Scrap #{editingScrap.code}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowEditScrapModal(false);
+                    setEditingScrap(null);
+                    setEditScrapForm({ content: '', x: 0, y: 0 });
+                    setEditScrapError('');
+                    window.history.pushState(null, '', window.location.pathname);
+                  }}
+                  className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
+                  title="Close"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Content Form */}
+              <div className="flex-1 flex flex-col min-h-0">
+                <form onSubmit={handleEditScrapSubmit} className="flex flex-col h-full">
+                  <div className="flex-1 flex flex-col min-h-0 mb-6">
+                    <label className="block text-sm font-medium text-gray-900 mb-2 flex-shrink-0">
+                      Content
+                    </label>
+                    <div className="flex-1 min-h-0">
+                      <FroalaEditor
+                        content={editScrapForm.content}
+                        onChange={(content) => setEditScrapForm(prev => ({ ...prev, content }))}
+                        height={400}
+                        maxHeight={600}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 flex-shrink-0">
+                    <div>
+                      <label htmlFor="edit-x" className="block text-sm font-medium text-gray-900 mb-2">
+                        X Position
+                      </label>
+                      <input
+                        type="number"
+                        name="x"
+                        id="edit-x"
+                        value={editScrapForm.x}
+                        onChange={handleEditScrapInputChange}
+                        min={0}
+                        max={999999}
+                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2 border"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="edit-y" className="block text-sm font-medium text-gray-900 mb-2">
+                        Y Position
+                      </label>
+                      <input
+                        type="number"
+                        name="y"
+                        id="edit-y"
+                        value={editScrapForm.y}
+                        onChange={handleEditScrapInputChange}
+                        min={0}
+                        max={999999}
+                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2 border"
+                      />
+                    </div>
+                  </div>
+
+                  {editScrapError && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-md flex-shrink-0">
+                      <div className="text-red-800 text-sm">{editScrapError}</div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowEditScrapModal(false);
+                        setEditingScrap(null);
+                        setEditScrapForm({ content: '', x: 0, y: 0 });
+                        setEditScrapError('');
+                        window.history.pushState(null, '', window.location.pathname);
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={editScrapLoading || !editScrapForm.content || editScrapForm.content.trim() === '' || editScrapForm.content === '<p><br></p>'}
+                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {editScrapLoading ? 'Updating...' : 'Update Scrap'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -1,27 +1,58 @@
 {
-  "name": "admin-panel",
+  "name": "corkboard",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx src/lib/db/seed.ts"
   },
   "dependencies": {
+    "@auth/drizzle-adapter": "^1.10.0",
+    "@heroicons/react": "^2.2.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.13",
+    "bcryptjs": "^3.0.2",
+    "better-sqlite3": "^12.2.0",
+    "draftjs-to-html": "^0.9.1",
+    "drizzle-kit": "^0.31.4",
+    "drizzle-orm": "^0.44.5",
+    "froala-editor": "^4.6.2",
+    "html-to-draftjs": "^1.5.0",
+    "lucide-react": "^0.542.0",
+    "next": "15.5.2",
+    "next-auth": "^4.24.11",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.2"
+    "react-froala-wysiwyg": "^4.6.2",
+    "sharp": "0.33.5",
+    "tsx": "^4.20.5"
+  },
+  "overrides": {
+    "is-arrayish": "0.2.1",
+    "color-convert": "1.9.3",
+    "color-name": "1.1.3",
+    "debug": "3.2.7",
+    "simple-swizzle": "0.2.2",
+    "cookie": "0.7.2",
+    "esbuild": "0.23.1"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/draft-js": "^0.11.18",
+    "@types/draftjs-to-html": "^0.8.4",
+    "@types/html-to-draftjs": "^1.5.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
-    "@eslint/eslintrc": "^3"
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }
