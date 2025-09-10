@@ -91,6 +91,7 @@ export const scraps = sqliteTable('scraps', {
   content: text('content').notNull(),
   x: integer('x').notNull(),
   y: integer('y').notNull(),
+  visible: integer('visible', { mode: 'boolean' }).notNull().default(true),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),

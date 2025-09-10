@@ -23,15 +23,15 @@ export default function FroalaEditor({ content, onChange, height, maxHeight }: F
     height: height || 300,
     heightMax: maxHeight || 500,
     heightMin: 200,
+    listAdvancedTypes: true,
     toolbarButtons: [
-      'bold', 'italic', 'underline', '|',
+      'bold', 'italic', 'underline', 'textColor', '|',
       'alignLeft', 'alignCenter', 'alignRight', '|',
-      'textColor'
+      'formatOL', 'formatUL'
     ],
     toolbarButtonsXS: [
-      'bold', 'italic', 'underline', '|',
-      'alignLeft', 'alignCenter', 'alignRight', '|',
-      'textColor'
+      'bold', 'italic', 'underline', 'textColor', '|',
+      'formatOL', 'formatUL'
     ],
     fontSize: false,
     fontFamily: false,

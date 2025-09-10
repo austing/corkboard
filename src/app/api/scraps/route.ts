@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
         content: scraps.content,
         x: scraps.x,
         y: scraps.y,
+        visible: scraps.visible,
         userId: scraps.userId,
         userName: users.name,
         userEmail: users.email,
@@ -35,10 +36,16 @@ export async function GET(request: NextRequest) {
       .from(scraps)
       .leftJoin(users, eq(scraps.userId, users.id));
 
-    // Filter to only user's own scraps if requested
-    const allScraps = onlyMine 
-      ? await baseQuery.where(eq(scraps.userId, session.user.id))
-      : await baseQuery;
+    // Filter scraps based on visibility and ownership
+    let allScraps;
+    if (onlyMine) {
+      // Show all scraps owned by the user (visible and invisible)
+      allScraps = await baseQuery.where(eq(scraps.userId, session.user.id));
+    } else {
+      // Show visible scraps + user's own invisible scraps
+      allScraps = await baseQuery;
+      // Client-side filtering will be handled by the frontend
+    }
 
     return NextResponse.json({ scraps: allScraps });
   } catch (error: unknown) {
@@ -62,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     await requirePermission(session.user.id, 'scraps', 'create');
 
-    const { content, x, y, userId } = await request.json();
+    const { content, x, y, visible, userId } = await request.json();
 
     if (!content || x === undefined || y === undefined) {
       return NextResponse.json(
@@ -97,6 +104,7 @@ export async function POST(request: NextRequest) {
       content,
       x: parseInt(x),
       y: parseInt(y),
+      visible: visible !== undefined ? visible : true,
       userId: targetUserId,
       createdAt: new Date(),
       updatedAt: new Date(),

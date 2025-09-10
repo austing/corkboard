@@ -26,6 +26,7 @@ export async function GET(
         content: scraps.content,
         x: scraps.x,
         y: scraps.y,
+        visible: scraps.visible,
         userId: scraps.userId,
         userName: users.name,
         userEmail: users.email,
@@ -76,7 +77,7 @@ export async function PUT(
 
     await requirePermission(session.user.id, 'scraps', 'update');
 
-    const { content, x, y, userId } = await request.json();
+    const { content, x, y, visible, userId } = await request.json();
 
     if (!content || x === undefined || y === undefined) {
       return NextResponse.json(
@@ -103,12 +104,16 @@ export async function PUT(
       await requirePermission(session.user.id, 'scraps', 'update_others');
     }
 
-    const updateData: { content: string; x: number; y: number; updatedAt: Date; userId?: string } = {
+    const updateData: { content: string; x: number; y: number; visible?: boolean; updatedAt: Date; userId?: string } = {
       content,
       x: parseInt(x),
       y: parseInt(y),
       updatedAt: new Date(),
     };
+
+    if (visible !== undefined) {
+      updateData.visible = visible;
+    }
 
     if (userId) {
       updateData.userId = userId;

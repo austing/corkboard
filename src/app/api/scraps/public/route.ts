@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 
 export async function GET(_request: NextRequest) {
   try {
-    // Public endpoint - no authentication required, shows all scraps
+    // Public endpoint - no authentication required, shows only visible scraps
     const allScraps = await db
       .select({
         id: scraps.id,
@@ -13,6 +13,7 @@ export async function GET(_request: NextRequest) {
         content: scraps.content,
         x: scraps.x,
         y: scraps.y,
+        visible: scraps.visible,
         userId: scraps.userId,
         userName: users.name,
         userEmail: users.email,
@@ -20,7 +21,8 @@ export async function GET(_request: NextRequest) {
         updatedAt: scraps.updatedAt,
       })
       .from(scraps)
-      .leftJoin(users, eq(scraps.userId, users.id));
+      .leftJoin(users, eq(scraps.userId, users.id))
+      .where(eq(scraps.visible, true));
 
     return NextResponse.json({ scraps: allScraps });
   } catch (error: unknown) {

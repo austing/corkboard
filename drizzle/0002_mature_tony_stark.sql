@@ -1,0 +1,1 @@
+ALTER TABLE `scraps` ADD `visible` integer DEFAULT true NOT NULL;
