@@ -29,7 +29,7 @@ describe('Database Schema Validation', () => {
         id: 'user-123',
         name: 'Test User',
         email: 'test@example.com',
-        password: 'hashed-password',
+        password: '$2b$12$hashedpasswordexample',
         createdAt: new Date(),
         updatedAt: new Date(),
       }
@@ -61,7 +61,7 @@ describe('Database Schema Validation', () => {
         id: 'user-123',
         name: 'Test User',
         email: 'invalid-email-format',
-        password: 'hashed-password',
+        password: '$2b$12$hashedpasswordexample',
         createdAt: new Date(),
         updatedAt: new Date(),
       }
@@ -74,7 +74,7 @@ describe('Database Schema Validation', () => {
         id: 'user-123',
         name: 'Test User',
         email: 'existing@example.com',
-        password: 'hashed-password',
+        password: '$2b$12$hashedpasswordexample',
         createdAt: new Date(),
         updatedAt: new Date(),
       }
@@ -482,7 +482,7 @@ describe('Database Schema Validation', () => {
         id: 'user-123',
         name: 'Test User',
         email: 'test@example.com',
-        password: 'hashed-password',
+        password: '$2b$12$hashedpasswordexample',
         createdAt: 'invalid-date', // Should be Date
         updatedAt: new Date(),
       }

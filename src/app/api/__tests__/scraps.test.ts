@@ -492,22 +492,22 @@ async function GET_PublicScraps() {
 async function POST_CreateScrap(request: NextRequest) {
   const session = await mockGetServerSession()
   if (!session?.user?.id) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+    return { json: jest.fn().mockResolvedValue({ error: 'Unauthorized' }), status: 401 }
   }
 
   const hasCreatePermission = await mockHasPermission(session.user.id, 'scraps', 'create')
   if (!hasCreatePermission) {
-    return new Response(JSON.stringify({ error: 'Permission denied' }), { status: 403 })
+    return { json: jest.fn().mockResolvedValue({ error: 'Permission denied' }), status: 403 }
   }
 
   const { content, x, y } = await request.json()
 
-  if (!content || x === undefined || y === undefined) {
-    return new Response(JSON.stringify({ error: 'Content, x, and y coordinates are required' }), { status: 400 })
+  if (content === undefined || x === undefined || y === undefined) {
+    return { json: jest.fn().mockResolvedValue({ error: 'Content, x, and y coordinates are required' }), status: 400 }
   }
 
-  if (!content.trim() || content === '<p><br></p>') {
-    return new Response(JSON.stringify({ error: 'Content cannot be empty' }), { status: 400 })
+  if (!content || !content.trim() || content === '<p><br></p>') {
+    return { json: jest.fn().mockResolvedValue({ error: 'Content cannot be empty' }), status: 400 }
   }
 
   const scrapData = {
@@ -524,7 +524,7 @@ async function POST_CreateScrap(request: NextRequest) {
 
   await mockDb.insert({}).values(scrapData)
 
-  return new Response(JSON.stringify({ message: 'Scrap created successfully' }), { status: 201 })
+  return { json: jest.fn().mockResolvedValue({ message: 'Scrap created successfully' }), status: 201 }
 }
 
 async function PUT_UpdateScrap(request: NextRequest, scrapId: string) {
