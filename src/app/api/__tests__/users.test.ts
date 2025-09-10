@@ -55,26 +55,27 @@ describe('/api/users', () => {
 
   describe('GET /api/users', () => {
     it('should return all users for admin', async () => {
+      const mockDate = new Date().toISOString()
       const mockUsers = [
         { 
           id: '1', 
           name: 'Admin User', 
           email: 'admin@example.com', 
-          createdAt: new Date(),
+          createdAt: mockDate,
           roles: ['admin'] 
         },
         { 
           id: '2', 
           name: 'Editor User', 
           email: 'editor@example.com', 
-          createdAt: new Date(),
+          createdAt: mockDate,
           roles: ['editor'] 
         },
         { 
           id: '3', 
           name: 'Scrapper User', 
           email: 'scrapper@example.com', 
-          createdAt: new Date(),
+          createdAt: mockDate,
           roles: ['scrapper'] 
         },
       ]
@@ -267,6 +268,11 @@ describe('/api/users', () => {
     })
 
     it('should assign roles to new user', async () => {
+      jest.clearAllMocks()
+      mockGetServerSession.mockResolvedValue(mockAdminSession)
+      mockHasPermission.mockResolvedValue(true)
+      mockBcrypt.hash.mockResolvedValue('hashed-password')
+      
       const userData = {
         name: 'New User',
         email: 'newuser@example.com',
@@ -274,20 +280,12 @@ describe('/api/users', () => {
         roles: ['editor', 'scrapper'],
       }
 
-      mockDb.select
-        .mockReturnValueOnce({
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue([]), // No existing user
-        } as any)
-        .mockReturnValueOnce({
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue([
-            { id: 'role-1', name: 'editor' },
-            { id: 'role-2', name: 'scrapper' },
-          ]),
-        } as any)
+      // Mock for user existence check - return empty (no existing user)
+      mockDb.select.mockReturnValue({
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue([]), // No existing user
+      } as any)
 
       mockDb.insert
         .mockReturnValueOnce({
@@ -361,6 +359,10 @@ describe('/api/users', () => {
     })
 
     it('should return 404 when user not found', async () => {
+      jest.clearAllMocks()
+      mockGetServerSession.mockResolvedValue(mockAdminSession)
+      mockHasPermission.mockResolvedValue(true)
+      
       mockDb.select.mockReturnValue({
         from: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
@@ -534,47 +536,47 @@ describe('/api/users', () => {
 async function GET_Users() {
   const session = await mockGetServerSession()
   if (!session?.user?.id) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+    return { json: jest.fn().mockResolvedValue({ error: 'Unauthorized' }), status: 401 }
   }
 
   const hasReadPermission = await mockHasPermission(session.user.id, 'users', 'read')
   if (!hasReadPermission) {
-    return new Response(JSON.stringify({ error: 'Permission denied' }), { status: 403 })
+    return { json: jest.fn().mockResolvedValue({ error: 'Permission denied' }), status: 403 }
   }
 
   const users = await mockDb.select().from({}).leftJoin({}, {}, {}).orderBy({})
-  return new Response(JSON.stringify({ users }), { status: 200 })
+  return { json: jest.fn().mockResolvedValue({ users }), status: 200 }
 }
 
 async function POST_CreateUser(request: NextRequest) {
   const session = await mockGetServerSession()
   if (!session?.user?.id) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+    return { json: jest.fn().mockResolvedValue({ error: 'Unauthorized' }), status: 401 }
   }
 
   const hasCreatePermission = await mockHasPermission(session.user.id, 'users', 'create')
   if (!hasCreatePermission) {
-    return new Response(JSON.stringify({ error: 'Permission denied' }), { status: 403 })
+    return { json: jest.fn().mockResolvedValue({ error: 'Permission denied' }), status: 403 }
   }
 
   const { name, email, password, roles } = await request.json()
 
   if (!name || !email || !password) {
-    return new Response(JSON.stringify({ error: 'Name, email, and password are required' }), { status: 400 })
+    return { json: jest.fn().mockResolvedValue({ error: 'Name, email, and password are required' }), status: 400 }
   }
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return new Response(JSON.stringify({ error: 'Invalid email format' }), { status: 400 })
+    return { json: jest.fn().mockResolvedValue({ error: 'Invalid email format' }), status: 400 }
   }
 
   if (password.length < 6) {
-    return new Response(JSON.stringify({ error: 'Password must be at least 6 characters long' }), { status: 400 })
+    return { json: jest.fn().mockResolvedValue({ error: 'Password must be at least 6 characters long' }), status: 400 }
   }
 
-  // Check for existing user
+  // Check for existing user with same email
   const existingUsers = await mockDb.select().from({}).where({}).limit(1)
   if (existingUsers.length > 0) {
-    return new Response(JSON.stringify({ error: 'Email address is already in use' }), { status: 400 })
+    return { json: jest.fn().mockResolvedValue({ error: 'Email address is already in use' }), status: 400 }
   }
 
   const hashedPassword = await mockBcrypt.hash(password, 12)
@@ -588,23 +590,28 @@ async function POST_CreateUser(request: NextRequest) {
     updatedAt: new Date(),
   })
 
-  return new Response(JSON.stringify({ message: 'User created successfully' }), { status: 201 })
+  // Handle role assignments
+  if (roles && roles.length > 0) {
+    await mockDb.insert({}).values({})
+  }
+
+  return { json: jest.fn().mockResolvedValue({ message: 'User created successfully' }), status: 201 }
 }
 
 async function PUT_UpdateUser(request: NextRequest, userId: string) {
   const session = await mockGetServerSession()
   if (!session?.user?.id) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+    return { json: jest.fn().mockResolvedValue({ error: 'Unauthorized' }), status: 401 }
   }
 
   const hasUpdatePermission = await mockHasPermission(session.user.id, 'users', 'update')
   if (!hasUpdatePermission) {
-    return new Response(JSON.stringify({ error: 'Permission denied' }), { status: 403 })
+    return { json: jest.fn().mockResolvedValue({ error: 'Permission denied' }), status: 403 }
   }
 
   const users = await mockDb.select().from({}).where({}).limit(1)
   if (!users.length) {
-    return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 })
+    return { json: jest.fn().mockResolvedValue({ error: 'User not found' }), status: 404 }
   }
 
   const { name, email, password, roles } = await request.json()
@@ -616,7 +623,13 @@ async function PUT_UpdateUser(request: NextRequest, userId: string) {
 
   await mockDb.update({}).set(updateData).where({})
 
-  return new Response(JSON.stringify({ message: 'User updated successfully' }), { status: 200 })
+  // Handle role updates
+  if (roles && roles.length > 0) {
+    await mockDb.delete({}).where({})
+    await mockDb.insert({}).values({})
+  }
+
+  return { json: jest.fn().mockResolvedValue({ message: 'User updated successfully' }), status: 200 }
 }
 
 async function DELETE_User(userId: string) {
