@@ -91,12 +91,22 @@ export default function HomePage() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Disable shift key functionality when modals are open
+      if (fullscreenScrap || showNewScrapModal || showEditScrapModal) {
+        return;
+      }
+      
       if (e.shiftKey && !isShiftPressed) {
         setIsShiftPressed(true);
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      // Disable shift key functionality when modals are open
+      if (fullscreenScrap || showNewScrapModal || showEditScrapModal) {
+        return;
+      }
+      
       if (!e.shiftKey) {
         setIsShiftPressed(false);
       }
@@ -123,11 +133,12 @@ export default function HomePage() {
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [isShiftPressed]);
+  }, [isShiftPressed, fullscreenScrap, showNewScrapModal, showEditScrapModal]);
 
-  // Handle escape key to close modals
+  // Handle keyboard shortcuts for modals
   useEffect(() => {
-    const handleEscapeKey = (e: KeyboardEvent) => {
+    const handleModalKeyboard = (e: KeyboardEvent) => {
+      // Handle Escape key to close modals
       if (e.key === 'Escape') {
         if (fullscreenScrap) {
           setFullscreenScrap(null);
@@ -145,15 +156,36 @@ export default function HomePage() {
           window.history.pushState(null, '', window.location.pathname);
         }
       }
+      
+      // Handle Command+Enter to submit forms
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (showNewScrapModal) {
+          // Trigger new scrap form submission
+          const formEvent = new Event('submit', { bubbles: true, cancelable: true });
+          const form = document.querySelector('form');
+          if (form) {
+            form.dispatchEvent(formEvent);
+          }
+        } else if (showEditScrapModal) {
+          // Trigger edit scrap form submission
+          const formEvent = new Event('submit', { bubbles: true, cancelable: true });
+          const form = document.querySelector('form');
+          if (form) {
+            form.dispatchEvent(formEvent);
+          }
+        }
+        // No action for fullscreen modal (view-only)
+      }
     };
 
     // Only add listener if a modal is open
     if (fullscreenScrap || showNewScrapModal || showEditScrapModal) {
-      window.addEventListener('keydown', handleEscapeKey);
+      window.addEventListener('keydown', handleModalKeyboard);
     }
 
     return () => {
-      window.removeEventListener('keydown', handleEscapeKey);
+      window.removeEventListener('keydown', handleModalKeyboard);
     };
   }, [fullscreenScrap, showNewScrapModal, showEditScrapModal]);
 
