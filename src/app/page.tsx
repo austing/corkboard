@@ -693,7 +693,7 @@ export default function HomePage() {
         }}
         onClick={handleCanvasClick}
       >
-        {/* Centered + button - fixed to viewport, not canvas */}
+        {/* Centered button - + for authenticated users, ⚘ for non-authenticated */}
         {session && !isShiftPressed && !isMoveMode && (
           <button
             onClick={() => {
@@ -723,15 +723,26 @@ export default function HomePage() {
             <PlusIcon className="h-8 w-8" />
           </button>
         )}
+        
+        {/* Decorative symbol for non-authenticated users */}
+        {!session && !isShiftPressed && !isMoveMode && (
+          <div
+            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-300 text-gray-600 shadow-lg"
+            style={{ zIndex: 1000 }}
+            title="Sign in to create scraps"
+          >
+            <span className="text-2xl">⚘</span>
+          </div>
+        )}
 
         {/* Fixed settings and sign out icons bottom right */}
         <div className="fixed bottom-6 right-6 flex space-x-2" style={{ zIndex: 999 }}>
           {session ? (
             <>
               <Link
-                href="/studio"
+                href="/admin"
                 className="inline-flex items-center justify-center w-12 h-12 border border-gray-300 rounded-full shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                title="Settings & Studio"
+                title="Admin"
               >
                 <CogIcon className="h-6 w-6" />
               </Link>
@@ -774,23 +785,6 @@ export default function HomePage() {
         )}
 
         {/* Empty state */}
-        {!loading && scraps.length === 0 && (
-          <div className="fixed inset-0 bg-transparent flex items-center justify-center" style={{ zIndex: 997 }}>
-            <div className="text-center">
-              <div className="text-gray-500 text-lg mb-4">
-                {session ? 'No scraps on the corkboard yet.' : 'No scraps to display.'}
-              </div>
-              {!session && (
-                <Link
-                  href="/auth/signin"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200"
-                >
-                  Sign In to Get Started
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Absolutely positioned scraps */}
         {!loading && scraps.map((scrap, index) => {

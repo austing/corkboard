@@ -104,7 +104,7 @@ export default function UsersPage() {
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 cursor-pointer"
               >
                 Add user
               </button>
@@ -160,7 +160,7 @@ export default function UsersPage() {
                           >
                             <button
                               onClick={() => handleEditUser(user)}
-                              className="text-indigo-600 hover:text-indigo-900"
+                              className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
                             >
                               Edit
                             </button>
@@ -172,7 +172,7 @@ export default function UsersPage() {
                           >
                             <button
                               onClick={() => handleDeleteUser(user.id)}
-                              className="text-red-600 hover:text-red-900"
+                              className="text-red-600 hover:text-red-900 cursor-pointer"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>

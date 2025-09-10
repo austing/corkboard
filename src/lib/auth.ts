@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+import { hasPermission } from '@/lib/permissions';
 
 export const authOptions: NextAuthOptions = {
   adapter: DrizzleAdapter(db),
@@ -61,8 +62,20 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async redirect({ url, baseUrl }) {
-      // Always redirect to index page after sign in, regardless of user role
+    async redirect({ url, baseUrl, token }) {
+      // If this is a sign-in redirect and we have a user token, check for admin permissions
+      if (token?.id && url === baseUrl) {
+        try {
+          const isAdmin = await hasPermission(token.id as string, 'admin', 'access');
+          if (isAdmin) {
+            return `${baseUrl}/admin`;
+          }
+        } catch (error) {
+          console.error('Error checking admin permissions during redirect:', error);
+        }
+      }
+      
+      // Default behavior: if URL starts with baseUrl, use it, otherwise redirect to index
       if (url.startsWith(baseUrl)) return url;
       return baseUrl;
     },

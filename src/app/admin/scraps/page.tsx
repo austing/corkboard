@@ -113,7 +113,7 @@ export default function ScrapsPage() {
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 cursor-pointer"
               >
                 Add scrap
               </button>
@@ -142,7 +142,7 @@ export default function ScrapsPage() {
                   >
                     <button 
                       onClick={() => handleEditScrap(scrap)}
-                      className="text-indigo-600 hover:text-indigo-900 text-sm"
+                      className="text-indigo-600 hover:text-indigo-900 text-sm cursor-pointer"
                     >
                       Edit
                     </button>
@@ -154,7 +154,7 @@ export default function ScrapsPage() {
                   >
                     <button
                       onClick={() => handleDeleteScrap(scrap.id, scrap.code)}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-red-600 hover:text-red-900 cursor-pointer"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -197,7 +197,7 @@ export default function ScrapsPage() {
             >
               <button
                 onClick={() => setIsAddModalOpen(true)}
-                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200"
+                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 cursor-pointer"
               >
                 Create your first scrap
               </button>
