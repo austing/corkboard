@@ -785,7 +785,7 @@ export default function HomePage() {
             window.history.pushState(null, '', window.location.pathname);
           }}
         >
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl h-[90vh] w-full mx-4 flex flex-col p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full mx-4 p-6 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               {/* Header */}
               <div className="flex justify-between items-center pb-4 border-b border-gray-200 mb-6 flex-shrink-0">
                 <h2 className="text-lg font-bold text-gray-900">
@@ -806,27 +806,26 @@ export default function HomePage() {
               </div>
 
               {/* Content Form */}
-              <div className="flex-1 flex flex-col min-h-0">
-                <form onSubmit={handleNewScrapSubmit} className="flex flex-col h-full">
-                  <div className="flex-1 flex flex-col min-h-0 mb-6">
-                    <label className="block text-sm font-medium text-gray-900 mb-2 flex-shrink-0">
-                      Content
-                    </label>
-                    <div className="flex-1 min-h-0">
-                      <FroalaEditor
-                        content={newScrapForm.content}
-                        onChange={(content) => setNewScrapForm(prev => ({ ...prev, content }))}
-                        height={400}
-                        maxHeight={600}
-                      />
-                    </div>
+              <form onSubmit={handleNewScrapSubmit} className="space-y-6">
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                    Content
+                  </label>
+                  <div>
+                    <FroalaEditor
+                      content={newScrapForm.content}
+                      onChange={(content) => setNewScrapForm(prev => ({ ...prev, content }))}
+                      height={400}
+                      maxHeight={600}
+                    />
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-4 flex-shrink-0">
-                    <div>
-                      <label htmlFor="new-x" className="block text-sm font-medium text-gray-900 mb-2">
-                        X Position
-                      </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="new-x" className="block text-sm font-medium text-gray-900 mb-2">
+                      X Position
+                    </label>
                       <input
                         type="number"
                         name="x"
@@ -883,8 +882,7 @@ export default function HomePage() {
                       {newScrapLoading ? 'Creating...' : 'Create Scrap'}
                     </button>
                   </div>
-                </form>
-              </div>
+              </form>
           </div>
         </div>
       )}
@@ -905,7 +903,7 @@ export default function HomePage() {
             window.history.pushState(null, '', window.location.pathname);
           }}
         >
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl h-[90vh] w-full mx-4 flex flex-col p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full mx-4 p-6 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               {/* Header */}
               <div className="flex justify-between items-center pb-4 border-b border-gray-200 mb-6 flex-shrink-0">
                 <h2 className="text-lg font-bold text-gray-900">
@@ -927,13 +925,12 @@ export default function HomePage() {
               </div>
 
               {/* Content Form */}
-              <div className="flex-1 flex flex-col min-h-0">
-                <form onSubmit={handleEditScrapSubmit} className="flex flex-col h-full">
-                  <div className="flex-1 flex flex-col min-h-0 mb-6">
-                    <label className="block text-sm font-medium text-gray-900 mb-2 flex-shrink-0">
+              <form onSubmit={handleEditScrapSubmit} className="space-y-6">
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-900 mb-2">
                       Content
                     </label>
-                    <div className="flex-1 min-h-0">
+                    <div>
                       <FroalaEditor
                         content={editScrapForm.content}
                         onChange={(content) => setEditScrapForm(prev => ({ ...prev, content }))}
@@ -943,7 +940,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 flex-shrink-0">
+                <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="edit-x" className="block text-sm font-medium text-gray-900 mb-2">
                         X Position
@@ -1005,8 +1002,7 @@ export default function HomePage() {
                       {editScrapLoading ? 'Updating...' : 'Update Scrap'}
                     </button>
                   </div>
-                </form>
-              </div>
+              </form>
           </div>
         </div>
       )}
