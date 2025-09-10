@@ -12,6 +12,9 @@
   - `npm run build` - Build for production
   - `npm run db:seed` - Seed database with default roles and admin user
   - `npm run lint` - Run ESLint
+  - `npm run test` - Run unit tests with Jest
+  - `npm run test:watch` - Run tests in watch mode
+  - `npm run test:coverage` - Run tests with coverage report
 
   ## Database & Permissions
   - Default admin: admin@example.com / admin123
@@ -26,9 +29,28 @@
   - Permission checks in all API routes
   - Froala editor for rich text content
 
+  ## Testing
+  - Jest configured with Next.js integration
+  - 101+ unit tests covering core functionality
+  - Test files: `src/**/__tests__/**/*.test.ts` and `tests/**/*.test.ts`
+  - Mock configurations for Next.js components and NextAuth
+  - Run `npm run test` after making changes to verify functionality
+  
+  ## Development Workflow
+  - Always run tests after making code changes: `npm run test`
+  - Run linting before committing: `npm run lint`
+  - For complex changes affecting multiple components, run full test suite
+  - Use test watch mode during development: `npm run test:watch`
+
   ## Architecture Notes
   - Scraps: User-created content with x/y positioning on infinite canvas
   - Shift+click creates scrap at cursor position
   - Move mode for repositioning scraps
   - Public/private scrap visibility system
   - Role-based access control throughout
+  
+  ## Auto-Commit Reminder
+  - Always commit changes with descriptive messages
+  - Use `git add -A && git commit -m "Description"` pattern
+  - Include testing status in commit messages
+  - Follow conventional commit format for consistency
