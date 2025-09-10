@@ -1,6 +1,18 @@
 import { getUserPermissions, hasPermission, hasPermissionForUser, requirePermission, Permission } from '../permissions'
 import { db } from '../db'
 
+// Mock the database schema
+jest.mock('../db/schema', () => ({
+  users: {},
+  userRoles: {},
+  roles: {},
+  rolePermissions: {},
+  permissions: {},
+  accounts: {},
+  sessions: {},
+  scraps: {},
+}))
+
 // Mock the database module
 jest.mock('../db', () => ({
   db: {
@@ -14,6 +26,7 @@ jest.mock('../db', () => ({
 // Mock drizzle-orm
 jest.mock('drizzle-orm', () => ({
   eq: jest.fn(),
+  relations: jest.fn(),
 }))
 
 const mockDb = db as jest.Mocked<typeof db>

@@ -21,6 +21,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "bcryptjs": "^3.0.2",
     "better-sqlite3": "^12.2.0",
+    "dompurify": "^3.2.6",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.5",
     "froala-editor": "^4.6.2",
@@ -44,6 +45,9 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.1.0",
+    "@testing-library/react": "^15.0.0",
+    "@testing-library/user-event": "^14.5.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -51,9 +55,6 @@
     "eslint-config-next": "15.5.2",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
-    "@testing-library/jest-dom": "^6.1.0",
-    "@testing-library/react": "^14.1.0",
-    "@testing-library/user-event": "^14.5.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

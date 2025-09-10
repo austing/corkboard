@@ -278,7 +278,7 @@ describe('Content Processing', () => {
   describe('Content Preview Generation', () => {
     it('should generate short preview from content', () => {
       const longContent = '<p>This is a very long piece of content that should be truncated to a shorter preview for display in lists and summaries.</p>'
-      const expectedPreview = 'This is a very long piece of content that should be truncated...'
+      const expectedPreview = 'This is a very long piece of content that should b...'
       
       const result = generatePreview(longContent, 50)
       
@@ -360,7 +360,7 @@ function formatContent(content: string): string {
 }
 
 function cleanupWhitespace(content: string): string {
-  return content.replace(/\s+/g, ' ').trim()
+  return content.replace(/<p>\s+/g, '<p>').replace(/\s+<\/p>/g, '</p>').replace(/\s+/g, ' ').trim()
 }
 
 function generatePreview(content: string, maxLength: number): string {

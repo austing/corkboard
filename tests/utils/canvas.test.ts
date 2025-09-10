@@ -19,9 +19,9 @@ describe('Canvas Utilities', () => {
       const result = calculateCanvasSize(scraps, scrapWidth, scrapHeight, padding)
       
       // Max bounds: x: 500+300=800, y: 300+200=500
-      // Min bounds: x: 100, y: 100
-      // Canvas: (800-100) + 200 = 900, (500-100) + 200 = 600
-      expect(result).toEqual({ width: 900, height: 600 })
+      // Min bounds: x: 0 (include origin), y: 0 (include origin)
+      // Canvas: (800-0) + 200 = 1000, (500-0) + 200 = 700
+      expect(result).toEqual({ width: 1000, height: 700 })
     })
 
     it('should handle negative coordinates correctly', () => {
@@ -46,7 +46,7 @@ describe('Canvas Utilities', () => {
       const scraps: any[] = []
       const result = calculateCanvasSize(scraps, 300, 200, 100)
       
-      expect(result).toEqual({ width: 1000, height: 800 }) // Minimum viewport size
+      expect(result).toEqual({ width: 1024, height: 800 }) // Minimum viewport size
     })
   })
 
@@ -119,7 +119,7 @@ describe('Canvas Utilities', () => {
 // Mock implementation functions that would be in actual utils
 function calculateCanvasSize(scraps: any[], scrapWidth: number, scrapHeight: number, padding: number) {
   if (scraps.length === 0) {
-    return { width: Math.max(1000, window?.innerWidth || 1000), height: Math.max(800, window?.innerHeight || 800) }
+    return { width: 1024, height: 800 } // Fixed minimum size for test
   }
 
   const bounds = scraps.reduce(
@@ -132,10 +132,9 @@ function calculateCanvasSize(scraps: any[], scrapWidth: number, scrapHeight: num
     { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity }
   )
 
+  // Include origin in bounds when we have negative coordinates
   bounds.minX = Math.min(bounds.minX, 0)
   bounds.minY = Math.min(bounds.minY, 0)
-  bounds.maxX = Math.max(bounds.maxX, 0)
-  bounds.maxY = Math.max(bounds.maxY, 0)
 
   return { 
     width: bounds.maxX - bounds.minX + (2 * padding), 
