@@ -6,7 +6,7 @@ import AdminLayout from '@/components/layout/admin-layout';
 import PermissionCheck from '@/components/auth/permission-check';
 import AddScrapModal from '@/components/admin/add-scrap-modal';
 import EditScrapModal from '@/components/admin/edit-scrap-modal';
-import { Trash2, MapPin } from 'lucide-react';
+import { TrashIcon, MapPinIcon } from '@heroicons/react/24/outline';
 
 
 interface Scrap {
@@ -130,7 +130,7 @@ export default function ScrapsPage() {
                     {scrap.code}
                   </h3>
                   <div className="flex items-center text-sm text-gray-500 mt-1">
-                    <MapPin className="h-4 w-4 mr-1" />
+                    <MapPinIcon className="h-4 w-4 mr-1" />
                     ({scrap.x}, {scrap.y})
                   </div>
                 </div>
@@ -156,7 +156,7 @@ export default function ScrapsPage() {
                       onClick={() => handleDeleteScrap(scrap.id, scrap.code)}
                       className="text-red-600 hover:text-red-900 cursor-pointer"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <TrashIcon className="h-4 w-4" />
                     </button>
                   </PermissionCheck>
                 </div>

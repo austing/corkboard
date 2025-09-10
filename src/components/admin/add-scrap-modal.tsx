@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 interface User {
   id: string;
@@ -93,7 +93,7 @@ export default function AddScrapModal({ isOpen, onClose, onScrapAdded }: AddScra
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 cursor-pointer"
           >
-            <X className="h-6 w-6" />
+            <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
 

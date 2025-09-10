@@ -32,6 +32,21 @@ export async function requirePermission(userId: string, resource: string, action
   }
 }
 
+export async function hasPermissionForUser(userId: string, resource: string, action: string, targetUserId?: string) {
+  // If targetUserId is provided and it's different from userId, check for general permission
+  // If targetUserId is same as userId or not provided, check for self permission first, then general
+  if (targetUserId && targetUserId !== userId) {
+    return hasPermission(userId, resource, action);
+  } else {
+    // Check self permission first, then fall back to general permission
+    const hasSelfPermission = await hasPermission(userId, resource, `${action}_self`);
+    if (hasSelfPermission) {
+      return true;
+    }
+    return hasPermission(userId, resource, action);
+  }
+}
+
 export type Permission = {
   permission: string;
   resource: string;

@@ -3,26 +3,26 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  Users, 
-  Shield, 
-  Settings, 
-  LayoutDashboard,
-  LogOut,
-  Clipboard,
-  ChevronLeft,
-  UserCog
-} from 'lucide-react';
+  UsersIcon, 
+  ShieldCheckIcon, 
+  CogIcon, 
+  Squares2X2Icon,
+  ArrowRightOnRectangleIcon,
+  ClipboardDocumentIcon,
+  ChevronLeftIcon,
+  UserCircleIcon
+} from '@heroicons/react/24/outline';
 import { signOut } from 'next-auth/react';
 import config from '../../../corkboard.config';
 
 const navigation = [
-  { name: `Back to ${config.app.name}`, href: '/', icon: ChevronLeft, isBack: true },
-  { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { name: 'Users', href: '/admin/users', icon: Users },
-  { name: 'Roles', href: '/admin/roles', icon: Shield },
-  { name: 'Scraps', href: '/admin/scraps', icon: Clipboard },
-  { name: 'Settings', href: '/admin/settings', icon: Settings },
-  { name: 'Profile Settings', href: '/profile', icon: UserCog },
+  { name: `Back to ${config.app.name}`, href: '/', icon: ChevronLeftIcon, isBack: true },
+  { name: 'Dashboard', href: '/admin', icon: Squares2X2Icon },
+  { name: 'Users', href: '/admin/users', icon: UsersIcon },
+  { name: 'Roles', href: '/admin/roles', icon: ShieldCheckIcon },
+  { name: 'Scraps', href: '/admin/scraps', icon: ClipboardDocumentIcon },
+  { name: 'Settings', href: '/admin/settings', icon: CogIcon },
+  { name: 'Profile Settings', href: '/profile', icon: UserCircleIcon },
 ];
 
 export default function Sidebar() {
@@ -72,7 +72,7 @@ export default function Sidebar() {
           }}
           className="flex items-center w-full px-2 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white cursor-pointer"
         >
-          <LogOut className="mr-3 h-6 w-6" />
+          <ArrowRightOnRectangleIcon className="mr-3 h-6 w-6" />
           Sign Out
         </button>
       </div>

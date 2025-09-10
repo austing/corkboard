@@ -99,6 +99,8 @@ export default function HomePage() {
       if (e.key === 'Escape' && isMoveMode) {
         setIsMoveMode(false);
         setMovingScrap(null);
+        // Reset shift key state to ensure hotkey works after canceling move
+        setIsShiftPressed(false);
         return;
       }
       
@@ -144,7 +146,7 @@ export default function HomePage() {
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [isShiftPressed, fullscreenScrap, showNewScrapModal, showEditScrapModal]);
+  }, [isShiftPressed, fullscreenScrap, showNewScrapModal, showEditScrapModal, isMoveMode]);
 
   // Handle keyboard shortcuts for modals
   useEffect(() => {
@@ -543,6 +545,8 @@ export default function HomePage() {
       updateScrapPosition(movingScrap.id, Math.max(0, Math.round(canvasX)), Math.max(0, Math.round(canvasY)));
       setIsMoveMode(false);
       setMovingScrap(null);
+      // Reset shift key state to ensure hotkey works after move
+      setIsShiftPressed(false);
     } else if (isShiftPressed && session && !isHoveringScrap && !isMoveMode) {
       // Calculate click position relative to the canvas
       const clickX = e.pageX;

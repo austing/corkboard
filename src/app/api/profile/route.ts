@@ -5,12 +5,19 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+import { hasPermissionForUser } from '@/lib/permissions';
 
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check if user has permission to update their own profile
+    const canUpdateSelf = await hasPermissionForUser(session.user.id, 'users', 'update', session.user.id);
+    if (!canUpdateSelf) {
+      return NextResponse.json({ error: 'Permission denied: Cannot update profile' }, { status: 403 });
     }
 
     const { name, email, currentPassword, newPassword } = await request.json();

@@ -11,6 +11,7 @@ export async function seedDatabase() {
     { resource: 'users', action: 'create', description: 'Create new users' },
     { resource: 'users', action: 'read', description: 'View users' },
     { resource: 'users', action: 'update', description: 'Edit users' },
+    { resource: 'users', action: 'update_self', description: 'Edit own user profile' },
     { resource: 'users', action: 'delete', description: 'Delete users' },
     { resource: 'roles', action: 'create', description: 'Create new roles' },
     { resource: 'roles', action: 'read', description: 'View roles' },
@@ -48,6 +49,7 @@ export async function seedDatabase() {
   const adminRoleId = randomUUID();
   const editorRoleId = randomUUID();
   const viewerRoleId = randomUUID();
+  const scrapperRoleId = randomUUID();
 
   await db.insert(roles).values([
     {
@@ -66,6 +68,12 @@ export async function seedDatabase() {
       id: viewerRoleId,
       name: 'viewer',
       description: 'Read-only access',
+      createdAt: new Date(),
+    },
+    {
+      id: scrapperRoleId,
+      name: 'scrapper',
+      description: 'Can create, read, update scraps and view all. Can edit own profile. Cannot delete or manage other users.',
       createdAt: new Date(),
     },
   ]);
@@ -95,6 +103,21 @@ export async function seedDatabase() {
     assignedAt: new Date(),
   }));
   await db.insert(rolePermissions).values(viewerPermissions);
+
+  // Assign scrapper permissions - can create, read, update scraps and view all, edit own profile, but not delete or manage others
+  const scrapperPermissionNames = [
+    'scraps:create', 
+    'scraps:read', 
+    'scraps:update', 
+    'scraps:view_all',
+    'users:update_self'
+  ];
+  const scrapperPermissions = scrapperPermissionNames.map(name => ({
+    roleId: scrapperRoleId,
+    permissionId: permissionIds[name],
+    assignedAt: new Date(),
+  }));
+  await db.insert(rolePermissions).values(scrapperPermissions);
 
   // Create default admin user
   const hashedPassword = await bcrypt.hash('admin123', 12);

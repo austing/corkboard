@@ -6,7 +6,7 @@ import AdminLayout from '@/components/layout/admin-layout';
 import PermissionCheck from '@/components/auth/permission-check';
 import AddRoleModal from '@/components/admin/add-role-modal';
 import EditRoleModal from '@/components/admin/edit-role-modal';
-import { Trash2 } from 'lucide-react';
+import { TrashIcon } from '@heroicons/react/24/outline';
 
 
 interface Role {
@@ -139,7 +139,7 @@ export default function RolesPage() {
                       onClick={() => handleDeleteRole(role.id, role.name)}
                       className="text-red-600 hover:text-red-900 cursor-pointer"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <TrashIcon className="h-4 w-4" />
                     </button>
                   </PermissionCheck>
                 </div>

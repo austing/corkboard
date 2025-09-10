@@ -32,6 +32,13 @@ body {
   min-height: 200px;
 }
 
+/* Ensure paragraph styling matches between editor and display */
+.fr-element p, .fr-view .fr-element p {
+  margin: 0;
+  line-height: 1;
+  text-indent: 2em;
+}
+
 .fr-toolbar {
   border-color: #d1d5db;
 }
@@ -116,6 +123,7 @@ span[data-froala] {
 
 /* Apply styles to content rendered with dangerouslySetInnerHTML */
 .fr-view p, [data-froala-content] p, .froala-content p {
-  margin: 8px 0;
-  line-height: 1.5;
+  margin: 0;
+  line-height: 1;
+  text-indent: 2em;
 }
