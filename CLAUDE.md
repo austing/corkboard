@@ -31,9 +31,9 @@
 
   ## Testing
   - Jest configured with Next.js integration
-  - **296 total tests** across comprehensive categories:
+  - **310 total tests** across comprehensive categories:
     - **232 core tests passing** (6 skipped with @TODO comments)
-    - **64 additional advanced tests** covering specialized areas
+    - **78 additional advanced tests** covering specialized areas (6 skipped with @TODO comments)
   - Test coverage includes:
     - Core API routes and business logic
     - React hooks and state management
@@ -72,8 +72,24 @@
   - Project uses package.json overrides to manage dependency conflicts
   - Test environment may show deprecation warnings that are handled via overrides
   
-  ## Auto-Commit Reminder
-  - Always commit changes with descriptive messages
-  - Use `git add -A && git commit -m "Description"` pattern
-  - Include testing status in commit messages
-  - Follow conventional commit format for consistency
+  ## Auto-Commit Requirement
+  - **ALWAYS commit changes immediately after successful completion of any task**
+  - Use descriptive commit messages that explain what was accomplished
+  - Include testing status and any important technical details
+  - Use the standard commit format with Claude Code attribution:
+    ```bash
+    git add [relevant files]
+    git commit -m "$(cat <<'EOF'
+    Brief summary of changes
+    
+    Detailed description of what was accomplished.
+    Include any important technical details or test results.
+    
+    🤖 Generated with [Claude Code](https://claude.ai/code)
+    
+    Co-Authored-By: Claude <noreply@anthropic.com>
+    EOF
+    )"
+    ```
+  - Check `git log --oneline -3` to follow existing commit message patterns
+  - Always verify commit succeeded with `git status` after committing
