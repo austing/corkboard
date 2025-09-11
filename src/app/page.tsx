@@ -51,7 +51,7 @@ export default function HomePage() {
   const editScrapModal = useModal<Scrap>(null, {
     updateUrlHash: null,
     onClose: () => {
-      setEditScrapForm({ content: '', x: 0, y: 0, visible: true });
+      editScrapForm.reset();
       setOriginalEditScrapForm({ content: '', x: 0, y: 0, visible: true });
       setEditScrapError('');
       window.history.pushState(null, '', window.location.pathname);
@@ -74,7 +74,7 @@ export default function HomePage() {
         }
         // Open the modal
         setTimeout(() => {
-          setFullscreenScrap(targetScrap);
+          fullscreenModal.open(targetScrap);
         }, 500); // Delay to let scroll complete
       }
     }
@@ -560,13 +560,11 @@ export default function HomePage() {
               onMouseEnter={() => setIsHoveringScrap(true)}
               onMouseLeave={() => setIsHoveringScrap(false)}
               onClick={() => {
-                const newScrap = fullscreenScrap?.id === scrap.id ? null : scrap;
-                setFullscreenScrap(newScrap);
-                // Update URL hash
-                if (newScrap) {
-                  window.history.pushState(null, '', `#${newScrap.code}`);
+                if (fullscreenModal.data?.id === scrap.id) {
+                  fullscreenModal.close();
                 } else {
-                  window.history.pushState(null, '', window.location.pathname);
+                  fullscreenModal.open(scrap);
+                  window.history.pushState(null, '', `#${scrap.code}`);
                 }
               }}
             >
@@ -589,8 +587,7 @@ export default function HomePage() {
                         updateScrapVisibility(scrap.id, true);
                       } else {
                         // Otherwise open fullscreen modal
-                        setFullscreenScrap(scrap);
-                        // Update URL hash
+                        fullscreenModal.open(scrap);
                         window.history.pushState(null, '', `#${scrap.code}`);
                       }
                     }}
