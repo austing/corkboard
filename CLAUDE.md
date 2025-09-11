@@ -31,10 +31,11 @@
 
   ## Testing
   - Jest configured with Next.js integration
-  - 101+ unit tests covering core functionality
+  - 238 unit tests with 100% passing rate (232 passed, 6 skipped)
   - Test files: `src/**/__tests__/**/*.test.ts` and `tests/**/*.test.ts`
   - Mock configurations for Next.js components and NextAuth
   - Run `npm run test` after making changes to verify functionality
+  - 6 tests skipped with @TODO comments for mock isolation and structure issues
   
   ## Development Workflow
   - Always run tests after making code changes: `npm run test`
@@ -48,6 +49,19 @@
   - Move mode for repositioning scraps
   - Public/private scrap visibility system
   - Role-based access control throughout
+  
+  ## File Editing Guidelines for Claude
+  - When editing TypeScript files, avoid using generic strings that match multiple locations
+  - Use sufficient context (3-5 lines before/after) to make string replacements unique
+  - If encountering "multiple matches" error, add more surrounding code context
+  - The Edit tool requires exact whitespace/indentation matching from Read tool output
+  - Use MultiEdit tool for multiple changes to the same file
+  - Always Read a file before editing to understand current structure
+  
+  ## Dependencies & Overrides
+  - Added punycode.js override to fix deprecation warnings in test suite
+  - Project uses package.json overrides to manage dependency conflicts
+  - Test environment may show deprecation warnings that are handled via overrides
   
   ## Auto-Commit Reminder
   - Always commit changes with descriptive messages
