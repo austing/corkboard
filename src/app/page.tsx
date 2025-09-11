@@ -643,7 +643,7 @@ export default function HomePage(): React.JSX.Element {
               {/* Content */}
               <div className="mb-3">
                 <div 
-                  className="text-sm text-gray-800 line-clamp-6 froala-content" 
+                  className="text-sm text-gray-800 line-clamp-24 froala-content" 
                   dangerouslySetInnerHTML={{ __html: scrap.content }}
                 />
               </div>
