@@ -84,8 +84,9 @@ span[data-froala] {
 }
 
 .fr-view ol, .fr-view ul, [data-froala-content] ol, [data-froala-content] ul, .froala-content ol, .froala-content ul {
-  margin: 16px 0;
+  margin: 0;
   padding-left: 40px;
+  line-height: 1;
 }
 
 .fr-view ol, [data-froala-content] ol, .froala-content ol {
@@ -97,7 +98,8 @@ span[data-froala] {
 }
 
 .fr-view ol ol, .fr-view ul ul, [data-froala-content] ol ol, [data-froala-content] ul ul, .froala-content ol ol, .froala-content ul ul {
-  margin: 8px 0;
+  margin: 0;
+  line-height: 1;
 }
 
 .fr-view ol ol, [data-froala-content] ol ol, .froala-content ol ol {
@@ -117,8 +119,8 @@ span[data-froala] {
 }
 
 .fr-view li, [data-froala-content] li, .froala-content li {
-  margin: 4px 0;
-  line-height: 1.5;
+  margin: 0;
+  line-height: 1;
 }
 
 /* Apply styles to content rendered with dangerouslySetInnerHTML */
