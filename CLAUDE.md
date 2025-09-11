@@ -31,11 +31,20 @@
 
   ## Testing
   - Jest configured with Next.js integration
-  - 238 unit tests with 100% passing rate (232 passed, 6 skipped)
+  - **296 total tests** across comprehensive categories:
+    - **232 core tests passing** (6 skipped with @TODO comments)
+    - **64 additional advanced tests** covering specialized areas
+  - Test coverage includes:
+    - Core API routes and business logic
+    - React hooks and state management
+    - Error handling and edge cases
+    - Browser compatibility and fallbacks
+    - Performance and memory management
+    - Accessibility (A11y) compliance
+    - Security (XSS, CSRF, input validation)
   - Test files: `src/**/__tests__/**/*.test.ts` and `tests/**/*.test.ts`
   - Mock configurations for Next.js components and NextAuth
   - Run `npm run test` after making changes to verify functionality
-  - 6 tests skipped with @TODO comments for mock isolation and structure issues
   
   ## Development Workflow
   - Always run tests after making code changes: `npm run test`
