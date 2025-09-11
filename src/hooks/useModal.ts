@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
+import type { UseModalOptions } from '../types';
 
-interface UseModalOptions {
-  onClose?: () => void;
-  preventBodyScroll?: boolean;
-  updateUrlHash?: string | null;
-  escapeToClose?: boolean;
+interface UseModalReturn<T> {
+  isOpen: boolean;
+  data: T | null;
+  open: (newData?: T) => void;
+  close: () => void;
+  setData: (data: T | null) => void;
 }
 
 export function useModal<T = boolean>(
   initialState: T | null = null,
   options: UseModalOptions = {}
-) {
+): UseModalReturn<T> {
   const {
     onClose,
     preventBodyScroll = true,
@@ -64,5 +66,11 @@ export function useModal<T = boolean>(
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, escapeToClose, close]);
 
-  return { isOpen, data, open, close, setData };
+  return { 
+    isOpen, 
+    data, 
+    open, 
+    close, 
+    setData 
+  } as UseModalReturn<T>;
 }

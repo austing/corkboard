@@ -12,6 +12,7 @@ import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { api, type Scrap } from '../lib/api';
 import { CanvasUtils } from '../utils/canvas';
 import { ScrapPermissions } from '../utils/permissions';
+import type { ScrapFormData, Position, Size } from '../types';
 
 
 // Dynamically import Froala editor to avoid SSR issues
@@ -21,17 +22,17 @@ const FroalaEditor = dynamic(() => import('./components/FroalaEditor'), {
 });
 
 
-export default function HomePage() {
+export default function HomePage(): React.JSX.Element {
   const { data: session } = useSession();
   const [scraps, setScraps] = useState<Scrap[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [_error, setError] = useState('');
-  const [_hasAdminAccess, setHasAdminAccess] = useState(false);
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
-  const [isShiftPressed, setIsShiftPressed] = useState(false);
-  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
-  const [isHoveringScrap, setIsHoveringScrap] = useState(false);
-  const [isMoveMode, setIsMoveMode] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [_error, setError] = useState<string>('');
+  const [_hasAdminAccess, setHasAdminAccess] = useState<boolean>(false);
+  const [canvasSize, setCanvasSize] = useState<Size>({ width: 0, height: 0 });
+  const [isShiftPressed, setIsShiftPressed] = useState<boolean>(false);
+  const [cursorPosition, setCursorPosition] = useState<Position>({ x: 0, y: 0 });
+  const [isHoveringScrap, setIsHoveringScrap] = useState<boolean>(false);
+  const [isMoveMode, setIsMoveMode] = useState<boolean>(false);
   const [movingScrap, setMovingScrap] = useState<Scrap | null>(null);
 
   // Modal management using useModal hook
@@ -175,8 +176,8 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scraps, loading, handleHashNavigation]);
 
-  const calculateCanvasSize = () => {
-    const size = CanvasUtils.calculateCanvasSize(scraps);
+  const calculateCanvasSize = (): void => {
+    const size: Size = CanvasUtils.calculateCanvasSize(scraps);
     setCanvasSize(size);
   };
 
@@ -213,22 +214,26 @@ export default function HomePage() {
     });
   };
   
-  const checkAdminAccess = async () => {
+  const checkAdminAccess = async (): Promise<void> => {
     if (!session?.user?.id) {
       setHasAdminAccess(false);
       return;
     }
 
     try {
-      const { hasPermission } = await api.checkPermission(session.user.id, 'admin', 'access');
-      setHasAdminAccess(hasPermission);
+      const response = await api.checkPermission({
+        userId: session.user.id,
+        resource: 'admin',
+        action: 'access'
+      });
+      setHasAdminAccess(response.hasPermission);
     } catch (err) {
       console.error('Error checking admin permissions:', err);
       setHasAdminAccess(false);
     }
   };
 
-  const fetchScraps = async () => {
+  const fetchScraps = async (): Promise<void> => {
     try {
       const data = await api.fetchScraps(!!session?.user?.id);
       const filteredScraps = session?.user?.id 
@@ -259,10 +264,14 @@ export default function HomePage() {
   };
 
   // Form management using useFormWithSubmit hook
-  const newScrapForm = useFormWithSubmit({
+  const newScrapForm = useFormWithSubmit<ScrapFormData>({
     initialValues: { content: '', x: 0, y: 0 },
-    onSubmit: async (values) => {
-      await api.createScrap(values);
+    onSubmit: async (values: ScrapFormData) => {
+      await api.createScrap({
+        content: values.content,
+        x: values.x,
+        y: values.y
+      });
     },
     onSuccess: () => {
       newScrapModal.close();
@@ -270,11 +279,18 @@ export default function HomePage() {
     }
   });
 
-  const editScrapForm = useFormWithSubmit({
+  const editScrapForm = useFormWithSubmit<ScrapFormData>({
     initialValues: { content: '', x: 0, y: 0, visible: true },
-    onSubmit: async (values) => {
-      if (!editScrapModal.data) return;
-      await api.updateScrap(editScrapModal.data.id, values);
+    onSubmit: async (values: ScrapFormData) => {
+      if (!editScrapModal.data) {
+        throw new Error('No scrap selected for editing');
+      }
+      await api.updateScrap(editScrapModal.data.id, {
+        content: values.content,
+        x: values.x,
+        y: values.y,
+        visible: values.visible
+      });
     },
     onSuccess: () => {
       editScrapModal.close();
@@ -282,16 +298,16 @@ export default function HomePage() {
     }
   });
 
-  const [editScrapError, setEditScrapError] = useState('');
-  const [originalEditScrapForm, setOriginalEditScrapForm] = useState({
+  const [editScrapError, setEditScrapError] = useState<string>('');
+  const [originalEditScrapForm, setOriginalEditScrapForm] = useState<ScrapFormData>({
     content: '',
     x: 0,
     y: 0,
     visible: true,
   });
 
-  const handleEditScrapClick = (scrap: Scrap) => {
-    const formData = {
+  const handleEditScrapClick = (scrap: Scrap): void => {
+    const formData: ScrapFormData = {
       content: scrap.content,
       x: scrap.x,
       y: scrap.y,
@@ -326,7 +342,7 @@ export default function HomePage() {
   }, [scraps, handleHashNavigation]);
 
   // Calculate position accounting for negative coordinates
-  const getScrapPosition = (scrap: Scrap) => {
+  const getScrapPosition = (scrap: Scrap): Position => {
     return CanvasUtils.getScrapDisplayPosition(scrap, scraps);
   };
 
@@ -338,27 +354,31 @@ export default function HomePage() {
     );
   }
 
-  const handleCanvasClick = (e: React.MouseEvent) => {
+  const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>): void => {
     if (isMoveMode && movingScrap) {
-      const coords = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, scraps);
+      const coords: Position = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, scraps);
       updateScrapPosition(movingScrap.id, coords.x, coords.y);
       setIsMoveMode(false);
       setMovingScrap(null);
       setIsShiftPressed(false);
     } else if (isShiftPressed && session && !isHoveringScrap && !isMoveMode) {
-      const coords = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, scraps);
+      const coords: Position = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, scraps);
       newScrapForm.setValues({ 
         content: '', 
         x: coords.x, 
-        y: coords.y
+        y: coords.y,
+        visible: true
       });
       newScrapModal.open();
       setIsShiftPressed(false);
     }
   };
 
-  const updateScrapPosition = async (scrapId: string, x: number, y: number) => {
-    if (!movingScrap) return;
+  const updateScrapPosition = async (scrapId: string, x: number, y: number): Promise<void> => {
+    if (!movingScrap) {
+      console.warn('No scrap selected for moving');
+      return;
+    }
     
     try {
       await api.updateScrap(scrapId, {
@@ -372,7 +392,7 @@ export default function HomePage() {
     }
   };
 
-  const updateScrapVisibility = async (scrapId: string, visible: boolean) => {
+  const updateScrapVisibility = async (scrapId: string, visible: boolean): Promise<void> => {
     try {
       await api.updateScrapVisibility(scrapId, visible);
       fetchScraps();
@@ -381,7 +401,7 @@ export default function HomePage() {
     }
   };
 
-  const hasFormChanged = () => {
+  const hasFormChanged = (): boolean => {
     return (
       editScrapForm.values.content !== originalEditScrapForm.content ||
       editScrapForm.values.x !== originalEditScrapForm.x ||
@@ -389,10 +409,13 @@ export default function HomePage() {
     );
   };
 
-  const handleVisibilityToggle = async () => {
-    if (!editScrapModal.data) return;
+  const handleVisibilityToggle = async (): Promise<void> => {
+    if (!editScrapModal.data) {
+      console.warn('No scrap selected for visibility toggle');
+      return;
+    }
     
-    const newVisibility = !editScrapModal.data.visible;
+    const newVisibility: boolean = !editScrapModal.data.visible;
     
     await updateScrapVisibility(editScrapModal.data.id, newVisibility);
     

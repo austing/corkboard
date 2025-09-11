@@ -1,21 +1,25 @@
-interface Scrap {
-  id: string;
-  code: string;
-  content: string;
-  x: number;
-  y: number;
-  visible: boolean;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  createdAt: number;
-  updatedAt: number;
+import type {
+  ScrapWithUser,
+  ScrapCreateData,
+  ScrapUpdateData,
+  ScrapsResponse,
+  PermissionCheckResponse,
+  VisibilityUpdateResponse,
+  PermissionCheck,
+  ApiError,
+  User,
+  Role
+} from '../types';
+
+interface ApiRequestOptions extends RequestInit {
+  timeout?: number;
 }
 
 class ApiClient {
+  private readonly baseTimeout = 10000; // 10 seconds
   private async request<T>(
     url: string,
-    options?: RequestInit
+    options?: ApiRequestOptions
   ): Promise<T> {
     try {
       const response = await fetch(url, {
@@ -27,51 +31,95 @@ class ApiClient {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Request failed' }));
-        throw new Error(error.error || `HTTP ${response.status}`);
+        const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
+        const apiError: ApiError = new Error(errorData.error || `HTTP ${response.status}`) as ApiError;
+        apiError.statusCode = response.status;
+        apiError.endpoint = url;
+        apiError.method = options?.method || 'GET';
+        apiError.requestData = options?.body;
+        throw apiError;
       }
 
-      return response.json();
+      return response.json() as Promise<T>;
     } catch (error) {
-      console.error(`API Error: ${url}`, error);
-      throw error;
+      if (error instanceof Error && 'statusCode' in error) {
+        throw error; // Re-throw API errors as-is
+      }
+      // Wrap other errors
+      const apiError: ApiError = new Error('Network error occurred') as ApiError;
+      apiError.endpoint = url;
+      apiError.method = options?.method || 'GET';
+      apiError.details = { originalError: error };
+      console.error(`API Error: ${url}`, apiError);
+      throw apiError;
     }
   }
 
   // Scrap-specific methods
-  async fetchScraps(authenticated: boolean) {
+  async fetchScraps(authenticated: boolean): Promise<ScrapsResponse> {
     const endpoint = authenticated ? '/api/scraps' : '/api/scraps/public';
-    return this.request<{ scraps: Scrap[] }>(endpoint);
+    return this.request<ScrapsResponse>(endpoint);
   }
 
-  async createScrap(data: { content: string; x: number; y: number }) {
-    return this.request('/api/scraps', {
+  async createScrap(data: ScrapCreateData): Promise<ScrapWithUser> {
+    return this.request<ScrapWithUser>('/api/scraps', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async updateScrap(id: string, data: Partial<Scrap>) {
-    return this.request(`/api/scraps/${id}`, {
+  async updateScrap(id: string, data: ScrapUpdateData): Promise<ScrapWithUser> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid scrap ID provided');
+    }
+    return this.request<ScrapWithUser>(`/api/scraps/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
-  async updateScrapVisibility(id: string, visible: boolean) {
-    return this.request(`/api/scraps/${id}/visibility`, {
+  async updateScrapVisibility(id: string, visible: boolean): Promise<VisibilityUpdateResponse> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid scrap ID provided');
+    }
+    if (typeof visible !== 'boolean') {
+      throw new Error('Visibility must be a boolean value');
+    }
+    return this.request<VisibilityUpdateResponse>(`/api/scraps/${id}/visibility`, {
       method: 'PUT',
       body: JSON.stringify({ visible }),
     });
   }
 
-  async checkPermission(userId: string, resource: string, action: string) {
-    return this.request<{ hasPermission: boolean }>('/api/permissions/check', {
+  async checkPermission(data: PermissionCheck): Promise<PermissionCheckResponse> {
+    const { userId, resource, action } = data;
+    if (!userId || !resource || !action) {
+      throw new Error('Missing required permission check parameters');
+    }
+    return this.request<PermissionCheckResponse>('/api/permissions/check', {
       method: 'POST',
       body: JSON.stringify({ userId, resource, action }),
     });
   }
+
+  // User management methods
+  async fetchUsers(): Promise<{ users: User[] }> {
+    return this.request<{ users: User[] }>('/api/users');
+  }
+
+  async fetchRoles(): Promise<{ roles: Role[] }> {
+    return this.request<{ roles: Role[] }>('/api/roles');
+  }
 }
 
 export const api = new ApiClient();
-export type { Scrap };
+
+// Re-export commonly used types
+export type {
+  ScrapWithUser as Scrap,
+  ScrapCreateData,
+  ScrapUpdateData,
+  ScrapsResponse,
+  PermissionCheckResponse,
+  ApiError
+} from '../types';

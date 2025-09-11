@@ -1,13 +1,16 @@
-import type { Scrap } from '../lib/api';
+import type { ScrapWithUser, Position, Size, Bounds } from '../types';
 
 export class CanvasUtils {
-  static getCanvasBounds(scraps: Scrap[]) {
+  private static readonly DEFAULT_SCRAP_WIDTH = 300;
+  private static readonly DEFAULT_SCRAP_HEIGHT = 200;
+  private static readonly DEFAULT_PADDING = 100;
+  static getCanvasBounds(scraps: ScrapWithUser[]): Bounds {
     if (scraps.length === 0) {
       return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
     }
 
-    const scrapWidth = 300;
-    const scrapHeight = 200;
+    const scrapWidth = this.DEFAULT_SCRAP_WIDTH;
+    const scrapHeight = this.DEFAULT_SCRAP_HEIGHT;
 
     const bounds = scraps.reduce(
       (acc, scrap) => ({
@@ -31,9 +34,9 @@ export class CanvasUtils {
   static pageToCanvasCoordinates(
     pageX: number,
     pageY: number,
-    scraps: Scrap[],
-    padding: number = 100
-  ) {
+    scraps: ScrapWithUser[],
+    padding: number = this.DEFAULT_PADDING
+  ): Position {
     const minX = scraps.length > 0 ? Math.min(0, ...scraps.map(s => s.x)) : 0;
     const minY = scraps.length > 0 ? Math.min(0, ...scraps.map(s => s.y)) : 0;
     
@@ -43,7 +46,11 @@ export class CanvasUtils {
     };
   }
 
-  static getScrapDisplayPosition(scrap: Scrap, scraps: Scrap[], padding: number = 100) {
+  static getScrapDisplayPosition(
+    scrap: ScrapWithUser, 
+    scraps: ScrapWithUser[], 
+    padding: number = this.DEFAULT_PADDING
+  ): Position {
     if (scraps.length === 0) return { x: scrap.x, y: scrap.y };
     
     const minX = Math.min(0, ...scraps.map(s => s.x));
@@ -55,7 +62,10 @@ export class CanvasUtils {
     };
   }
 
-  static calculateCanvasSize(scraps: Scrap[], padding: number = 100) {
+  static calculateCanvasSize(
+    scraps: ScrapWithUser[], 
+    padding: number = this.DEFAULT_PADDING
+  ): Size {
     if (scraps.length === 0) {
       return { 
         width: Math.max(window.innerWidth, 1000), 

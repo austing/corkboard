@@ -1,8 +1,15 @@
 import { useState, useCallback } from 'react';
 
+interface UseLoadingStateReturn<T extends (...args: never[]) => Promise<unknown>> {
+  execute: (...args: Parameters<T>) => Promise<ReturnType<T>>;
+  loading: boolean;
+  error: Error | null;
+  setError: (error: Error | null) => void;
+}
+
 export function useLoadingState<T extends (...args: never[]) => Promise<unknown>>(
   asyncFunction: T
-) {
+): UseLoadingStateReturn<T> {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -22,5 +29,10 @@ export function useLoadingState<T extends (...args: never[]) => Promise<unknown>
     }
   }, [asyncFunction]);
 
-  return { execute, loading, error, setError };
+  return { 
+    execute, 
+    loading, 
+    error, 
+    setError 
+  } as UseLoadingStateReturn<T>;
 }

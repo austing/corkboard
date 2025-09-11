@@ -1,21 +1,11 @@
 import { useEffect, useRef } from 'react';
 import type React from 'react';
-
-interface ShortcutConfig {
-  key: string;
-  handler: () => void;
-  ctrl?: boolean;
-  meta?: boolean;
-  shift?: boolean;
-  alt?: boolean;
-  preventDefault?: boolean;
-  enabled?: boolean;
-}
+import type { ShortcutConfig } from '../types';
 
 export function useKeyboardShortcuts(
   shortcuts: ShortcutConfig[],
   deps: React.DependencyList = []
-) {
+): void {
   const handlersRef = useRef(shortcuts);
   handlersRef.current = shortcuts;
 

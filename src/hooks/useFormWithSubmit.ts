@@ -1,11 +1,18 @@
 import { useState, useCallback, FormEvent, ChangeEvent } from 'react';
+import type { UseFormOptions } from '../types';
 
-interface UseFormOptions<T> {
-  initialValues: T;
-  onSubmit: (values: T) => Promise<void>;
-  onSuccess?: () => void;
-  onError?: (error: string) => void;
-  resetOnSuccess?: boolean;
+interface UseFormReturn<T> {
+  values: T;
+  loading: boolean;
+  error: string;
+  handleInputChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  handleSubmit: (e?: FormEvent) => Promise<void>;
+  setValue: (name: keyof T, value: unknown) => void;
+  setValues: (values: T) => void;
+  reset: () => void;
+  hasChanged: () => boolean;
+  setInitialValues: (newValues: T) => void;
+  setError: (error: string) => void;
 }
 
 export function useFormWithSubmit<T extends Record<string, unknown>>({
@@ -14,7 +21,7 @@ export function useFormWithSubmit<T extends Record<string, unknown>>({
   onSuccess,
   onError,
   resetOnSuccess = true
-}: UseFormOptions<T>) {
+}: UseFormOptions<T>): UseFormReturn<T> {
   const [values, setValues] = useState<T>(initialValues);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -81,5 +88,5 @@ export function useFormWithSubmit<T extends Record<string, unknown>>({
     hasChanged,
     setInitialValues,
     setError
-  };
+  } as UseFormReturn<T>;
 }
