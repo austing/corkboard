@@ -6,6 +6,12 @@ import { PencilIcon, PlusIcon, ArrowsPointingOutIcon, XMarkIcon, CogIcon, ArrowR
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import config from '../../corkboard.config';
+import { useModal } from '../hooks/useModal';
+import { useFormWithSubmit } from '../hooks/useFormWithSubmit';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { api, type Scrap } from '../lib/api';
+import { CanvasUtils } from '../utils/canvas';
+import { ScrapPermissions } from '../utils/permissions';
 
 
 // Dynamically import Froala editor to avoid SSR issues
@@ -14,19 +20,6 @@ const FroalaEditor = dynamic(() => import('./components/FroalaEditor'), {
   loading: () => <div className="flex-1 border border-gray-300 rounded-md p-3 text-sm">Loading editor...</div>
 });
 
-interface Scrap {
-  id: string;
-  code: string;
-  content: string;
-  x: number;
-  y: number;
-  visible: boolean;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  createdAt: number;
-  updatedAt: number;
-}
 
 export default function HomePage() {
   const { data: session } = useSession();
@@ -34,16 +27,36 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [_error, setError] = useState('');
   const [_hasAdminAccess, setHasAdminAccess] = useState(false);
-  const [fullscreenScrap, setFullscreenScrap] = useState<Scrap | null>(null);
-  const [showNewScrapModal, setShowNewScrapModal] = useState(false);
-  const [showEditScrapModal, setShowEditScrapModal] = useState(false);
-  const [editingScrap, setEditingScrap] = useState<Scrap | null>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [isShiftPressed, setIsShiftPressed] = useState(false);
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const [isHoveringScrap, setIsHoveringScrap] = useState(false);
   const [isMoveMode, setIsMoveMode] = useState(false);
   const [movingScrap, setMovingScrap] = useState<Scrap | null>(null);
+
+  // Modal management using useModal hook
+  const fullscreenModal = useModal<Scrap>(null, {
+    updateUrlHash: null,
+    onClose: () => {
+      window.history.pushState(null, '', window.location.pathname);
+    }
+  });
+
+  const newScrapModal = useModal(false, {
+    onClose: () => {
+      window.history.pushState(null, '', window.location.pathname);
+    }
+  });
+
+  const editScrapModal = useModal<Scrap>(null, {
+    updateUrlHash: null,
+    onClose: () => {
+      setEditScrapForm({ content: '', x: 0, y: 0, visible: true });
+      setOriginalEditScrapForm({ content: '', x: 0, y: 0, visible: true });
+      setEditScrapError('');
+      window.history.pushState(null, '', window.location.pathname);
+    }
+  });
 
   const handleHashNavigation = useCallback(() => {
     const hash = window.location.hash.replace('#', '');
@@ -79,33 +92,11 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
-  // Prevent body scroll when modals are open
-  useEffect(() => {
-    if (fullscreenScrap || showNewScrapModal || showEditScrapModal) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-
-    // Cleanup on unmount
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [fullscreenScrap, showNewScrapModal, showEditScrapModal]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Handle escape key to cancel move mode
-      if (e.key === 'Escape' && isMoveMode) {
-        setIsMoveMode(false);
-        setMovingScrap(null);
-        // Reset shift key state to ensure hotkey works after canceling move
-        setIsShiftPressed(false);
-        return;
-      }
-      
       // Disable shift key functionality when modals are open or in move mode
-      if (fullscreenScrap || showNewScrapModal || showEditScrapModal || isMoveMode) {
+      if (fullscreenModal.isOpen || newScrapModal.isOpen || editScrapModal.isOpen || isMoveMode) {
         return;
       }
       
@@ -116,7 +107,7 @@ export default function HomePage() {
 
     const handleKeyUp = (e: KeyboardEvent) => {
       // Disable shift key functionality when modals are open or in move mode
-      if (fullscreenScrap || showNewScrapModal || showEditScrapModal || isMoveMode) {
+      if (fullscreenModal.isOpen || newScrapModal.isOpen || editScrapModal.isOpen || isMoveMode) {
         return;
       }
       
@@ -126,11 +117,9 @@ export default function HomePage() {
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      // Always update cursor position
       setCursorPosition({ x: e.clientX, y: e.clientY });
     };
 
-    // Initialize cursor position immediately
     const initializeCursorPosition = (e: MouseEvent) => {
       setCursorPosition({ x: e.clientX, y: e.clientY });
     };
@@ -138,7 +127,6 @@ export default function HomePage() {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     window.addEventListener('mousemove', handleMouseMove);
-    // Get initial cursor position
     window.addEventListener('mousemove', initializeCursorPosition, { once: true });
 
     return () => {
@@ -146,62 +134,34 @@ export default function HomePage() {
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [isShiftPressed, fullscreenScrap, showNewScrapModal, showEditScrapModal, isMoveMode]);
+  }, [isShiftPressed, fullscreenModal.isOpen, newScrapModal.isOpen, editScrapModal.isOpen, isMoveMode]);
 
-  // Handle keyboard shortcuts for modals
-  useEffect(() => {
-    const handleModalKeyboard = (e: KeyboardEvent) => {
-      // Handle Escape key to close modals
-      if (e.key === 'Escape') {
-        if (fullscreenScrap) {
-          setFullscreenScrap(null);
-          window.history.pushState(null, '', window.location.pathname);
-        } else if (showNewScrapModal) {
-          setShowNewScrapModal(false);
-          setNewScrapForm({ content: '', x: 0, y: 0 });
-          setNewScrapError('');
-          window.history.pushState(null, '', window.location.pathname);
-        } else if (showEditScrapModal) {
-          setShowEditScrapModal(false);
-          setEditingScrap(null);
-          setEditScrapForm({ content: '', x: 0, y: 0, visible: true });
-        setOriginalEditScrapForm({ content: '', x: 0, y: 0, visible: true });
-          setEditScrapError('');
-          window.history.pushState(null, '', window.location.pathname);
+  // Use keyboard shortcuts hook for better organization
+  useKeyboardShortcuts([
+    {
+      key: 'Escape',
+      handler: () => {
+        if (isMoveMode) {
+          setIsMoveMode(false);
+          setMovingScrap(null);
+          setIsShiftPressed(false);
         }
-      }
-      
-      // Handle Command+Enter to submit forms
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        e.preventDefault();
-        if (showNewScrapModal) {
-          // Trigger new scrap form submission
-          const formEvent = new Event('submit', { bubbles: true, cancelable: true });
-          const form = document.querySelector('form');
-          if (form) {
-            form.dispatchEvent(formEvent);
-          }
-        } else if (showEditScrapModal) {
-          // Trigger edit scrap form submission
-          const formEvent = new Event('submit', { bubbles: true, cancelable: true });
-          const form = document.querySelector('form');
-          if (form) {
-            form.dispatchEvent(formEvent);
-          }
+      },
+      enabled: isMoveMode
+    },
+    {
+      key: 'Enter',
+      ctrl: true,
+      handler: () => {
+        if (newScrapModal.isOpen) {
+          newScrapForm.handleSubmit();
+        } else if (editScrapModal.isOpen) {
+          editScrapForm.handleSubmit();
         }
-        // No action for fullscreen modal (view-only)
-      }
-    };
-
-    // Only add listener if a modal is open
-    if (fullscreenScrap || showNewScrapModal || showEditScrapModal) {
-      window.addEventListener('keydown', handleModalKeyboard);
+      },
+      enabled: newScrapModal.isOpen || editScrapModal.isOpen
     }
-
-    return () => {
-      window.removeEventListener('keydown', handleModalKeyboard);
-    };
-  }, [fullscreenScrap, showNewScrapModal, showEditScrapModal]);
+  ], [isMoveMode, newScrapModal.isOpen, editScrapModal.isOpen]);
 
   useEffect(() => {
     if (scraps.length > 0 && !loading) {
@@ -216,34 +176,8 @@ export default function HomePage() {
   }, [scraps, loading, handleHashNavigation]);
 
   const calculateCanvasSize = () => {
-    if (scraps.length === 0) return;
-
-    // Calculate bounds of all scraps including their size
-    const scrapWidth = 300; // max-w-sm is roughly 300px
-    const scrapHeight = 200; // estimated height
-    const padding = 100; // padding around edges
-
-    const bounds = scraps.reduce(
-      (acc, scrap) => ({
-        minX: Math.min(acc.minX, scrap.x),
-        maxX: Math.max(acc.maxX, scrap.x + scrapWidth),
-        minY: Math.min(acc.minY, scrap.y),
-        maxY: Math.max(acc.maxY, scrap.y + scrapHeight),
-      }),
-      { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity }
-    );
-
-    // Include origin (0,0) in bounds
-    bounds.minX = Math.min(bounds.minX, 0);
-    bounds.minY = Math.min(bounds.minY, 0);
-    bounds.maxX = Math.max(bounds.maxX, 0);
-    bounds.maxY = Math.max(bounds.maxY, 0);
-
-    // Set canvas size to exactly fit content with padding
-    const canvasWidth = bounds.maxX - bounds.minX + (2 * padding);
-    const canvasHeight = bounds.maxY - bounds.minY + (2 * padding);
-    
-    setCanvasSize({ width: canvasWidth, height: canvasHeight });
+    const size = CanvasUtils.calculateCanvasSize(scraps);
+    setCanvasSize(size);
   };
 
   // Keep centering function for potential future use
@@ -286,22 +220,8 @@ export default function HomePage() {
     }
 
     try {
-      const response = await fetch('/api/permissions/check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: session.user.id,
-          resource: 'admin',
-          action: 'access'
-        }),
-      });
-
-      if (response.ok) {
-        const { hasPermission } = await response.json();
-        setHasAdminAccess(hasPermission);
-      } else {
-        setHasAdminAccess(false);
-      }
+      const { hasPermission } = await api.checkPermission(session.user.id, 'admin', 'access');
+      setHasAdminAccess(hasPermission);
     } catch (err) {
       console.error('Error checking admin permissions:', err);
       setHasAdminAccess(false);
@@ -310,32 +230,15 @@ export default function HomePage() {
 
   const fetchScraps = async () => {
     try {
-      if (session?.user?.id) {
-        // If authenticated, get all scraps (visible + user's own invisible)
-        const response = await fetch('/api/scraps');
-        if (response.ok) {
-          const data = await response.json();
-          // Filter: visible scraps + user's own invisible scraps
-          const filteredScraps = data.scraps.filter((scrap: Scrap) => 
-            scrap.visible || scrap.userId === session.user.id
-          );
-          setScraps(filteredScraps);
-        } else {
-          setScraps([]);
-        }
-      } else {
-        // If not authenticated, only get public visible scraps
-        const response = await fetch('/api/scraps/public');
-        if (response.ok) {
-          const data = await response.json();
-          setScraps(data.scraps);
-        } else {
-          setScraps([]);
-        }
-      }
+      const data = await api.fetchScraps(!!session?.user?.id);
+      const filteredScraps = session?.user?.id 
+        ? ScrapPermissions.filterViewableScraps(data.scraps, session.user.id)
+        : data.scraps;
+      setScraps(filteredScraps);
     } catch (err) {
       console.error('Error fetching scraps:', err);
       setError('An error occurred while fetching scraps');
+      setScraps([]);
     } finally {
       setLoading(false);
     }
@@ -355,63 +258,30 @@ export default function HomePage() {
     return JSON.stringify(scrapData, null, 2);
   };
 
-  const [newScrapForm, setNewScrapForm] = useState({
-    content: '',
-    x: 0,
-    y: 0,
-  });
-  const [newScrapLoading, setNewScrapLoading] = useState(false);
-  const [newScrapError, setNewScrapError] = useState('');
-
-  const handleNewScrapSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setNewScrapLoading(true);
-    setNewScrapError('');
-
-    try {
-      const response = await fetch('/api/scraps', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: newScrapForm.content,
-          x: newScrapForm.x,
-          y: newScrapForm.y,
-        }),
-      });
-
-      if (response.ok) {
-        setShowNewScrapModal(false);
-        setNewScrapForm({ content: '', x: 0, y: 0 });
-        window.history.pushState(null, '', window.location.pathname);
-        fetchScraps(); // Refresh the scraps
-      } else {
-        const data = await response.json();
-        setNewScrapError(data.error || 'Failed to create scrap');
-      }
-    } catch (err) {
-      setNewScrapError('An error occurred while creating the scrap');
-    } finally {
-      setNewScrapLoading(false);
+  // Form management using useFormWithSubmit hook
+  const newScrapForm = useFormWithSubmit({
+    initialValues: { content: '', x: 0, y: 0 },
+    onSubmit: async (values) => {
+      await api.createScrap(values);
+    },
+    onSuccess: () => {
+      newScrapModal.close();
+      fetchScraps();
     }
-  };
-
-  const handleNewScrapInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setNewScrapForm(prev => ({ 
-      ...prev, 
-      [name]: name === 'x' || name === 'y' ? parseInt(value) || 0 : value 
-    }));
-  };
-
-  const [editScrapForm, setEditScrapForm] = useState({
-    content: '',
-    x: 0,
-    y: 0,
-    visible: true,
   });
-  const [editScrapLoading, setEditScrapLoading] = useState(false);
+
+  const editScrapForm = useFormWithSubmit({
+    initialValues: { content: '', x: 0, y: 0, visible: true },
+    onSubmit: async (values) => {
+      if (!editScrapModal.data) return;
+      await api.updateScrap(editScrapModal.data.id, values);
+    },
+    onSuccess: () => {
+      editScrapModal.close();
+      fetchScraps();
+    }
+  });
+
   const [editScrapError, setEditScrapError] = useState('');
   const [originalEditScrapForm, setOriginalEditScrapForm] = useState({
     content: '',
@@ -421,63 +291,15 @@ export default function HomePage() {
   });
 
   const handleEditScrapClick = (scrap: Scrap) => {
-    setEditingScrap(scrap);
     const formData = {
       content: scrap.content,
       x: scrap.x,
       y: scrap.y,
       visible: scrap.visible,
     };
-    setEditScrapForm(formData);
+    editScrapForm.setInitialValues(formData);
     setOriginalEditScrapForm(formData);
-    setShowEditScrapModal(true);
-  };
-
-  const handleEditScrapSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingScrap) return;
-    
-    setEditScrapLoading(true);
-    setEditScrapError('');
-
-    try {
-      const response = await fetch(`/api/scraps/${editingScrap.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: editScrapForm.content,
-          x: editScrapForm.x,
-          y: editScrapForm.y,
-          visible: editScrapForm.visible,
-        }),
-      });
-
-      if (response.ok) {
-        setShowEditScrapModal(false);
-        setEditingScrap(null);
-        setEditScrapForm({ content: '', x: 0, y: 0, visible: true });
-        setOriginalEditScrapForm({ content: '', x: 0, y: 0, visible: true });
-        window.history.pushState(null, '', window.location.pathname);
-        fetchScraps(); // Refresh the scraps
-      } else {
-        const data = await response.json();
-        setEditScrapError(data.error || 'Failed to update scrap');
-      }
-    } catch (err) {
-      setEditScrapError('An error occurred while updating the scrap');
-    } finally {
-      setEditScrapLoading(false);
-    }
-  };
-
-  const handleEditScrapInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setEditScrapForm(prev => ({ 
-      ...prev, 
-      [name]: name === 'x' || name === 'y' ? parseInt(value) || 0 : value 
-    }));
+    editScrapModal.open(scrap);
   };
 
   // Quill editor configuration - only basic formatting, no font size
@@ -505,18 +327,7 @@ export default function HomePage() {
 
   // Calculate position accounting for negative coordinates
   const getScrapPosition = (scrap: Scrap) => {
-    if (scraps.length === 0) return { x: scrap.x, y: scrap.y };
-    
-    // Calculate the minimum bounds to offset negative coordinates
-    const minX = Math.min(0, ...scraps.map(s => s.x));
-    const minY = Math.min(0, ...scraps.map(s => s.y));
-    
-    const padding = 100;
-    
-    return { 
-      x: scrap.x - minX + padding, 
-      y: scrap.y - minY + padding 
-    };
+    return CanvasUtils.getScrapDisplayPosition(scrap, scraps);
   };
 
   if (loading) {
@@ -529,44 +340,20 @@ export default function HomePage() {
 
   const handleCanvasClick = (e: React.MouseEvent) => {
     if (isMoveMode && movingScrap) {
-      // Move the scrap to the clicked position
-      const clickX = e.pageX;
-      const clickY = e.pageY;
-      
-      // Convert to canvas coordinates (accounting for padding and negative offset)
-      const minX = scraps.length > 0 ? Math.min(0, ...scraps.map(s => s.x)) : 0;
-      const minY = scraps.length > 0 ? Math.min(0, ...scraps.map(s => s.y)) : 0;
-      const padding = 100;
-      
-      const canvasX = clickX + minX - padding;
-      const canvasY = clickY + minY - padding;
-      
-      // Update the scrap position
-      updateScrapPosition(movingScrap.id, Math.max(0, Math.round(canvasX)), Math.max(0, Math.round(canvasY)));
+      const coords = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, scraps);
+      updateScrapPosition(movingScrap.id, coords.x, coords.y);
       setIsMoveMode(false);
       setMovingScrap(null);
-      // Reset shift key state to ensure hotkey works after move
       setIsShiftPressed(false);
     } else if (isShiftPressed && session && !isHoveringScrap && !isMoveMode) {
-      // Calculate click position relative to the canvas
-      const clickX = e.pageX;
-      const clickY = e.pageY;
-      
-      // Convert to canvas coordinates (accounting for padding and negative offset)
-      const minX = scraps.length > 0 ? Math.min(0, ...scraps.map(s => s.x)) : 0;
-      const minY = scraps.length > 0 ? Math.min(0, ...scraps.map(s => s.y)) : 0;
-      const padding = 100;
-      
-      const canvasX = clickX + minX - padding;
-      const canvasY = clickY + minY - padding;
-      
-      setNewScrapForm({ 
+      const coords = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, scraps);
+      newScrapForm.setValues({ 
         content: '', 
-        x: Math.max(0, Math.round(canvasX)), 
-        y: Math.max(0, Math.round(canvasY))
+        x: coords.x, 
+        y: coords.y
       });
-      setShowNewScrapModal(true);
-      setIsShiftPressed(false); // Reset shift state when modal opens
+      newScrapModal.open();
+      setIsShiftPressed(false);
     }
   };
 
@@ -574,23 +361,12 @@ export default function HomePage() {
     if (!movingScrap) return;
     
     try {
-      const response = await fetch(`/api/scraps/${scrapId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: movingScrap.content,
-          x: x,
-          y: y,
-        }),
+      await api.updateScrap(scrapId, {
+        content: movingScrap.content,
+        x: x,
+        y: y,
       });
-
-      if (response.ok) {
-        fetchScraps(); // Refresh the scraps
-      } else {
-        console.error('Failed to update scrap position');
-      }
+      fetchScraps();
     } catch (err) {
       console.error('Error updating scrap position:', err);
     }
@@ -598,21 +374,8 @@ export default function HomePage() {
 
   const updateScrapVisibility = async (scrapId: string, visible: boolean) => {
     try {
-      const response = await fetch(`/api/scraps/${scrapId}/visibility`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          visible: visible,
-        }),
-      });
-
-      if (response.ok) {
-        fetchScraps(); // Refresh the scraps
-      } else {
-        console.error('Failed to update scrap visibility');
-      }
+      await api.updateScrapVisibility(scrapId, visible);
+      fetchScraps();
     } catch (err) {
       console.error('Error updating scrap visibility:', err);
     }
@@ -620,35 +383,27 @@ export default function HomePage() {
 
   const hasFormChanged = () => {
     return (
-      editScrapForm.content !== originalEditScrapForm.content ||
-      editScrapForm.x !== originalEditScrapForm.x ||
-      editScrapForm.y !== originalEditScrapForm.y
+      editScrapForm.values.content !== originalEditScrapForm.content ||
+      editScrapForm.values.x !== originalEditScrapForm.x ||
+      editScrapForm.values.y !== originalEditScrapForm.y
     );
   };
 
   const handleVisibilityToggle = async () => {
-    if (!editingScrap) return;
+    if (!editScrapModal.data) return;
     
-    const newVisibility = !editingScrap.visible;
+    const newVisibility = !editScrapModal.data.visible;
     
-    // Update visibility immediately
-    await updateScrapVisibility(editingScrap.id, newVisibility);
+    await updateScrapVisibility(editScrapModal.data.id, newVisibility);
     
-    // Update the editingScrap state with the new visibility
-    setEditingScrap(prev => prev ? { ...prev, visible: newVisibility } : null);
-    
-    // Update form state
-    setEditScrapForm(prev => ({ ...prev, visible: newVisibility }));
+    // Update modal data and form state
+    editScrapModal.setData(prev => prev ? { ...prev, visible: newVisibility } : null);
+    editScrapForm.setValue('visible', newVisibility);
     setOriginalEditScrapForm(prev => ({ ...prev, visible: newVisibility }));
     
     // If no other changes, close the modal
     if (!hasFormChanged()) {
-      setShowEditScrapModal(false);
-      setEditingScrap(null);
-      setEditScrapForm({ content: '', x: 0, y: 0, visible: true });
-      setOriginalEditScrapForm({ content: '', x: 0, y: 0, visible: true });
-      setEditScrapError('');
-      window.history.pushState(null, '', window.location.pathname);
+      editScrapModal.close();
     }
   };
 
@@ -701,24 +456,17 @@ export default function HomePage() {
         {session && !isShiftPressed && !isMoveMode && (
           <button
             onClick={() => {
-              // Calculate button's center position relative to the canvas
               const buttonCenterX = window.scrollX + window.innerWidth / 2;
               const buttonCenterY = window.scrollY + window.innerHeight / 2;
               
-              // Convert to canvas coordinates (accounting for padding and negative offset)
-              const minX = scraps.length > 0 ? Math.min(0, ...scraps.map(s => s.x)) : 0;
-              const minY = scraps.length > 0 ? Math.min(0, ...scraps.map(s => s.y)) : 0;
-              const padding = 100;
+              const coords = CanvasUtils.pageToCanvasCoordinates(buttonCenterX, buttonCenterY, scraps);
               
-              const canvasX = buttonCenterX + minX - padding;
-              const canvasY = buttonCenterY + minY - padding;
-              
-              setNewScrapForm({ 
+              newScrapForm.setValues({ 
                 content: '', 
-                x: Math.max(0, Math.round(canvasX)), 
-                y: Math.max(0, Math.round(canvasY))
+                x: coords.x, 
+                y: coords.y
               });
-              setShowNewScrapModal(true);
+              newScrapModal.open();
             }}
             className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 inline-flex items-center justify-center w-16 h-16 rounded-full ${config.theme.primary.bg} ${config.theme.primary.hover} text-white shadow-lg transition-all hover:scale-110 cursor-pointer`}
             title="Create new scrap (or hold Shift and click anywhere)"
@@ -895,54 +643,45 @@ export default function HomePage() {
       </div>
 
       {/* Fullscreen Modal */}
-      {fullscreenScrap && (
+      {fullscreenModal.isOpen && fullscreenModal.data && (
         <div 
           className="fixed inset-0 flex items-center justify-center" 
           style={{ 
             zIndex: 1001,
             backgroundColor: 'rgba(0, 0, 0, 0.2)'
           }}
-          onClick={() => {
-            setFullscreenScrap(null);
-            window.history.pushState(null, '', window.location.pathname);
-          }}
+          onClick={() => fullscreenModal.close()}
         >
           <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full mx-4 flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="p-6 flex flex-col h-full overflow-hidden">
             {/* Header */}
             <div className="flex justify-between items-center pb-4 border-b border-gray-200 mb-6">
               <a 
-                href={`#${fullscreenScrap.code}`}
+                href={`#${fullscreenModal.data.code}`}
                 className={`text-lg font-mono font-bold ${config.theme.primary.text} hover:text-indigo-800`}
-                title={`Anchor to ${fullscreenScrap.code}`}
+                title={`Anchor to ${fullscreenModal.data.code}`}
               >
-                #{fullscreenScrap.code}
+                #{fullscreenModal.data.code}
               </a>
               <div className="flex space-x-2">
-                {session?.user?.id === fullscreenScrap.userId && (
+                {ScrapPermissions.canEdit(fullscreenModal.data, session?.user?.id) && (
                   <>
                     <button
                       onClick={async () => {
-                        // Toggle visibility of the scrap directly
-                        const newVisibility = !fullscreenScrap.visible;
-                        await updateScrapVisibility(fullscreenScrap.id, newVisibility);
-                        
-                        // Close the modal and clear URL hash
-                        setFullscreenScrap(null);
-                        window.history.pushState(null, '', window.location.pathname);
+                        const newVisibility = !fullscreenModal.data!.visible;
+                        await updateScrapVisibility(fullscreenModal.data!.id, newVisibility);
+                        fullscreenModal.close();
                       }}
                       className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
-                      title={fullscreenScrap.visible ? "Make private" : "Make visible"}
+                      title={fullscreenModal.data.visible ? "Make private" : "Make visible"}
                     >
-                      {fullscreenScrap.visible ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
+                      {fullscreenModal.data.visible ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
                     </button>
                     <button
                       onClick={() => {
-                        setMovingScrap(fullscreenScrap);
+                        setMovingScrap(fullscreenModal.data!);
                         setIsMoveMode(true);
-                        setFullscreenScrap(null);
-                        // Clear URL hash when entering move mode
-                        window.history.pushState(null, '', window.location.pathname);
+                        fullscreenModal.close();
                       }}
                       className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
                       title="Move this scrap"
@@ -951,8 +690,8 @@ export default function HomePage() {
                     </button>
                     <button
                       onClick={() => {
-                        handleEditScrapClick(fullscreenScrap);
-                        setFullscreenScrap(null); // Close fullscreen modal
+                        handleEditScrapClick(fullscreenModal.data!);
+                        fullscreenModal.close();
                       }}
                       className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
                       title="Edit this scrap"
@@ -962,10 +701,7 @@ export default function HomePage() {
                   </>
                 )}
                 <button
-                  onClick={() => {
-                    setFullscreenScrap(null);
-                    window.history.pushState(null, '', window.location.pathname);
-                  }}
+                  onClick={() => fullscreenModal.close()}
                   className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
                   title="Close fullscreen"
                 >
@@ -978,17 +714,17 @@ export default function HomePage() {
             <div className="flex-1 overflow-y-auto mb-6">
               <div 
                 className="text-base text-gray-800 leading-relaxed froala-content" 
-                dangerouslySetInnerHTML={{ __html: fullscreenScrap.content }}
+                dangerouslySetInnerHTML={{ __html: fullscreenModal.data.content }}
               />
             </div>
 
             {/* Footer */}
             <div className="text-sm text-gray-500 border-t border-gray-200 pt-4 flex justify-between items-center">
               <div>
-                {fullscreenScrap.userName || fullscreenScrap.userEmail}
+                {fullscreenModal.data.userName || fullscreenModal.data.userEmail}
               </div>
               <div>
-                {new Date(fullscreenScrap.createdAt).toLocaleDateString()}
+                {new Date(fullscreenModal.data.createdAt).toLocaleDateString()}
               </div>
             </div>
             </div>
@@ -997,19 +733,14 @@ export default function HomePage() {
       )}
 
       {/* New Scrap Modal */}
-      {showNewScrapModal && (
+      {newScrapModal.isOpen && (
         <div 
           className="fixed inset-0 flex items-center justify-center" 
           style={{ 
             zIndex: 1001,
             backgroundColor: 'rgba(0, 0, 0, 0.2)'
           }}
-          onClick={() => {
-            setShowNewScrapModal(false);
-            setNewScrapForm({ content: '', x: 0, y: 0 });
-            setNewScrapError('');
-            window.history.pushState(null, '', window.location.pathname);
-          }}
+          onClick={() => newScrapModal.close()}
         >
           <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full mx-4 p-6 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               {/* Header */}
@@ -1018,12 +749,7 @@ export default function HomePage() {
                   Create New Scrap
                 </h2>
                 <button
-                  onClick={() => {
-                    setShowNewScrapModal(false);
-                    setNewScrapForm({ content: '', x: 0, y: 0 });
-                    setNewScrapError('');
-                    window.history.pushState(null, '', window.location.pathname);
-                  }}
+                  onClick={() => newScrapModal.close()}
                   className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
                   title="Close"
                 >
@@ -1032,15 +758,15 @@ export default function HomePage() {
               </div>
 
               {/* Content Form */}
-              <form onSubmit={handleNewScrapSubmit} className="space-y-6">
+              <form onSubmit={newScrapForm.handleSubmit} className="space-y-6">
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-900 mb-2">
                     Content
                   </label>
                   <div>
                     <FroalaEditor
-                      content={newScrapForm.content}
-                      onChange={(content) => setNewScrapForm(prev => ({ ...prev, content }))}
+                      content={newScrapForm.values.content}
+                      onChange={(content) => newScrapForm.setValue('content', content)}
                       height={400}
                       maxHeight={600}
                     />
@@ -1056,8 +782,8 @@ export default function HomePage() {
                         type="number"
                         name="x"
                         id="new-x"
-                        value={newScrapForm.x}
-                        onChange={handleNewScrapInputChange}
+                        value={newScrapForm.values.x}
+                        onChange={newScrapForm.handleInputChange}
                         min={0}
                         max={999999}
                         className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2 border"
@@ -1072,8 +798,8 @@ export default function HomePage() {
                         type="number"
                         name="y"
                         id="new-y"
-                        value={newScrapForm.y}
-                        onChange={handleNewScrapInputChange}
+                        value={newScrapForm.values.y}
+                        onChange={newScrapForm.handleInputChange}
                         min={0}
                         max={999999}
                         className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2 border"
@@ -1081,31 +807,26 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {newScrapError && (
+                  {newScrapForm.error && (
                     <div className="p-3 bg-red-50 border border-red-200 rounded-md flex-shrink-0">
-                      <div className="text-red-800 text-sm">{newScrapError}</div>
+                      <div className="text-red-800 text-sm">{newScrapForm.error}</div>
                     </div>
                   )}
 
                   <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 flex-shrink-0">
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowNewScrapModal(false);
-                        setNewScrapForm({ content: '', x: 0, y: 0 });
-                        setNewScrapError('');
-                        window.history.pushState(null, '', window.location.pathname);
-                      }}
+                      onClick={() => newScrapModal.close()}
                       className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      disabled={newScrapLoading || !newScrapForm.content || newScrapForm.content.trim() === '' || newScrapForm.content === '<p><br></p>'}
+                      disabled={newScrapForm.loading || !newScrapForm.values.content || newScrapForm.values.content.trim() === '' || newScrapForm.values.content === '<p><br></p>'}
                       className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${config.theme.primary.bg} ${config.theme.primary.hover} disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      {newScrapLoading ? 'Creating...' : 'Create Scrap'}
+                      {newScrapForm.loading ? 'Creating...' : 'Create Scrap'}
                     </button>
                   </div>
               </form>
@@ -1114,51 +835,36 @@ export default function HomePage() {
       )}
 
       {/* Edit Scrap Modal */}
-      {showEditScrapModal && editingScrap && (
+      {editScrapModal.isOpen && editScrapModal.data && (
         <div 
           className="fixed inset-0 flex items-center justify-center" 
           style={{ 
             zIndex: 1001,
             backgroundColor: 'rgba(0, 0, 0, 0.2)'
           }}
-          onClick={() => {
-            setShowEditScrapModal(false);
-            setEditingScrap(null);
-            setEditScrapForm({ content: '', x: 0, y: 0, visible: true });
-        setOriginalEditScrapForm({ content: '', x: 0, y: 0, visible: true });
-            setEditScrapError('');
-            window.history.pushState(null, '', window.location.pathname);
-          }}
+          onClick={() => editScrapModal.close()}
         >
           <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full mx-4 p-6 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               {/* Header */}
               <div className="flex justify-between items-center pb-4 border-b border-gray-200 mb-6 flex-shrink-0">
                 <h2 className="text-lg font-bold text-gray-900">
-                  Edit Scrap #{editingScrap.code}
+                  Edit Scrap #{editScrapModal.data.code}
                 </h2>
                 <div className="flex space-x-2">
                   <button
                     type="button"
                     onClick={handleVisibilityToggle}
                     className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
-                    title={editingScrap?.visible ? "Make private" : "Make visible"}
+                    title={editScrapModal.data.visible ? "Make private" : "Make visible"}
                   >
-                    {editingScrap?.visible ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
+                    {editScrapModal.data.visible ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      if (editingScrap) {
-                        setMovingScrap(editingScrap);
-                        setIsMoveMode(true);
-                        setShowEditScrapModal(false);
-                        setEditingScrap(null);
-                        setEditScrapForm({ content: '', x: 0, y: 0, visible: true });
-                        setOriginalEditScrapForm({ content: '', x: 0, y: 0, visible: true });
-                        setEditScrapError('');
-                        // Clear URL hash when entering move mode
-                        window.history.pushState(null, '', window.location.pathname);
-                      }
+                      setMovingScrap(editScrapModal.data);
+                      setIsMoveMode(true);
+                      editScrapModal.close();
                     }}
                     className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
                     title="Move this scrap"
@@ -1166,14 +872,7 @@ export default function HomePage() {
                     <MapPinIcon className="h-5 w-5" />
                   </button>
                   <button
-                    onClick={() => {
-                      setShowEditScrapModal(false);
-                      setEditingScrap(null);
-                      setEditScrapForm({ content: '', x: 0, y: 0, visible: true });
-        setOriginalEditScrapForm({ content: '', x: 0, y: 0, visible: true });
-                      setEditScrapError('');
-                      window.history.pushState(null, '', window.location.pathname);
-                    }}
+                    onClick={() => editScrapModal.close()}
                     className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
                     title="Close"
                   >
@@ -1183,15 +882,15 @@ export default function HomePage() {
               </div>
 
               {/* Content Form */}
-              <form onSubmit={handleEditScrapSubmit} className="space-y-6">
+              <form onSubmit={editScrapForm.handleSubmit} className="space-y-6">
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-900 mb-2">
                       Content
                     </label>
                     <div>
                       <FroalaEditor
-                        content={editScrapForm.content}
-                        onChange={(content) => setEditScrapForm(prev => ({ ...prev, content }))}
+                        content={editScrapForm.values.content}
+                        onChange={(content) => editScrapForm.setValue('content', content)}
                         height={400}
                         maxHeight={600}
                       />
@@ -1207,8 +906,8 @@ export default function HomePage() {
                         type="number"
                         name="x"
                         id="edit-x"
-                        value={editScrapForm.x}
-                        onChange={handleEditScrapInputChange}
+                        value={editScrapForm.values.x}
+                        onChange={editScrapForm.handleInputChange}
                         min={0}
                         max={999999}
                         className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2 border"
@@ -1223,8 +922,8 @@ export default function HomePage() {
                         type="number"
                         name="y"
                         id="edit-y"
-                        value={editScrapForm.y}
-                        onChange={handleEditScrapInputChange}
+                        value={editScrapForm.values.y}
+                        onChange={editScrapForm.handleInputChange}
                         min={0}
                         max={999999}
                         className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2 border"
@@ -1232,33 +931,26 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {editScrapError && (
+                  {editScrapForm.error && (
                     <div className="p-3 bg-red-50 border border-red-200 rounded-md flex-shrink-0">
-                      <div className="text-red-800 text-sm">{editScrapError}</div>
+                      <div className="text-red-800 text-sm">{editScrapForm.error}</div>
                     </div>
                   )}
 
                   <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 flex-shrink-0">
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowEditScrapModal(false);
-                        setEditingScrap(null);
-                        setEditScrapForm({ content: '', x: 0, y: 0, visible: true });
-        setOriginalEditScrapForm({ content: '', x: 0, y: 0, visible: true });
-                        setEditScrapError('');
-                        window.history.pushState(null, '', window.location.pathname);
-                      }}
+                      onClick={() => editScrapModal.close()}
                       className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      disabled={editScrapLoading || !editScrapForm.content || editScrapForm.content.trim() === '' || editScrapForm.content === '<p><br></p>'}
+                      disabled={editScrapForm.loading || !editScrapForm.values.content || editScrapForm.values.content.trim() === '' || editScrapForm.values.content === '<p><br></p>'}
                       className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${config.theme.primary.bg} ${config.theme.primary.hover} disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      {editScrapLoading ? 'Updating...' : 'Update Scrap'}
+                      {editScrapForm.loading ? 'Updating...' : 'Update Scrap'}
                     </button>
                   </div>
               </form>

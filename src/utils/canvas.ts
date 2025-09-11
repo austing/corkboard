@@ -1,0 +1,72 @@
+import type { Scrap } from '../lib/api';
+
+export class CanvasUtils {
+  static getCanvasBounds(scraps: Scrap[]) {
+    if (scraps.length === 0) {
+      return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    }
+
+    const scrapWidth = 300;
+    const scrapHeight = 200;
+
+    const bounds = scraps.reduce(
+      (acc, scrap) => ({
+        minX: Math.min(acc.minX, scrap.x),
+        maxX: Math.max(acc.maxX, scrap.x + scrapWidth),
+        minY: Math.min(acc.minY, scrap.y),
+        maxY: Math.max(acc.maxY, scrap.y + scrapHeight),
+      }),
+      { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity }
+    );
+
+    // Include origin in bounds
+    bounds.minX = Math.min(bounds.minX, 0);
+    bounds.minY = Math.min(bounds.minY, 0);
+    bounds.maxX = Math.max(bounds.maxX, 0);
+    bounds.maxY = Math.max(bounds.maxY, 0);
+
+    return bounds;
+  }
+
+  static pageToCanvasCoordinates(
+    pageX: number,
+    pageY: number,
+    scraps: Scrap[],
+    padding: number = 100
+  ) {
+    const minX = scraps.length > 0 ? Math.min(0, ...scraps.map(s => s.x)) : 0;
+    const minY = scraps.length > 0 ? Math.min(0, ...scraps.map(s => s.y)) : 0;
+    
+    return {
+      x: Math.max(0, Math.round(pageX + minX - padding)),
+      y: Math.max(0, Math.round(pageY + minY - padding))
+    };
+  }
+
+  static getScrapDisplayPosition(scrap: Scrap, scraps: Scrap[], padding: number = 100) {
+    if (scraps.length === 0) return { x: scrap.x, y: scrap.y };
+    
+    const minX = Math.min(0, ...scraps.map(s => s.x));
+    const minY = Math.min(0, ...scraps.map(s => s.y));
+    
+    return { 
+      x: scrap.x - minX + padding, 
+      y: scrap.y - minY + padding 
+    };
+  }
+
+  static calculateCanvasSize(scraps: Scrap[], padding: number = 100) {
+    if (scraps.length === 0) {
+      return { 
+        width: Math.max(window.innerWidth, 1000), 
+        height: Math.max(window.innerHeight, 800) 
+      };
+    }
+
+    const bounds = this.getCanvasBounds(scraps);
+    const canvasWidth = bounds.maxX - bounds.minX + (2 * padding);
+    const canvasHeight = bounds.maxY - bounds.minY + (2 * padding);
+    
+    return { width: canvasWidth, height: canvasHeight };
+  }
+}
