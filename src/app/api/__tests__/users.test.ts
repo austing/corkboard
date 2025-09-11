@@ -277,7 +277,7 @@ describe('/api/users', () => {
         name: 'New User',
         email: 'newuser@example.com',
         password: 'password123',
-        roles: ['editor', 'scrapper'],
+        roleId: 'editor-role-id',
       }
 
       // Mock for user existence check - return empty (no existing user)
@@ -299,7 +299,7 @@ describe('/api/users', () => {
       const response = await POST_CreateUser(request)
 
       expect(response.status).toBe(201)
-      expect(mockDb.insert).toHaveBeenCalledTimes(2) // User + role assignments
+      expect(mockDb.insert).toHaveBeenCalledTimes(2) // User + role assignment
     })
 
     it('should create user without roles when none specified', async () => {
@@ -559,7 +559,7 @@ async function POST_CreateUser(request: NextRequest) {
     return { json: jest.fn().mockResolvedValue({ error: 'Permission denied' }), status: 403 }
   }
 
-  const { name, email, password, roles } = await request.json()
+  const { name, email, password, roleId } = await request.json()
 
   if (!name || !email || !password) {
     return { json: jest.fn().mockResolvedValue({ error: 'Name, email, and password are required' }), status: 400 }
@@ -590,8 +590,8 @@ async function POST_CreateUser(request: NextRequest) {
     updatedAt: new Date(),
   })
 
-  // Handle role assignments
-  if (roles && roles.length > 0) {
+  // Handle role assignment
+  if (roleId) {
     await mockDb.insert({}).values({})
   }
 

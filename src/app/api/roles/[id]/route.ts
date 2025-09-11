@@ -84,14 +84,25 @@ export async function PUT(
       );
     }
 
-    // Check if another role with this name exists
+    // Check if the role exists
     const existingRole = await db
+      .select()
+      .from(roles)
+      .where(eq(roles.id, id))
+      .limit(1);
+
+    if (existingRole.length === 0) {
+      return NextResponse.json({ error: 'Role not found' }, { status: 404 });
+    }
+
+    // Check if another role with this name exists
+    const duplicateRole = await db
       .select()
       .from(roles)
       .where(eq(roles.name, name.toLowerCase()))
       .limit(1);
 
-    if (existingRole.length > 0 && existingRole[0].id !== id) {
+    if (duplicateRole.length > 0 && duplicateRole[0].id !== id) {
       return NextResponse.json(
         { error: 'Another role with this name already exists' },
         { status: 400 }

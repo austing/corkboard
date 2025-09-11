@@ -283,14 +283,10 @@ describe('/api/roles', () => {
     })
 
     it('should return 404 when role not found', async () => {
-      jest.clearAllMocks()
-      mockGetServerSession.mockResolvedValue(mockAdminSession)
-      mockHasPermission.mockResolvedValue(true)
-      
       mockDb.select.mockReturnValue({
         from: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue([]),
+        limit: jest.fn().mockResolvedValue([]), // Role doesn't exist
       } as any)
 
       const updateData = {

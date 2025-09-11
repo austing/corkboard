@@ -34,19 +34,22 @@ describe('Database Seeding', () => {
     it('should create all default permissions', async () => {
       await seedDatabase()
 
-      // Should have called insert for permissions (19 permissions)
-      expect(mockDb.insert).toHaveBeenCalledTimes(29) // 19 permissions + 4 roles + 4 permission assignments + 1 user + 1 user role
+      // Should have called insert for permissions (20 permissions)
+      expect(mockDb.insert).toHaveBeenCalledTimes(27) // 20 permissions + 1 roles + 4 permission assignments + 1 user + 1 user role
     })
 
     it('should create default roles with correct names', async () => {
       await seedDatabase()
 
-      // Verify roles are created
-      const rolesCalls = (mockDb.insert as jest.Mock).mock.calls.find(call => 
-        call[0] && Array.isArray(call[0]) && call[0].some((role: any) => role.name === 'admin')
+      // Verify roles are created via values call with array containing admin role
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: 'admin',
+            description: 'Full system access',
+          })
+        ])
       )
-      
-      expect(rolesCalls).toBeDefined()
     })
 
     it('should create scrapper role with correct description', async () => {
@@ -114,9 +117,9 @@ describe('Database Seeding', () => {
     it('should assign all permissions to admin role', async () => {
       await seedDatabase()
 
-      // Admin should get all 19 permissions
+      // Admin should get all 20 permissions
       const adminPermissionAssignments = (mockDb.values as jest.Mock).mock.calls.find(call => 
-        Array.isArray(call[0]) && call[0].length === 19 // all permissions
+        Array.isArray(call[0]) && call[0].length === 20 // all permissions
       )
 
       expect(adminPermissionAssignments).toBeDefined()
