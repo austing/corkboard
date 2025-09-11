@@ -34,14 +34,15 @@ describe('Database Schema Validation', () => {
         updatedAt: new Date(),
       }
 
+      const mockValues = jest.fn().mockResolvedValue({ insertedId: userData.id })
       mockDb.insert.mockReturnValue({
-        values: jest.fn().mockResolvedValue({ insertedId: userData.id }),
+        values: mockValues,
       } as any)
 
       const result = await createUser(userData)
 
       expect(mockDb.insert).toHaveBeenCalledWith(users)
-      expect(mockDb.values).toHaveBeenCalledWith(userData)
+      expect(mockValues).toHaveBeenCalledWith(userData)
       expect(result.insertedId).toBe(userData.id)
     })
 
@@ -114,14 +115,15 @@ describe('Database Schema Validation', () => {
         updatedAt: new Date(),
       }
 
+      const mockValues = jest.fn().mockResolvedValue({ insertedId: scrapData.id })
       mockDb.insert.mockReturnValue({
-        values: jest.fn().mockResolvedValue({ insertedId: scrapData.id }),
+        values: mockValues,
       } as any)
 
       const result = await createScrap(scrapData)
 
       expect(mockDb.insert).toHaveBeenCalledWith(scraps)
-      expect(mockDb.values).toHaveBeenCalledWith(scrapData)
+      expect(mockValues).toHaveBeenCalledWith(scrapData)
       expect(result.insertedId).toBe(scrapData.id)
     })
 
@@ -242,14 +244,15 @@ describe('Database Schema Validation', () => {
         createdAt: new Date(),
       }
 
+      const mockValues = jest.fn().mockResolvedValue({ insertedId: roleData.id })
       mockDb.insert.mockReturnValue({
-        values: jest.fn().mockResolvedValue({ insertedId: roleData.id }),
+        values: mockValues,
       } as any)
 
       const result = await createRole(roleData)
 
       expect(mockDb.insert).toHaveBeenCalledWith(roles)
-      expect(mockDb.values).toHaveBeenCalledWith(roleData)
+      expect(mockValues).toHaveBeenCalledWith(roleData)
       expect(result.insertedId).toBe(roleData.id)
     })
 
@@ -301,14 +304,15 @@ describe('Database Schema Validation', () => {
         createdAt: new Date(),
       }
 
+      const mockValues = jest.fn().mockResolvedValue({ insertedId: permissionData.id })
       mockDb.insert.mockReturnValue({
-        values: jest.fn().mockResolvedValue({ insertedId: permissionData.id }),
+        values: mockValues,
       } as any)
 
       const result = await createPermission(permissionData)
 
       expect(mockDb.insert).toHaveBeenCalledWith(permissions)
-      expect(mockDb.values).toHaveBeenCalledWith(permissionData)
+      expect(mockValues).toHaveBeenCalledWith(permissionData)
       expect(result.insertedId).toBe(permissionData.id)
     })
 
@@ -351,14 +355,15 @@ describe('Database Schema Validation', () => {
         assignedAt: new Date(),
       }
 
+      const mockValues = jest.fn().mockResolvedValue(undefined)
       mockDb.insert.mockReturnValue({
-        values: jest.fn().mockResolvedValue(undefined),
+        values: mockValues,
       } as any)
 
       await createRolePermission(associationData)
 
       expect(mockDb.insert).toHaveBeenCalledWith(rolePermissions)
-      expect(mockDb.values).toHaveBeenCalledWith(associationData)
+      expect(mockValues).toHaveBeenCalledWith(associationData)
     })
 
     it('should validate foreign key constraints', async () => {
@@ -398,14 +403,15 @@ describe('Database Schema Validation', () => {
         assignedAt: new Date(),
       }
 
+      const mockValues = jest.fn().mockResolvedValue(undefined)
       mockDb.insert.mockReturnValue({
-        values: jest.fn().mockResolvedValue(undefined),
+        values: mockValues,
       } as any)
 
       await createUserRole(associationData)
 
       expect(mockDb.insert).toHaveBeenCalledWith(userRoles)
-      expect(mockDb.values).toHaveBeenCalledWith(associationData)
+      expect(mockValues).toHaveBeenCalledWith(associationData)
     })
 
     it('should validate user-role foreign keys', async () => {
@@ -544,7 +550,14 @@ describe('Database Schema Validation', () => {
 // Mock implementation functions
 async function createUser(userData: any) {
   validateUserData(userData)
-  return await mockDb.insert(users).values(userData)
+  try {
+    return await mockDb.insert(users).values(userData)
+  } catch (error: any) {
+    if (error.message.includes('UNIQUE constraint failed: users.email')) {
+      throw new Error('Email already exists')
+    }
+    throw error
+  }
 }
 
 async function createScrap(scrapData: any) {
@@ -552,25 +565,69 @@ async function createScrap(scrapData: any) {
   if (scrapData.visible === undefined) {
     scrapData.visible = true
   }
-  return await mockDb.insert(scraps).values(scrapData)
+  try {
+    return await mockDb.insert(scraps).values(scrapData)
+  } catch (error: any) {
+    if (error.message.includes('UNIQUE constraint failed: scraps.code')) {
+      throw new Error('Scrap code already exists')
+    }
+    if (error.message.includes('FOREIGN KEY constraint failed')) {
+      throw new Error('User does not exist')
+    }
+    throw error
+  }
 }
 
 async function createRole(roleData: any) {
   validateRoleData(roleData)
-  return await mockDb.insert(roles).values(roleData)
+  try {
+    return await mockDb.insert(roles).values(roleData)
+  } catch (error: any) {
+    if (error.message.includes('UNIQUE constraint failed: roles.name')) {
+      throw new Error('Role name already exists')
+    }
+    throw error
+  }
 }
 
 async function createPermission(permissionData: any) {
   validatePermissionData(permissionData)
-  return await mockDb.insert(permissions).values(permissionData)
+  try {
+    return await mockDb.insert(permissions).values(permissionData)
+  } catch (error: any) {
+    if (error.message.includes('UNIQUE constraint failed: permissions.name')) {
+      throw new Error('Permission already exists')
+    }
+    throw error
+  }
 }
 
 async function createRolePermission(associationData: any) {
-  return await mockDb.insert(rolePermissions).values(associationData)
+  try {
+    return await mockDb.insert(rolePermissions).values(associationData)
+  } catch (error: any) {
+    if (error.message.includes('FOREIGN KEY constraint failed')) {
+      throw new Error('Invalid role or permission')
+    }
+    if (error.message.includes('UNIQUE constraint failed')) {
+      throw new Error('Permission already assigned to role')
+    }
+    throw error
+  }
 }
 
 async function createUserRole(associationData: any) {
-  return await mockDb.insert(userRoles).values(associationData)
+  try {
+    return await mockDb.insert(userRoles).values(associationData)
+  } catch (error: any) {
+    if (error.message.includes('FOREIGN KEY constraint failed')) {
+      throw new Error('Invalid user or role')
+    }
+    if (error.message.includes('UNIQUE constraint failed')) {
+      throw new Error('Role already assigned to user')
+    }
+    throw error
+  }
 }
 
 async function deleteUser(userId: string) {
@@ -626,12 +683,20 @@ function validateUserData(userData: any) {
 }
 
 function validateScrapData(scrapData: any) {
-  if (!scrapData.code || !scrapData.content || !scrapData.userId) {
+  if (!scrapData.code || !scrapData.userId) {
     throw new Error('Missing required fields')
   }
   
   if (scrapData.x === undefined || scrapData.y === undefined) {
     throw new Error('Missing required fields')
+  }
+  
+  if (scrapData.content === undefined) {
+    throw new Error('Missing required fields')
+  }
+  
+  if (!scrapData.content || !scrapData.content.trim()) {
+    throw new Error('Content cannot be empty')
   }
   
   if (typeof scrapData.x !== 'number' || typeof scrapData.y !== 'number') {
