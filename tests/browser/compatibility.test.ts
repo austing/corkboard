@@ -337,16 +337,24 @@ describe('Browser Compatibility', () => {
       };
 
       // Mock CSS.supports
-      (global as any).CSS = {
-        supports: (property: string, value: string) => {
-          return value.includes('var(');
-        }
-      };
+      Object.defineProperty(global, 'CSS', {
+        value: {
+          supports: (property: string, value: string) => {
+            return value.includes('var(');
+          }
+        },
+        writable: true,
+        configurable: true
+      });
 
       expect(getCSSValue('--primary-color', '#007bff')).toBe('var(--primary-color, #007bff)');
 
       // Remove CSS.supports
-      delete (global as any).CSS;
+      Object.defineProperty(global, 'CSS', {
+        value: undefined,
+        writable: true,
+        configurable: true
+      });
       expect(getCSSValue('--primary-color', '#007bff')).toBe('#007bff');
     });
 
