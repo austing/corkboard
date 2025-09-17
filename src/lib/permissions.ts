@@ -3,19 +3,27 @@ import { users, userRoles, rolePermissions, permissions } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm';
 
 export async function getUserPermissions(userId: string) {
-  const userPermissions = await db
-    .select({
-      permission: permissions.name,
-      resource: permissions.resource,
-      action: permissions.action,
-    })
-    .from(users)
-    .innerJoin(userRoles, eq(users.id, userRoles.userId))
-    .innerJoin(rolePermissions, eq(userRoles.roleId, rolePermissions.roleId))
-    .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
-    .where(eq(users.id, userId));
+  console.log('getUserPermissions called for userId:', userId);
+  
+  try {
+    const userPermissions = await db
+      .select({
+        permission: permissions.name,
+        resource: permissions.resource,
+        action: permissions.action,
+      })
+      .from(users)
+      .innerJoin(userRoles, eq(users.id, userRoles.userId))
+      .innerJoin(rolePermissions, eq(userRoles.roleId, rolePermissions.roleId))
+      .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+      .where(eq(users.id, userId));
 
-  return userPermissions;
+    console.log('getUserPermissions result for userId:', userId, 'permissions:', userPermissions);
+    return userPermissions;
+  } catch (error) {
+    console.error('Error in getUserPermissions for userId:', userId, 'Error:', error);
+    throw error;
+  }
 }
 
 export async function hasPermission(userId: string, resource: string, action: string) {

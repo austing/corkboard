@@ -17,7 +17,16 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const onlyMine = url.searchParams.get('onlyMine') === 'true';
 
-    await requirePermission(session.user.id, 'scraps', 'read');
+    // Add debug logging to help identify permission issues
+    console.log('Checking permissions for user:', session.user.id);
+    
+    try {
+      await requirePermission(session.user.id, 'scraps', 'read');
+      console.log('Permission check successful for user:', session.user.id);
+    } catch (permissionError) {
+      console.error('Permission check failed for user:', session.user.id, 'Error:', permissionError);
+      throw permissionError;
+    }
 
     const baseQuery = db
       .select({
