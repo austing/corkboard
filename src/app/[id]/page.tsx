@@ -152,6 +152,11 @@ export default function NestedScrapPage(): React.JSX.Element {
     }
   ], [isMoveMode, newScrapModal.isOpen, editScrapModal.isOpen]);
 
+  const calculateCanvasSize = useCallback((): void => {
+    const size: Size = CanvasUtils.calculateCanvasSize(nestedScraps);
+    setCanvasSize(size);
+  }, [nestedScraps]);
+
   useEffect(() => {
     if (nestedScraps.length > 0 && !loading) {
       calculateCanvasSize();
@@ -159,11 +164,6 @@ export default function NestedScrapPage(): React.JSX.Element {
       setCanvasSize({ width: Math.max(window.innerWidth, 1000), height: Math.max(window.innerHeight, 800) });
     }
   }, [nestedScraps, loading, calculateCanvasSize]);
-
-  const calculateCanvasSize = (): void => {
-    const size: Size = CanvasUtils.calculateCanvasSize(nestedScraps);
-    setCanvasSize(size);
-  };
 
   // Form management using useFormWithSubmit hook
   const newScrapForm = useFormWithSubmit<ScrapFormData>({
