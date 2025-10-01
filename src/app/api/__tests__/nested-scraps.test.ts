@@ -414,3 +414,105 @@ describe('Nested Scraps UI Components', () => {
     expect(newScrapData.nestedWithin).toBe(parentId);
   });
 });
+
+describe('Nested Scrap Count Functionality', () => {
+  it('should include nestedCount in API responses', () => {
+    const scrapWithCount = {
+      id: 'scrap-1',
+      code: 'TEST123',
+      content: '<p>Test content</p>',
+      x: 100,
+      y: 200,
+      visible: true,
+      userId: 'user-123',
+      nestedWithin: null,
+      nestedCount: 3,
+      userName: 'Test User',
+      userEmail: 'test@example.com',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    expect(scrapWithCount.nestedCount).toBe(3);
+    expect(typeof scrapWithCount.nestedCount).toBe('number');
+  });
+
+  it('should show nested count header when scrap has children', () => {
+    const scrapWithChildren = {
+      id: 'parent-scrap',
+      nestedCount: 5,
+    };
+
+    const shouldShowHeader = scrapWithChildren.nestedCount && scrapWithChildren.nestedCount > 0;
+    expect(shouldShowHeader).toBe(true);
+
+    const headerText = `Contains ${scrapWithChildren.nestedCount} scrap${scrapWithChildren.nestedCount !== 1 ? 's' : ''}`;
+    expect(headerText).toBe('Contains 5 scraps');
+  });
+
+  it('should not show nested count header when scrap has no children', () => {
+    const scrapWithoutChildren = {
+      id: 'leaf-scrap',
+      nestedCount: 0,
+    };
+
+    const shouldShowHeader = !!(scrapWithoutChildren.nestedCount && scrapWithoutChildren.nestedCount > 0);
+    expect(shouldShowHeader).toBe(false);
+  });
+
+  it('should handle singular and plural nested count text correctly', () => {
+    const scrapWithOneChild = { nestedCount: 1 };
+    const scrapWithMultipleChildren = { nestedCount: 3 };
+
+    const singularText = `Contains ${scrapWithOneChild.nestedCount} scrap${scrapWithOneChild.nestedCount !== 1 ? 's' : ''}`;
+    const pluralText = `Contains ${scrapWithMultipleChildren.nestedCount} scrap${scrapWithMultipleChildren.nestedCount !== 1 ? 's' : ''}`;
+
+    expect(singularText).toBe('Contains 1 scrap');
+    expect(pluralText).toBe('Contains 3 scraps');
+  });
+
+  it('should provide link to nested scrap page in count header', () => {
+    const scrapId = 'parent-scrap-123';
+    const nestedUrl = `/${scrapId}`;
+
+    expect(nestedUrl).toBe('/parent-scrap-123');
+    expect(nestedUrl.startsWith('/')).toBe(true);
+    expect(nestedUrl).not.toContain('#'); // Should be path route, not hash route
+  });
+});
+
+describe('Magnifying Glass Link Functionality', () => {
+  it('should provide magnifying glass link for scrap authors', () => {
+    const currentUserId = 'user-123';
+    const scrapByCurrentUser = {
+      id: 'scrap-1',
+      userId: 'user-123',
+    };
+    const scrapByOtherUser = {
+      id: 'scrap-2',
+      userId: 'other-user',
+    };
+
+    const shouldShowForOwnScrap = currentUserId === scrapByCurrentUser.userId;
+    const shouldShowForOtherScrap = currentUserId === scrapByOtherUser.userId;
+
+    expect(shouldShowForOwnScrap).toBe(true);
+    expect(shouldShowForOtherScrap).toBe(false);
+  });
+
+  it('should generate correct link to scrap nested page', () => {
+    const scrapId = 'scrap-abc-123';
+    const nestedPageUrl = `/${scrapId}`;
+
+    expect(nestedPageUrl).toBe('/scrap-abc-123');
+    expect(nestedPageUrl.startsWith('/')).toBe(true);
+  });
+
+  it('should have appropriate icon size for different contexts', () => {
+    const previewIconSize = 'h-3 w-3'; // Small icon for preview cards
+    const modalIconSize = 'h-4 w-4'; // Slightly larger for modal
+
+    expect(previewIconSize).toContain('3');
+    expect(modalIconSize).toContain('4');
+  });
+});

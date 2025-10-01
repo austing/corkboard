@@ -61,6 +61,7 @@ export interface Scrap {
 export interface ScrapWithUser extends Scrap {
   userName: string;
   userEmail: string;
+  nestedCount?: number;
 }
 
 export interface UserWithRoles extends User {

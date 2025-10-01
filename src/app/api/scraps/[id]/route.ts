@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { scraps, users } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, count } from 'drizzle-orm';
 import { requirePermission } from '@/lib/permissions';
 
 export async function GET(
@@ -52,7 +52,18 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({ scrap: scrap[0] });
+    // Get nested scrap count for this scrap
+    const nestedCountResult = await db
+      .select({ count: count() })
+      .from(scraps)
+      .where(eq(scraps.nestedWithin, id));
+
+    const scrapWithCount = {
+      ...scrap[0],
+      nestedCount: nestedCountResult[0]?.count || 0
+    };
+
+    return NextResponse.json({ scrap: scrapWithCount });
   } catch (error: unknown) {
     console.error('Error fetching scrap:', error);
     if (error instanceof Error && error.message?.includes('Access denied')) {

@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
-import { PencilIcon, PlusIcon, ArrowsPointingOutIcon, XMarkIcon, CogIcon, ArrowRightOnRectangleIcon, UserIcon, EyeIcon, EyeSlashIcon, MapPinIcon, FolderIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, PlusIcon, ArrowsPointingOutIcon, XMarkIcon, CogIcon, ArrowRightOnRectangleIcon, UserIcon, EyeIcon, EyeSlashIcon, MapPinIcon, FolderIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import config from '../../corkboard.config';
@@ -591,16 +591,41 @@ export default function HomePage(): React.JSX.Element {
                 }
               }}
             >
+              {/* Nested count header (if scrap has nested scraps) */}
+              {scrap.nestedCount && scrap.nestedCount > 0 && (
+                <div className="text-center mb-3 border-b border-gray-200 pb-2">
+                  <Link
+                    href={`/${scrap.id}`}
+                    className="text-sm text-gray-600 hover:text-indigo-600 underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Contains {scrap.nestedCount} scrap{scrap.nestedCount !== 1 ? 's' : ''}
+                  </Link>
+                </div>
+              )}
+
               {/* Header with code and action buttons */}
               <div className="flex justify-between items-center mb-3">
-                <a 
-                  href={`#${scrap.code}`}
-                  className={`text-sm font-mono font-bold ${config.theme.primary.text} hover:text-indigo-800`}
-                  title={`Anchor to ${scrap.code}`}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  #{scrap.code}
-                </a>
+                <div className="flex items-center space-x-2">
+                  <a
+                    href={`#${scrap.code}`}
+                    className={`text-sm font-mono font-bold ${config.theme.primary.text} hover:text-indigo-800`}
+                    title={`Anchor to ${scrap.code}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    #{scrap.code}
+                  </a>
+                  {session?.user?.id === scrap.userId && (
+                    <Link
+                      href={`/${scrap.id}`}
+                      className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
+                      title="View this scrap's nested page"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MagnifyingGlassIcon className="h-3 w-3" />
+                    </Link>
+                  )}
+                </div>
                 <div className="flex space-x-1">
                   <button
                     onClick={(e) => {
@@ -684,15 +709,38 @@ export default function HomePage(): React.JSX.Element {
         >
           <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full mx-4 flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="p-6 flex flex-col h-full overflow-hidden">
+            {/* Nested count header in modal (if scrap has nested scraps) */}
+            {fullscreenModal.data.nestedCount && fullscreenModal.data.nestedCount > 0 && (
+              <div className="text-center mb-4 border-b border-gray-200 pb-4">
+                <Link
+                  href={`/${fullscreenModal.data.id}`}
+                  className="text-base text-gray-600 hover:text-indigo-600 underline"
+                >
+                  Contains {fullscreenModal.data.nestedCount} scrap{fullscreenModal.data.nestedCount !== 1 ? 's' : ''}
+                </Link>
+              </div>
+            )}
+
             {/* Header */}
             <div className="flex justify-between items-center pb-4 border-b border-gray-200 mb-6">
-              <a 
-                href={`#${fullscreenModal.data.code}`}
-                className={`text-lg font-mono font-bold ${config.theme.primary.text} hover:text-indigo-800`}
-                title={`Anchor to ${fullscreenModal.data.code}`}
-              >
-                #{fullscreenModal.data.code}
-              </a>
+              <div className="flex items-center space-x-3">
+                <a
+                  href={`#${fullscreenModal.data.code}`}
+                  className={`text-lg font-mono font-bold ${config.theme.primary.text} hover:text-indigo-800`}
+                  title={`Anchor to ${fullscreenModal.data.code}`}
+                >
+                  #{fullscreenModal.data.code}
+                </a>
+                {session?.user?.id === fullscreenModal.data.userId && (
+                  <Link
+                    href={`/${fullscreenModal.data.id}`}
+                    className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
+                    title="View this scrap's nested page"
+                  >
+                    <MagnifyingGlassIcon className="h-4 w-4" />
+                  </Link>
+                )}
+              </div>
               <div className="flex space-x-2">
                 <Link
                   href={`/${fullscreenModal.data.id}`}

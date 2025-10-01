@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { scraps, users } from '@/lib/db/schema';
-import { eq, isNull } from 'drizzle-orm';
+import { eq, isNull, count } from 'drizzle-orm';
 import { requirePermission } from '@/lib/permissions';
 import { randomUUID } from 'crypto';
 
@@ -60,7 +60,25 @@ export async function GET(request: NextRequest) {
       // Client-side filtering will be handled by the frontend
     }
 
-    return NextResponse.json({ scraps: allScraps });
+    // Get nested scrap counts for each scrap
+    const scrapIds = allScraps.map(scrap => scrap.id);
+    const nestedCounts = await Promise.all(
+      scrapIds.map(async (scrapId) => {
+        const result = await db
+          .select({ count: count() })
+          .from(scraps)
+          .where(eq(scraps.nestedWithin, scrapId));
+        return { scrapId, count: result[0]?.count || 0 };
+      })
+    );
+
+    // Add nested counts to scrap data
+    const scrapsWithCounts = allScraps.map(scrap => ({
+      ...scrap,
+      nestedCount: nestedCounts.find(nc => nc.scrapId === scrap.id)?.count || 0
+    }));
+
+    return NextResponse.json({ scraps: scrapsWithCounts });
   } catch (error: unknown) {
     console.error('Error fetching scraps:', error);
     if (error instanceof Error && error.message?.includes('Access denied')) {
