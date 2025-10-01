@@ -1,0 +1,1 @@
+ALTER TABLE `scraps` ADD `nested_within` text REFERENCES scraps(id);

@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { scraps, users } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, isNull } from 'drizzle-orm';
 import { requirePermission } from '@/lib/permissions';
 import { randomUUID } from 'crypto';
 
@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
         y: scraps.y,
         visible: scraps.visible,
         userId: scraps.userId,
+        nestedWithin: scraps.nestedWithin,
         userName: users.name,
         userEmail: users.email,
         createdAt: scraps.createdAt,
@@ -46,13 +47,16 @@ export async function GET(request: NextRequest) {
       .leftJoin(users, eq(scraps.userId, users.id));
 
     // Filter scraps based on visibility and ownership
+    // IMPORTANT: Only show scraps that are NOT nested (nestedWithin is null)
     let allScraps;
     if (onlyMine) {
-      // Show all scraps owned by the user (visible and invisible)
-      allScraps = await baseQuery.where(eq(scraps.userId, session.user.id));
+      // Show all scraps owned by the user (visible and invisible) but only top-level scraps
+      allScraps = await baseQuery.where(
+        eq(scraps.userId, session.user.id)
+      ).where(isNull(scraps.nestedWithin));
     } else {
-      // Show visible scraps + user's own invisible scraps
-      allScraps = await baseQuery;
+      // Show visible scraps + user's own invisible scraps, but only top-level scraps
+      allScraps = await baseQuery.where(isNull(scraps.nestedWithin));
       // Client-side filtering will be handled by the frontend
     }
 
@@ -78,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     await requirePermission(session.user.id, 'scraps', 'create');
 
-    const { content, x, y, visible, userId } = await request.json();
+    const { content, x, y, visible, userId, nestedWithin } = await request.json();
 
     if (!content || x === undefined || y === undefined) {
       return NextResponse.json(
@@ -115,6 +119,7 @@ export async function POST(request: NextRequest) {
       y: parseInt(y),
       visible: visible !== undefined ? visible : true,
       userId: targetUserId,
+      nestedWithin: nestedWithin || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

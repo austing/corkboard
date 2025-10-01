@@ -93,6 +93,7 @@ export const scraps = sqliteTable('scraps', {
   y: integer('y').notNull(),
   visible: integer('visible', { mode: 'boolean' }).notNull().default(true),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  nestedWithin: text('nested_within').references(() => scraps.id, { onDelete: 'cascade' }),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
 });
@@ -132,6 +133,8 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
   user: one(users, { fields: [sessions.userId], references: [users.id] }),
 }));
 
-export const scrapsRelations = relations(scraps, ({ one }) => ({
+export const scrapsRelations = relations(scraps, ({ one, many }) => ({
   user: one(users, { fields: [scraps.userId], references: [users.id] }),
+  parentScrap: one(scraps, { fields: [scraps.nestedWithin], references: [scraps.id] }),
+  nestedScraps: many(scraps),
 }));

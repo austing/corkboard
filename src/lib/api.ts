@@ -102,6 +102,20 @@ class ApiClient {
     });
   }
 
+  async fetchNestedScraps(parentId: string): Promise<{ parentScrap: ScrapWithUser; nestedScraps: ScrapWithUser[] }> {
+    if (!parentId || typeof parentId !== 'string') {
+      throw new Error('Invalid parent scrap ID provided');
+    }
+    return this.request<{ parentScrap: ScrapWithUser; nestedScraps: ScrapWithUser[] }>(`/api/scraps/${parentId}/nested`);
+  }
+
+  async fetchScrapByCode(code: string): Promise<{ scrap: ScrapWithUser }> {
+    if (!code || typeof code !== 'string') {
+      throw new Error('Invalid scrap code provided');
+    }
+    return this.request<{ scrap: ScrapWithUser }>(`/api/scraps/code/${code}`);
+  }
+
   // User management methods
   async fetchUsers(): Promise<{ users: User[] }> {
     return this.request<{ users: User[] }>('/api/users');

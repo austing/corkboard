@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { scraps, users } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, isNull, and } from 'drizzle-orm';
 
 export async function GET(_request: NextRequest) {
   try {
-    // Public endpoint - no authentication required, shows only visible scraps
+    // Public endpoint - no authentication required, shows only visible top-level scraps
     const allScraps = await db
       .select({
         id: scraps.id,
@@ -15,6 +15,7 @@ export async function GET(_request: NextRequest) {
         y: scraps.y,
         visible: scraps.visible,
         userId: scraps.userId,
+        nestedWithin: scraps.nestedWithin,
         userName: users.name,
         userEmail: users.email,
         createdAt: scraps.createdAt,
@@ -22,7 +23,7 @@ export async function GET(_request: NextRequest) {
       })
       .from(scraps)
       .leftJoin(users, eq(scraps.userId, users.id))
-      .where(eq(scraps.visible, true));
+      .where(and(eq(scraps.visible, true), isNull(scraps.nestedWithin)));
 
     return NextResponse.json({ scraps: allScraps });
   } catch (error: unknown) {

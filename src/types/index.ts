@@ -49,6 +49,7 @@ export interface Scrap {
   y: number;
   visible: boolean;
   userId: string;
+  nestedWithin?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -79,12 +80,14 @@ export interface ScrapFormData {
   x: number;
   y: number;
   visible?: boolean;
+  nestedWithin?: string | null;
 }
 
 export interface ScrapCreateData {
   content: string;
   x: number;
   y: number;
+  nestedWithin?: string | null;
 }
 
 export interface ScrapUpdateData {
@@ -92,6 +95,7 @@ export interface ScrapUpdateData {
   x?: number;
   y?: number;
   visible?: boolean;
+  nestedWithin?: string | null;
 }
 
 export interface UserFormData {

@@ -28,6 +28,7 @@ export async function GET(
         y: scraps.y,
         visible: scraps.visible,
         userId: scraps.userId,
+        nestedWithin: scraps.nestedWithin,
         userName: users.name,
         userEmail: users.email,
         createdAt: scraps.createdAt,
@@ -77,7 +78,7 @@ export async function PUT(
 
     await requirePermission(session.user.id, 'scraps', 'update');
 
-    const { content, x, y, visible, userId } = await request.json();
+    const { content, x, y, visible, userId, nestedWithin } = await request.json();
 
     if (!content || x === undefined || y === undefined) {
       return NextResponse.json(
@@ -104,7 +105,7 @@ export async function PUT(
       await requirePermission(session.user.id, 'scraps', 'update_others');
     }
 
-    const updateData: { content: string; x: number; y: number; visible?: boolean; updatedAt: Date; userId?: string } = {
+    const updateData: { content: string; x: number; y: number; visible?: boolean; updatedAt: Date; userId?: string; nestedWithin?: string | null } = {
       content,
       x: parseInt(x),
       y: parseInt(y),
@@ -117,6 +118,10 @@ export async function PUT(
 
     if (userId) {
       updateData.userId = userId;
+    }
+
+    if (nestedWithin !== undefined) {
+      updateData.nestedWithin = nestedWithin || null;
     }
 
     await db

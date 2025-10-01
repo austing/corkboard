@@ -1,33 +1,35 @@
 'use client';
 
-import { useSession, signOut } from 'next-auth/react';
-import Link from 'next/link';
-import { PencilIcon, PlusIcon, ArrowsPointingOutIcon, XMarkIcon, CogIcon, ArrowRightOnRectangleIcon, UserIcon, EyeIcon, EyeSlashIcon, MapPinIcon, FolderIcon } from '@heroicons/react/24/outline';
+import { useSession } from 'next-auth/react';
 import { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeftIcon, PlusIcon, CogIcon, ArrowRightOnRectangleIcon, UserIcon, EyeIcon, EyeSlashIcon, MapPinIcon, PencilIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import dynamic from 'next/dynamic';
-import config from '../../corkboard.config';
-import { useModal } from '../hooks/useModal';
-import { useFormWithSubmit } from '../hooks/useFormWithSubmit';
-import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
-import { api, type Scrap } from '../lib/api';
-import { CanvasUtils } from '../utils/canvas';
-import { ScrapPermissions } from '../utils/permissions';
-import type { ScrapFormData, Position, Size } from '../types';
-
+import config from '../../../corkboard.config';
+import { useModal } from '../../hooks/useModal';
+import { useFormWithSubmit } from '../../hooks/useFormWithSubmit';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { api, type Scrap } from '../../lib/api';
+import { CanvasUtils } from '../../utils/canvas';
+import { ScrapPermissions } from '../../utils/permissions';
+import type { ScrapFormData, Position, Size } from '../../types';
 
 // Dynamically import Froala editor to avoid SSR issues
-const FroalaEditor = dynamic(() => import('./components/FroalaEditor'), { 
+const FroalaEditor = dynamic(() => import('../components/FroalaEditor'), {
   ssr: false,
   loading: () => <div className="flex-1 border border-gray-300 rounded-md p-3 text-sm">Loading editor...</div>
 });
 
-
-export default function HomePage(): React.JSX.Element {
+export default function NestedScrapPage(): React.JSX.Element {
   const { data: session } = useSession();
-  const [scraps, setScraps] = useState<Scrap[]>([]);
+  const params = useParams();
+  const parentId = params.id as string;
+
+  const [parentScrap, setParentScrap] = useState<Scrap | null>(null);
+  const [nestedScraps, setNestedScraps] = useState<Scrap[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [_error, setError] = useState<string>('');
-  const [_hasAdminAccess, setHasAdminAccess] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
   const [canvasSize, setCanvasSize] = useState<Size>({ width: 0, height: 0 });
   const [isShiftPressed, setIsShiftPressed] = useState<boolean>(false);
   const [cursorPosition, setCursorPosition] = useState<Position>({ x: 0, y: 0 });
@@ -53,65 +55,57 @@ export default function HomePage(): React.JSX.Element {
     updateUrlHash: null,
     onClose: () => {
       editScrapForm.reset();
-      setOriginalEditScrapForm({ content: '', x: 0, y: 0, visible: true });
-      setEditScrapError('');
+      _setOriginalEditScrapForm({ content: '', x: 0, y: 0, visible: true, nestedWithin: parentId });
+      _setEditScrapError('');
       window.history.pushState(null, '', window.location.pathname);
     }
   });
 
-  const handleHashNavigation = useCallback(() => {
-    const hash = window.location.hash.replace('#', '');
-    if (hash && scraps.length > 0) {
-      const targetScrap = scraps.find(scrap => scrap.code === hash);
-      if (targetScrap) {
-        // Scroll to the scrap
-        const scrapElement = document.getElementById(hash);
-        if (scrapElement) {
-          scrapElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center',
-            inline: 'center'
-          });
-        }
-        // Open the modal
-        setTimeout(() => {
-          fullscreenModal.open(targetScrap);
-        }, 500); // Delay to let scroll complete
-      }
+  const fetchNestedScraps = useCallback(async (): Promise<void> => {
+    if (!parentId) return;
+
+    try {
+      const data = await api.fetchNestedScraps(parentId);
+      setParentScrap(data.parentScrap);
+      const filteredScraps = session?.user?.id
+        ? ScrapPermissions.filterViewableScraps(data.nestedScraps, session.user.id)
+        : data.nestedScraps;
+      setNestedScraps(filteredScraps);
+    } catch (err) {
+      console.error('Error fetching nested scraps:', err);
+      setError('An error occurred while fetching nested scraps');
+      setNestedScraps([]);
+    } finally {
+      setLoading(false);
     }
-  }, [scraps]);
+  }, [parentId, session?.user?.id]);
 
   useEffect(() => {
-    document.title = 'Corkboard';
-  }, []);
+    if (parentScrap) {
+      document.title = `Nested in ${parentScrap.code} - Corkboard`;
+    }
+  }, [parentScrap]);
 
   useEffect(() => {
-    fetchScraps();
-    if (session?.user?.id) {
-      checkAdminAccess();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
-
+    fetchNestedScraps();
+  }, [fetchNestedScraps]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Disable shift key functionality when modals are open or in move mode
       if (fullscreenModal.isOpen || newScrapModal.isOpen || editScrapModal.isOpen || isMoveMode) {
         return;
       }
-      
+
       if (e.shiftKey && !isShiftPressed) {
         setIsShiftPressed(true);
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      // Disable shift key functionality when modals are open or in move mode
       if (fullscreenModal.isOpen || newScrapModal.isOpen || editScrapModal.isOpen || isMoveMode) {
         return;
       }
-      
+
       if (!e.shiftKey) {
         setIsShiftPressed(false);
       }
@@ -121,14 +115,9 @@ export default function HomePage(): React.JSX.Element {
       setCursorPosition({ x: e.clientX, y: e.clientY });
     };
 
-    const initializeCursorPosition = (e: MouseEvent) => {
-      setCursorPosition({ x: e.clientX, y: e.clientY });
-    };
-
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mousemove', initializeCursorPosition, { once: true });
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
@@ -137,7 +126,6 @@ export default function HomePage(): React.JSX.Element {
     };
   }, [isShiftPressed, fullscreenModal.isOpen, newScrapModal.isOpen, editScrapModal.isOpen, isMoveMode]);
 
-  // Use keyboard shortcuts hook for better organization
   useKeyboardShortcuts([
     {
       key: 'Escape',
@@ -165,122 +153,37 @@ export default function HomePage(): React.JSX.Element {
   ], [isMoveMode, newScrapModal.isOpen, editScrapModal.isOpen]);
 
   useEffect(() => {
-    if (scraps.length > 0 && !loading) {
+    if (nestedScraps.length > 0 && !loading) {
       calculateCanvasSize();
-      // Handle hash navigation after scraps are loaded
-      handleHashNavigation();
-    } else if (scraps.length === 0 && !loading) {
-      // No scraps - set minimal canvas size
+    } else if (nestedScraps.length === 0 && !loading) {
       setCanvasSize({ width: Math.max(window.innerWidth, 1000), height: Math.max(window.innerHeight, 800) });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scraps, loading, handleHashNavigation]);
+  }, [nestedScraps, loading, calculateCanvasSize]);
 
   const calculateCanvasSize = (): void => {
-    const size: Size = CanvasUtils.calculateCanvasSize(scraps);
+    const size: Size = CanvasUtils.calculateCanvasSize(nestedScraps);
     setCanvasSize(size);
-  };
-
-  // Keep centering function for potential future use
-  const _centerViewport = () => {
-    if (scraps.length === 0) return;
-
-    const bounds = scraps.reduce(
-      (acc, scrap) => ({
-        minX: Math.min(acc.minX, scrap.x),
-        maxX: Math.max(acc.maxX, scrap.x + 300),
-        minY: Math.min(acc.minY, scrap.y),
-        maxY: Math.max(acc.maxY, scrap.y + 200),
-      }),
-      { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity }
-    );
-
-    bounds.minX = Math.min(bounds.minX, 0);
-    bounds.minY = Math.min(bounds.minY, 0);
-    bounds.maxX = Math.max(bounds.maxX, 0);
-    bounds.maxY = Math.max(bounds.maxY, 0);
-
-    const centerX = (bounds.minX + bounds.maxX) / 2;
-    const centerY = (bounds.minY + bounds.maxY) / 2;
-    const padding = 100;
-
-    const scrollX = centerX - Math.min(bounds.minX, 0) - window.innerWidth / 2 + padding;
-    const scrollY = centerY - Math.min(bounds.minY, 0) - window.innerHeight / 2 + padding;
-
-    window.scrollTo({
-      left: Math.max(0, scrollX),
-      top: Math.max(0, scrollY),
-      behavior: 'smooth'
-    });
-  };
-  
-  const checkAdminAccess = async (): Promise<void> => {
-    if (!session?.user?.id) {
-      setHasAdminAccess(false);
-      return;
-    }
-
-    try {
-      const response = await api.checkPermission({
-        userId: session.user.id,
-        resource: 'admin',
-        action: 'access'
-      });
-      setHasAdminAccess(response.hasPermission);
-    } catch (err) {
-      console.error('Error checking admin permissions:', err);
-      setHasAdminAccess(false);
-    }
-  };
-
-  const fetchScraps = async (): Promise<void> => {
-    try {
-      const data = await api.fetchScraps(!!session?.user?.id);
-      const filteredScraps = session?.user?.id 
-        ? ScrapPermissions.filterViewableScraps(data.scraps, session.user.id)
-        : data.scraps;
-      setScraps(filteredScraps);
-    } catch (err) {
-      console.error('Error fetching scraps:', err);
-      setError('An error occurred while fetching scraps');
-      setScraps([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const _scrapToText = (scrap: Scrap) => {
-    const scrapData = {
-      id: scrap.id,
-      code: scrap.code,
-      content: scrap.content,
-      position: { x: scrap.x, y: scrap.y },
-      author: scrap.userName || scrap.userEmail,
-      created: new Date(scrap.createdAt).toISOString(),
-      updated: new Date(scrap.updatedAt).toISOString()
-    };
-    
-    return JSON.stringify(scrapData, null, 2);
   };
 
   // Form management using useFormWithSubmit hook
   const newScrapForm = useFormWithSubmit<ScrapFormData>({
-    initialValues: { content: '', x: 0, y: 0 },
+    initialValues: { content: '', x: 0, y: 0, nestedWithin: parentId },
     onSubmit: async (values: ScrapFormData) => {
       await api.createScrap({
         content: values.content,
         x: values.x,
-        y: values.y
+        y: values.y,
+        nestedWithin: parentId
       });
     },
     onSuccess: () => {
       newScrapModal.close();
-      fetchScraps();
+      fetchNestedScraps();
     }
   });
 
   const editScrapForm = useFormWithSubmit<ScrapFormData>({
-    initialValues: { content: '', x: 0, y: 0, visible: true },
+    initialValues: { content: '', x: 0, y: 0, visible: true, nestedWithin: parentId },
     onSubmit: async (values: ScrapFormData) => {
       if (!editScrapModal.data) {
         throw new Error('No scrap selected for editing');
@@ -289,21 +192,23 @@ export default function HomePage(): React.JSX.Element {
         content: values.content,
         x: values.x,
         y: values.y,
-        visible: values.visible
+        visible: values.visible,
+        nestedWithin: values.nestedWithin
       });
     },
     onSuccess: () => {
       editScrapModal.close();
-      fetchScraps();
+      fetchNestedScraps();
     }
   });
 
-  const [editScrapError, setEditScrapError] = useState<string>('');
-  const [originalEditScrapForm, setOriginalEditScrapForm] = useState<ScrapFormData>({
+  const [_editScrapError, _setEditScrapError] = useState<string>('');
+  const [_originalEditScrapForm, _setOriginalEditScrapForm] = useState<ScrapFormData>({
     content: '',
     x: 0,
     y: 0,
     visible: true,
+    nestedWithin: parentId,
   });
 
   const handleEditScrapClick = (scrap: Scrap): void => {
@@ -312,62 +217,32 @@ export default function HomePage(): React.JSX.Element {
       x: scrap.x,
       y: scrap.y,
       visible: scrap.visible,
+      nestedWithin: scrap.nestedWithin || parentId,
     };
     editScrapForm.setInitialValues(formData);
-    setOriginalEditScrapForm(formData);
+    _setOriginalEditScrapForm(formData);
     editScrapModal.open(scrap);
   };
 
-  // Quill editor configuration - only basic formatting, no font size
-  const _quillModules = {
-    toolbar: [
-      ['bold', 'italic', 'underline'],
-      [{ 'align': [] }],
-      [{ 'color': [] }]
-    ],
-  };
-
-  const _quillFormats = [
-    'bold', 'italic', 'underline', 'align', 'color'
-  ];
-
-  // Listen for hash changes
-  useEffect(() => {
-    const handleHashChange = () => {
-      handleHashNavigation();
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [scraps, handleHashNavigation]);
-
-  // Calculate position accounting for negative coordinates
   const getScrapPosition = (scrap: Scrap): Position => {
-    return CanvasUtils.getScrapDisplayPosition(scrap, scraps);
+    return CanvasUtils.getScrapDisplayPosition(scrap, nestedScraps);
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Loading scraps index...</div>
-      </div>
-    );
-  }
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>): void => {
     if (isMoveMode && movingScrap) {
-      const coords: Position = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, scraps);
+      const coords: Position = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, nestedScraps);
       updateScrapPosition(movingScrap.id, coords.x, coords.y);
       setIsMoveMode(false);
       setMovingScrap(null);
       setIsShiftPressed(false);
     } else if (isShiftPressed && session && !isHoveringScrap && !isMoveMode) {
-      const coords: Position = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, scraps);
-      newScrapForm.setValues({ 
-        content: '', 
-        x: coords.x, 
+      const coords: Position = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, nestedScraps);
+      newScrapForm.setValues({
+        content: '',
+        x: coords.x,
         y: coords.y,
-        visible: true
+        visible: true,
+        nestedWithin: parentId
       });
       newScrapModal.open();
       setIsShiftPressed(false);
@@ -379,14 +254,15 @@ export default function HomePage(): React.JSX.Element {
       console.warn('No scrap selected for moving');
       return;
     }
-    
+
     try {
       await api.updateScrap(scrapId, {
         content: movingScrap.content,
         x: x,
         y: y,
+        nestedWithin: parentId
       });
-      fetchScraps();
+      fetchNestedScraps();
     } catch (err) {
       console.error('Error updating scrap position:', err);
     }
@@ -395,49 +271,63 @@ export default function HomePage(): React.JSX.Element {
   const updateScrapVisibility = async (scrapId: string, visible: boolean): Promise<void> => {
     try {
       await api.updateScrapVisibility(scrapId, visible);
-      fetchScraps();
+      fetchNestedScraps();
     } catch (err) {
       console.error('Error updating scrap visibility:', err);
     }
   };
 
-  const hasFormChanged = (): boolean => {
+  if (loading) {
     return (
-      editScrapForm.values.content !== originalEditScrapForm.content ||
-      editScrapForm.values.x !== originalEditScrapForm.x ||
-      editScrapForm.values.y !== originalEditScrapForm.y
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">Loading nested scraps...</div>
+      </div>
     );
-  };
+  }
 
-  const handleVisibilityToggle = async (): Promise<void> => {
-    if (!editScrapModal.data) {
-      console.warn('No scrap selected for visibility toggle');
-      return;
-    }
-    
-    const newVisibility: boolean = !editScrapModal.data.visible;
-    
-    await updateScrapVisibility(editScrapModal.data.id, newVisibility);
-    
-    // Update modal data and form state
-    editScrapModal.setData(prev => prev ? { ...prev, visible: newVisibility } : null);
-    editScrapForm.setValue('visible', newVisibility);
-    setOriginalEditScrapForm(prev => ({ ...prev, visible: newVisibility }));
-    
-    // If no other changes, close the modal
-    if (!hasFormChanged()) {
-      editScrapModal.close();
-    }
-  };
+  if (error || !parentScrap) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">{error || 'Parent scrap not found'}</div>
+          <Link href="/" className="text-blue-600 hover:text-blue-800">
+            ← Back to main corkboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
+      {/* Back button and parent scrap info */}
+      <div className="fixed top-4 left-4 right-4 z-50 flex items-center justify-between bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 p-3">
+        <div className="flex items-center space-x-3">
+          <Link
+            href="/"
+            className="inline-flex items-center text-gray-600 hover:text-gray-800 text-sm font-medium"
+          >
+            <ArrowLeftIcon className="h-4 w-4 mr-1" />
+            Back to main
+          </Link>
+          <div className="text-gray-400">|</div>
+          <div className="text-sm">
+            <span className="text-gray-600">Nested in: </span>
+            <span className="font-mono font-bold text-indigo-600">#{parentScrap.code}</span>
+          </div>
+        </div>
+
+        <div className="text-sm text-gray-500">
+          {nestedScraps.length} nested scrap{nestedScraps.length !== 1 ? 's' : ''}
+        </div>
+      </div>
+
       {/* Shift key cursor replacement */}
       {isShiftPressed && session && !isMoveMode && (
         <div
           className={`fixed pointer-events-none inline-flex items-center justify-center w-8 h-8 rounded-full shadow-lg ${
-            isHoveringScrap 
-              ? 'bg-gray-400 text-gray-600' 
+            isHoveringScrap
+              ? 'bg-gray-400 text-gray-600'
               : `${config.theme.primary.bg} text-white`
           }`}
           style={{
@@ -464,41 +354,43 @@ export default function HomePage(): React.JSX.Element {
         </div>
       )}
 
-      {/* Infinite canvas - no size restrictions */}
-      <div 
-        className="bg-transparent" 
-        style={{ 
-          width: `${canvasSize.width}px`, 
+      {/* Infinite canvas */}
+      <div
+        className="bg-transparent"
+        style={{
+          width: `${canvasSize.width}px`,
           height: `${canvasSize.height}px`,
           position: 'relative',
+          marginTop: '80px', // Account for fixed header
           cursor: (isShiftPressed && session && !isMoveMode) || isMoveMode ? 'none' : 'default'
         }}
         onClick={handleCanvasClick}
       >
-        {/* Centered button - + for authenticated users, ⚘ for non-authenticated */}
+        {/* Centered button for creating new nested scraps */}
         {session && !isShiftPressed && !isMoveMode && (
           <button
             onClick={() => {
               const buttonCenterX = window.scrollX + window.innerWidth / 2;
               const buttonCenterY = window.scrollY + window.innerHeight / 2;
-              
-              const coords = CanvasUtils.pageToCanvasCoordinates(buttonCenterX, buttonCenterY, scraps);
-              
-              newScrapForm.setValues({ 
-                content: '', 
-                x: coords.x, 
-                y: coords.y
+
+              const coords = CanvasUtils.pageToCanvasCoordinates(buttonCenterX, buttonCenterY, nestedScraps);
+
+              newScrapForm.setValues({
+                content: '',
+                x: coords.x,
+                y: coords.y,
+                nestedWithin: parentId
               });
               newScrapModal.open();
             }}
             className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 inline-flex items-center justify-center w-16 h-16 rounded-full ${config.theme.primary.bg} ${config.theme.primary.hover} text-white shadow-lg transition-all hover:scale-110 cursor-pointer`}
-            title="Create new scrap (or hold Shift and click anywhere)"
+            title="Create new nested scrap (or hold Shift and click anywhere)"
             style={{ zIndex: 1000 }}
           >
             <PlusIcon className="h-8 w-8" />
           </button>
         )}
-        
+
         {/* Decorative symbol for non-authenticated users */}
         {!session && !isShiftPressed && !isMoveMode && (
           <div
@@ -523,6 +415,7 @@ export default function HomePage(): React.JSX.Element {
               </Link>
               <button
                 onClick={async () => {
+                  const { signOut } = await import('next-auth/react');
                   await signOut({ redirect: false });
                   window.location.href = '/';
                 }}
@@ -544,33 +437,34 @@ export default function HomePage(): React.JSX.Element {
         </div>
 
         {/* Error message */}
-        {_error && (
-          <div className="fixed top-4 left-4 right-4 p-4 bg-red-50 border border-red-200 rounded-md" style={{ zIndex: 998 }}>
-            <p className="text-red-800">{_error}</p>
-          </div>
-        )}
-
-        {/* Loading state */}
-        {loading && (
-          <div className="fixed inset-0 bg-transparent flex items-center justify-center" style={{ zIndex: 997 }}>
-            <div className="text-center">
-              <div className="text-gray-500 text-lg mb-4">Loading corkboard...</div>
-            </div>
+        {error && (
+          <div className="fixed top-20 left-4 right-4 p-4 bg-red-50 border border-red-200 rounded-md" style={{ zIndex: 998 }}>
+            <p className="text-red-800">{error}</p>
           </div>
         )}
 
         {/* Empty state */}
+        {nestedScraps.length === 0 && !loading && (
+          <div className="flex items-center justify-center min-h-[50vh] text-center">
+            <div className="text-gray-500">
+              <div className="text-lg mb-2">No nested scraps yet</div>
+              <div className="text-sm">
+                {session ? 'Create the first nested scrap by clicking the + button or holding Shift and clicking' : 'Sign in to create nested scraps'}
+              </div>
+            </div>
+          </div>
+        )}
 
-        {/* Absolutely positioned scraps */}
-        {!loading && scraps.map((scrap, index) => {
+        {/* Absolutely positioned nested scraps */}
+        {!loading && nestedScraps.map((scrap, index) => {
           const position = getScrapPosition(scrap);
           return (
             <div
               key={scrap.id}
               id={scrap.code}
               className={`absolute shadow-lg rounded-lg p-4 max-w-sm transition-shadow cursor-pointer ${
-                movingScrap?.id === scrap.id 
-                  ? `${config.theme.moving.bg} ${config.theme.moving.text} border ${config.theme.moving.border}` 
+                movingScrap?.id === scrap.id
+                  ? `${config.theme.moving.bg} ${config.theme.moving.text} border ${config.theme.moving.border}`
                   : !scrap.visible && session?.user?.id === scrap.userId
                     ? `${config.theme.invisible.bg} ${config.theme.invisible.text} border border-gray-600 opacity-40 hover:opacity-100 hover:shadow-xl invert`
                     : 'bg-white border border-gray-200 hover:shadow-xl'
@@ -587,14 +481,14 @@ export default function HomePage(): React.JSX.Element {
                   fullscreenModal.close();
                 } else {
                   fullscreenModal.open(scrap);
-                  window.history.pushState(null, '', `#${scrap.code}`);
+                  window.history.pushState(null, '', `${window.location.pathname}#${scrap.code}`);
                 }
               }}
             >
               {/* Header with code and action buttons */}
               <div className="flex justify-between items-center mb-3">
-                <a 
-                  href={`#${scrap.code}`}
+                <a
+                  href={`${window.location.pathname}#${scrap.code}`}
                   className={`text-sm font-mono font-bold ${config.theme.primary.text} hover:text-indigo-800`}
                   title={`Anchor to ${scrap.code}`}
                   onClick={(e) => e.stopPropagation()}
@@ -602,63 +496,19 @@ export default function HomePage(): React.JSX.Element {
                   #{scrap.code}
                 </a>
                 <div className="flex space-x-1">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!scrap.visible && session?.user?.id === scrap.userId) {
-                        // If it's an invisible scrap, toggle visibility directly
-                        updateScrapVisibility(scrap.id, true);
-                      } else {
-                        // Otherwise open fullscreen modal
-                        fullscreenModal.open(scrap);
-                        window.history.pushState(null, '', `#${scrap.code}`);
-                      }
-                    }}
-                    className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-100 cursor-pointer"
-                    title={!scrap.visible && session?.user?.id === scrap.userId ? "Make visible" : "View fullscreen"}
-                  >
-                    {!scrap.visible && session?.user?.id === scrap.userId ? (
-                      <EyeSlashIcon className="h-4 w-4" />
-                    ) : (
-                      <ArrowsPointingOutIcon className="h-4 w-4" />
-                    )}
-                  </button>
-                  <Link
-                    href={`/${scrap.id}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-100 cursor-pointer"
-                    title="View nested scraps"
-                  >
-                    <FolderIcon className="h-4 w-4" />
-                  </Link>
-                  {session?.user?.id === scrap.userId && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditScrapClick(scrap);
-                        // Update URL hash
-                        window.history.pushState(null, '', `#${scrap.code}`);
-                      }}
-                      className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-100 cursor-pointer"
-                      title="Edit this scrap"
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                  )}
+                  {/* Scrap action buttons would go here - similar to main page */}
                 </div>
               </div>
 
               {/* Content */}
               <div className="mb-3">
-                <div 
-                  className="text-sm text-gray-800 line-clamp-24 froala-content" 
+                <div
+                  className="text-sm text-gray-800 line-clamp-24 froala-content"
                   dangerouslySetInnerHTML={{ __html: scrap.content }}
                 />
               </div>
 
-              {/* Footer info - simplified */}
+              {/* Footer info */}
               <div className="text-xs text-gray-500 border-t pt-2 flex justify-between items-center">
                 <div>
                   {scrap.userName || scrap.userEmail}
@@ -672,11 +522,11 @@ export default function HomePage(): React.JSX.Element {
         })}
       </div>
 
-      {/* Fullscreen Modal */}
+      {/* Fullscreen Modal for nested scraps */}
       {fullscreenModal.isOpen && fullscreenModal.data && (
-        <div 
-          className="fixed inset-0 flex items-center justify-center" 
-          style={{ 
+        <div
+          className="fixed inset-0 flex items-center justify-center"
+          style={{
             zIndex: 1001,
             backgroundColor: 'rgba(0, 0, 0, 0.2)'
           }}
@@ -686,21 +536,14 @@ export default function HomePage(): React.JSX.Element {
             <div className="p-6 flex flex-col h-full overflow-hidden">
             {/* Header */}
             <div className="flex justify-between items-center pb-4 border-b border-gray-200 mb-6">
-              <a 
-                href={`#${fullscreenModal.data.code}`}
+              <a
+                href={`${window.location.pathname}#${fullscreenModal.data.code}`}
                 className={`text-lg font-mono font-bold ${config.theme.primary.text} hover:text-indigo-800`}
                 title={`Anchor to ${fullscreenModal.data.code}`}
               >
                 #{fullscreenModal.data.code}
               </a>
               <div className="flex space-x-2">
-                <Link
-                  href={`/${fullscreenModal.data.id}`}
-                  className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
-                  title="View nested scraps"
-                >
-                  <FolderIcon className="h-5 w-5" />
-                </Link>
                 {ScrapPermissions.canEdit(fullscreenModal.data, session?.user?.id) && (
                   <>
                     <button
@@ -749,8 +592,8 @@ export default function HomePage(): React.JSX.Element {
 
             {/* Content - scrollable */}
             <div className="flex-1 overflow-y-auto mb-6">
-              <div 
-                className="text-base text-gray-800 leading-relaxed froala-content" 
+              <div
+                className="text-base text-gray-800 leading-relaxed froala-content"
                 dangerouslySetInnerHTML={{ __html: fullscreenModal.data.content }}
               />
             </div>
@@ -769,11 +612,11 @@ export default function HomePage(): React.JSX.Element {
         </div>
       )}
 
-      {/* New Scrap Modal */}
+      {/* New Scrap Modal for nested scraps */}
       {newScrapModal.isOpen && (
-        <div 
-          className="fixed inset-0 flex items-center justify-center" 
-          style={{ 
+        <div
+          className="fixed inset-0 flex items-center justify-center"
+          style={{
             zIndex: 1001,
             backgroundColor: 'rgba(0, 0, 0, 0.2)'
           }}
@@ -783,7 +626,7 @@ export default function HomePage(): React.JSX.Element {
               {/* Header */}
               <div className="flex justify-between items-center pb-4 border-b border-gray-200 mb-6 flex-shrink-0">
                 <h2 className="text-lg font-bold text-gray-900">
-                  Create New Scrap
+                  Create New Nested Scrap
                 </h2>
                 <button
                   onClick={() => newScrapModal.close()}
@@ -863,7 +706,7 @@ export default function HomePage(): React.JSX.Element {
                       disabled={newScrapForm.loading || !newScrapForm.values.content || newScrapForm.values.content.trim() === '' || newScrapForm.values.content === '<p><br></p>'}
                       className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${config.theme.primary.bg} ${config.theme.primary.hover} disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      {newScrapForm.loading ? 'Creating...' : 'Create Scrap'}
+                      {newScrapForm.loading ? 'Creating...' : 'Create Nested Scrap'}
                     </button>
                   </div>
               </form>
@@ -871,11 +714,11 @@ export default function HomePage(): React.JSX.Element {
         </div>
       )}
 
-      {/* Edit Scrap Modal */}
+      {/* Edit Scrap Modal for nested scraps */}
       {editScrapModal.isOpen && editScrapModal.data && (
-        <div 
-          className="fixed inset-0 flex items-center justify-center" 
-          style={{ 
+        <div
+          className="fixed inset-0 flex items-center justify-center"
+          style={{
             zIndex: 1001,
             backgroundColor: 'rgba(0, 0, 0, 0.2)'
           }}
@@ -885,12 +728,17 @@ export default function HomePage(): React.JSX.Element {
               {/* Header */}
               <div className="flex justify-between items-center pb-4 border-b border-gray-200 mb-6 flex-shrink-0">
                 <h2 className="text-lg font-bold text-gray-900">
-                  Edit Scrap #{editScrapModal.data.code}
+                  Edit Nested Scrap #{editScrapModal.data.code}
                 </h2>
                 <div className="flex space-x-2">
                   <button
                     type="button"
-                    onClick={handleVisibilityToggle}
+                    onClick={() => {
+                      if (!editScrapModal.data) return;
+                      const newVisibility = !editScrapModal.data.visible;
+                      updateScrapVisibility(editScrapModal.data.id, newVisibility);
+                      editScrapModal.close();
+                    }}
                     className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
                     title={editScrapModal.data.visible ? "Make private" : "Make visible"}
                   >
