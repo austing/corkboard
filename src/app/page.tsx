@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
-import { PencilIcon, PlusIcon, ArrowsPointingOutIcon, XMarkIcon, CogIcon, ArrowRightOnRectangleIcon, UserIcon, EyeIcon, EyeSlashIcon, MapPinIcon, FolderIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, PlusIcon, ArrowsPointingOutIcon, XMarkIcon, CogIcon, ArrowRightOnRectangleIcon, UserIcon, EyeIcon, EyeSlashIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import config from '../../corkboard.config';
@@ -591,19 +591,6 @@ export default function HomePage(): React.JSX.Element {
                 }
               }}
             >
-              {/* Nested count header (if scrap has nested scraps) */}
-              {scrap.nestedCount && scrap.nestedCount > 0 && (
-                <div className="text-center mb-3 border-b border-gray-200 pb-2">
-                  <Link
-                    href={`/${scrap.id}`}
-                    className="text-sm text-gray-600 hover:text-indigo-600 underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Contains {scrap.nestedCount} scrap{scrap.nestedCount !== 1 ? 's' : ''}
-                  </Link>
-                </div>
-              )}
-
               {/* Header with code and action buttons */}
               <div className="flex justify-between items-center mb-3">
                 <div className="flex items-center space-x-2">
@@ -615,16 +602,6 @@ export default function HomePage(): React.JSX.Element {
                   >
                     #{scrap.code}
                   </a>
-                  {session?.user?.id === scrap.userId && (
-                    <Link
-                      href={`/${scrap.id}`}
-                      className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
-                      title="View this scrap's nested page"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MagnifyingGlassIcon className="h-3 w-3" />
-                    </Link>
-                  )}
                 </div>
                 <div className="flex space-x-1">
                   <button
@@ -648,16 +625,6 @@ export default function HomePage(): React.JSX.Element {
                       <ArrowsPointingOutIcon className="h-4 w-4" />
                     )}
                   </button>
-                  <Link
-                    href={`/${scrap.id}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-100 cursor-pointer"
-                    title="View nested scraps"
-                  >
-                    <FolderIcon className="h-4 w-4" />
-                  </Link>
                   {session?.user?.id === scrap.userId && (
                     <button
                       onClick={(e) => {
@@ -677,11 +644,33 @@ export default function HomePage(): React.JSX.Element {
 
               {/* Content */}
               <div className="mb-3">
-                <div 
-                  className="text-sm text-gray-800 line-clamp-24 froala-content" 
+                <div
+                  className="text-sm text-gray-800 line-clamp-24 froala-content"
                   dangerouslySetInnerHTML={{ __html: scrap.content }}
                 />
               </div>
+
+              {/* Open Nest button */}
+              {scrap.nestedCount !== undefined && (
+                <div className="flex justify-center mb-3">
+                  <Link
+                    href={`/${scrap.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+                  >
+                    {scrap.nestedCount === 0 ? (
+                      'No Nest'
+                    ) : (
+                      <>
+                        Open Nest{' '}
+                        <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                          {scrap.nestedCount}
+                        </span>
+                      </>
+                    )}
+                  </Link>
+                </div>
+              )}
 
               {/* Footer info - simplified */}
               <div className="text-xs text-gray-500 border-t pt-2 flex justify-between items-center">
@@ -699,9 +688,9 @@ export default function HomePage(): React.JSX.Element {
 
       {/* Fullscreen Modal */}
       {fullscreenModal.isOpen && fullscreenModal.data && (
-        <div 
-          className="fixed inset-0 flex items-center justify-center" 
-          style={{ 
+        <div
+          className="fixed inset-0 flex items-center justify-center"
+          style={{
             zIndex: 1001,
             backgroundColor: 'rgba(0, 0, 0, 0.2)'
           }}
@@ -709,18 +698,6 @@ export default function HomePage(): React.JSX.Element {
         >
           <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full mx-4 flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="p-6 flex flex-col h-full overflow-hidden">
-            {/* Nested count header in modal (if scrap has nested scraps) */}
-            {fullscreenModal.data.nestedCount && fullscreenModal.data.nestedCount > 0 && (
-              <div className="text-center mb-4 border-b border-gray-200 pb-4">
-                <Link
-                  href={`/${fullscreenModal.data.id}`}
-                  className="text-base text-gray-600 hover:text-indigo-600 underline"
-                >
-                  Contains {fullscreenModal.data.nestedCount} scrap{fullscreenModal.data.nestedCount !== 1 ? 's' : ''}
-                </Link>
-              </div>
-            )}
-
             {/* Header */}
             <div className="flex justify-between items-center pb-4 border-b border-gray-200 mb-6">
               <div className="flex items-center space-x-3">
@@ -731,24 +708,8 @@ export default function HomePage(): React.JSX.Element {
                 >
                   #{fullscreenModal.data.code}
                 </a>
-                {session?.user?.id === fullscreenModal.data.userId && (
-                  <Link
-                    href={`/${fullscreenModal.data.id}`}
-                    className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
-                    title="View this scrap's nested page"
-                  >
-                    <MagnifyingGlassIcon className="h-4 w-4" />
-                  </Link>
-                )}
               </div>
               <div className="flex space-x-2">
-                <Link
-                  href={`/${fullscreenModal.data.id}`}
-                  className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
-                  title="View nested scraps"
-                >
-                  <FolderIcon className="h-5 w-5" />
-                </Link>
                 {ScrapPermissions.canEdit(fullscreenModal.data, session?.user?.id) && (
                   <>
                     <button
@@ -797,10 +758,31 @@ export default function HomePage(): React.JSX.Element {
 
             {/* Content - scrollable */}
             <div className="flex-1 overflow-y-auto mb-6">
-              <div 
-                className="text-base text-gray-800 leading-relaxed froala-content" 
+              <div
+                className="text-base text-gray-800 leading-relaxed froala-content"
                 dangerouslySetInnerHTML={{ __html: fullscreenModal.data.content }}
               />
+
+              {/* Open Nest button in modal */}
+              {fullscreenModal.data.nestedCount !== undefined && (
+                <div className="flex justify-center mt-6">
+                  <Link
+                    href={`/${fullscreenModal.data.id}`}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+                  >
+                    {fullscreenModal.data.nestedCount === 0 ? (
+                      'No Nest'
+                    ) : (
+                      <>
+                        Open Nest{' '}
+                        <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                          {fullscreenModal.data.nestedCount}
+                        </span>
+                      </>
+                    )}
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Footer */}

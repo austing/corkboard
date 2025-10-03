@@ -58,6 +58,19 @@
   - Move mode for repositioning scraps
   - Public/private scrap visibility system
   - Role-based access control throughout
+  - Nested scraps: Scraps can contain other scraps (infinite nesting depth)
+  - Hash-based navigation: URLs like `/#CODE` or `/PARENT_ID#CHILD_CODE` for direct scrap access
+
+  ## UI Component Patterns
+  - **Scrap Preview Card**: Shows scrap content with code, action buttons, and "Open Nest" button
+  - **Open Nest Button**: Centered button below content preview with badge showing nested count
+    - Shows "No Nest" when count is 0
+    - Shows "Open Nest" with blue badge when count > 0
+  - **Nested Navigation**:
+    - "Nested in" navbar links to parent scrap's location (index or parent nest with hash)
+    - Hash navigation scrolls to and opens target scrap modal
+  - **Action Buttons**: Fullscreen view and edit (for owners) - NO folder or magnifying glass icons
+  - **NO nested count headers** at top of scraps - replaced by Open Nest button
   
   ## File Editing Guidelines for Claude
   - When editing TypeScript files, avoid using generic strings that match multiple locations
