@@ -12,11 +12,13 @@ export function NestButton({ scrapId, nestedCount, size = 'small', onClick }: Ne
     ? 'px-2 py-1 text-xs'
     : 'px-3 py-1.5 text-sm';
 
+  const borderColor = nestedCount === 0 ? 'border-gray-300' : 'border-indigo-600';
+
   return (
     <Link
       href={`/${scrapId}`}
       onClick={onClick}
-      className={`inline-flex items-center justify-center gap-1 border border-indigo-600 rounded-md shadow-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer mt-1 ${sizeClasses}`}
+      className={`inline-flex items-center justify-center gap-1 border ${borderColor} rounded-md shadow-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer mt-1 ${sizeClasses}`}
     >
       {nestedCount === 0 ? (
         'Build Nest'

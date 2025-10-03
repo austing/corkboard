@@ -13,7 +13,7 @@ import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { api, type Scrap } from '../../lib/api';
 import { CanvasUtils } from '../../utils/canvas';
 import { ScrapPermissions } from '../../utils/permissions';
-import { NestButton } from '../../components/NestButton';
+import { ScrapHeader } from '../../components/ScrapHeader';
 import type { ScrapFormData, Position, Size } from '../../types';
 
 // Dynamically import Froala editor to avoid SSR issues
@@ -534,64 +534,23 @@ export default function NestedScrapPage(): React.JSX.Element {
                 }
               }}
             >
-              {/* Header with code, nest button, and action buttons */}
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex flex-col">
-                  <a
-                    href={`${window.location.pathname}#${scrap.code}`}
-                    className={`text-sm font-mono font-bold ${config.theme.primary.text} hover:text-indigo-800`}
-                    title={`Anchor to ${scrap.code}`}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    #{scrap.code}
-                  </a>
-                  {/* Open Nest button - hide on invisible scraps */}
-                  {scrap.nestedCount !== undefined && scrap.visible && (
-                    <NestButton
-                      scrapId={scrap.id}
-                      nestedCount={scrap.nestedCount}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  )}
-                </div>
-                <div className="flex space-x-1">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!scrap.visible && session?.user?.id === scrap.userId) {
-                        // If it's an invisible scrap, toggle visibility directly
-                        updateScrapVisibility(scrap.id, true);
-                      } else {
-                        // Otherwise open fullscreen modal
-                        fullscreenModal.open(scrap);
-                        window.history.pushState(null, '', `${window.location.pathname}#${scrap.code}`);
-                      }
-                    }}
-                    className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-100 cursor-pointer"
-                    title={!scrap.visible && session?.user?.id === scrap.userId ? "Make visible" : "View fullscreen"}
-                  >
-                    {!scrap.visible && session?.user?.id === scrap.userId ? (
-                      <EyeSlashIcon className="h-4 w-4" />
-                    ) : (
-                      <ArrowsPointingOutIcon className="h-4 w-4" />
-                    )}
-                  </button>
-                  {session?.user?.id === scrap.userId && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditScrapClick(scrap);
-                        // Update URL hash
-                        window.history.pushState(null, '', `${window.location.pathname}#${scrap.code}`);
-                      }}
-                      className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-100 cursor-pointer"
-                      title="Edit this scrap"
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
+              <ScrapHeader
+                scrap={scrap}
+                isOwner={session?.user?.id === scrap.userId}
+                pathPrefix={window.location.pathname}
+                onFullscreenClick={() => {
+                  if (!scrap.visible && session?.user?.id === scrap.userId) {
+                    updateScrapVisibility(scrap.id, true);
+                  } else {
+                    fullscreenModal.open(scrap);
+                    window.history.pushState(null, '', `${window.location.pathname}#${scrap.code}`);
+                  }
+                }}
+                onEditClick={() => {
+                  handleEditScrapClick(scrap);
+                  window.history.pushState(null, '', `${window.location.pathname}#${scrap.code}`);
+                }}
+              />
 
               {/* Content */}
               <div className="mb-3">
@@ -628,64 +587,37 @@ export default function NestedScrapPage(): React.JSX.Element {
           <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full mx-4 flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="p-6 flex flex-col h-full overflow-hidden">
             {/* Header */}
-            <div className="flex justify-between items-start pb-4 border-b border-gray-200 mb-6">
-              <div className="flex flex-col">
-                <a
-                  href={`${window.location.pathname}#${fullscreenModal.data.code}`}
-                  className={`text-lg font-mono font-bold ${config.theme.primary.text} hover:text-indigo-800`}
-                  title={`Anchor to ${fullscreenModal.data.code}`}
-                >
-                  #{fullscreenModal.data.code}
-                </a>
-                {/* Open Nest button in modal header - hide on invisible scraps */}
-                {fullscreenModal.data.nestedCount !== undefined && fullscreenModal.data.visible && (
-                  <NestButton
-                    scrapId={fullscreenModal.data.id}
-                    nestedCount={fullscreenModal.data.nestedCount}
-                    size="medium"
+            <div className="pb-4 border-b border-gray-200 mb-6">
+              <div className="flex justify-between items-center">
+                <div className="flex-1">
+                  <ScrapHeader
+                    scrap={fullscreenModal.data}
+                    isModal={true}
+                    isOwner={ScrapPermissions.canEdit(fullscreenModal.data, session?.user?.id)}
+                    pathPrefix={window.location.pathname}
+                    onFullscreenClick={() => {
+                      fullscreenModal.open(fullscreenModal.data!);
+                      window.history.pushState(null, '', `${window.location.pathname}#${fullscreenModal.data.code}`);
+                    }}
+                    onEditClick={() => {
+                      handleEditScrapClick(fullscreenModal.data!);
+                      fullscreenModal.close();
+                    }}
+                    onVisibilityToggle={async () => {
+                      const newVisibility = !fullscreenModal.data!.visible;
+                      await updateScrapVisibility(fullscreenModal.data!.id, newVisibility);
+                      fullscreenModal.close();
+                    }}
+                    onMoveClick={() => {
+                      setMovingScrap(fullscreenModal.data!);
+                      setIsMoveMode(true);
+                      fullscreenModal.close();
+                    }}
                   />
-                )}
-              </div>
-              <div className="flex space-x-2">
-                {ScrapPermissions.canEdit(fullscreenModal.data, session?.user?.id) && (
-                  <>
-                    <button
-                      onClick={async () => {
-                        const newVisibility = !fullscreenModal.data!.visible;
-                        await updateScrapVisibility(fullscreenModal.data!.id, newVisibility);
-                        fullscreenModal.close();
-                      }}
-                      className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
-                      title={fullscreenModal.data.visible ? "Make private" : "Make visible"}
-                    >
-                      {fullscreenModal.data.visible ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setMovingScrap(fullscreenModal.data!);
-                        setIsMoveMode(true);
-                        fullscreenModal.close();
-                      }}
-                      className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
-                      title="Move this scrap"
-                    >
-                      <MapPinIcon className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleEditScrapClick(fullscreenModal.data!);
-                        fullscreenModal.close();
-                      }}
-                      className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
-                      title="Edit this scrap"
-                    >
-                      <PencilIcon className="h-5 w-5" />
-                    </button>
-                  </>
-                )}
+                </div>
                 <button
                   onClick={() => fullscreenModal.close()}
-                  className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer"
+                  className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer ml-2"
                   title="Close fullscreen"
                 >
                   <XMarkIcon className="h-5 w-5" />
