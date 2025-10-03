@@ -667,36 +667,36 @@ export default function NestedScrapPage(): React.JSX.Element {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="fullscreen-nested-x" className="block text-sm font-medium text-gray-900 mb-2">
-                        X Position
-                      </label>
-                      <input
-                        type="number"
-                        name="x"
-                        id="fullscreen-nested-x"
-                        value={editScrapForm.values.x !== undefined ? editScrapForm.values.x : fullscreenModal.data.x}
-                        onChange={editScrapForm.handleInputChange}
-                        min={0}
-                        max={999999}
-                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2 border"
-                      />
+                    <div className="flex justify-center">
+                      <div className="relative w-32">
+                        <input
+                          type="number"
+                          name="x"
+                          id="fullscreen-nested-x"
+                          value={editScrapForm.values.x !== undefined ? editScrapForm.values.x : fullscreenModal.data.x}
+                          onChange={editScrapForm.handleInputChange}
+                          min={0}
+                          max={999999}
+                          placeholder="X"
+                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2 border bg-gray-50 placeholder-gray-500"
+                        />
+                      </div>
                     </div>
 
-                    <div>
-                      <label htmlFor="fullscreen-nested-y" className="block text-sm font-medium text-gray-900 mb-2">
-                        Y Position
-                      </label>
-                      <input
-                        type="number"
-                        name="y"
-                        id="fullscreen-nested-y"
-                        value={editScrapForm.values.y !== undefined ? editScrapForm.values.y : fullscreenModal.data.y}
-                        onChange={editScrapForm.handleInputChange}
-                        min={0}
-                        max={999999}
-                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2 border"
-                      />
+                    <div className="flex justify-center">
+                      <div className="relative w-32">
+                        <input
+                          type="number"
+                          name="y"
+                          id="fullscreen-nested-y"
+                          value={editScrapForm.values.y !== undefined ? editScrapForm.values.y : fullscreenModal.data.y}
+                          onChange={editScrapForm.handleInputChange}
+                          min={0}
+                          max={999999}
+                          placeholder="Y"
+                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2 border bg-gray-50 placeholder-gray-500"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
