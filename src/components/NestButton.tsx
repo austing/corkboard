@@ -11,28 +11,29 @@ interface NestButtonProps {
 export function NestButton({ scrapId, nestedCount, size = 'small', onClick }: NestButtonProps) {
   const sizeClasses = size === 'small'
     ? 'px-2 py-1 text-xs'
-    : 'px-3 py-1.5 text-sm';
+    : 'px-2.5 py-1.5 text-sm';
 
   const iconSize = size === 'small' ? 'h-3 w-3' : 'h-4 w-4';
-  const borderColor = nestedCount === 0 ? 'border-gray-300' : 'border-indigo-600';
 
   return (
     <Link
       href={`/${scrapId}`}
       onClick={onClick}
-      className={`inline-flex items-center justify-center gap-1 border ${borderColor} rounded-md shadow-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer mt-1 ${sizeClasses}`}
+      className={`inline-flex items-center gap-1 rounded-full font-medium cursor-pointer mt-1 ${sizeClasses} ${
+        nestedCount === 0
+          ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          : 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200'
+      }`}
     >
       {nestedCount === 0 ? (
         <>
-          <span className="inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-700">
-            <PlusIcon className={iconSize} />
-          </span>
+          <PlusIcon className={iconSize} />
           Nest
         </>
       ) : (
         <>
           Nest
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-200 text-indigo-900">
             {nestedCount}
           </span>
         </>
