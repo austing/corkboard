@@ -24,7 +24,9 @@ export function NestButton({ scrapId, nestedCount, size = 'small', onClick }: Ne
     >
       {nestedCount === 0 ? (
         <>
-          <PlusIcon className={iconSize} />
+          <span className="inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-700">
+            <PlusIcon className={iconSize} />
+          </span>
           Nest
         </>
       ) : (
