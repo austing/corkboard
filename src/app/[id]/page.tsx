@@ -533,9 +533,9 @@ export default function NestedScrapPage(): React.JSX.Element {
                 }
               }}
             >
-              {/* Header with code and action buttons */}
-              <div className="flex justify-between items-center mb-3">
-                <div className="flex items-center space-x-2">
+              {/* Header with code, nest button, and action buttons */}
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex flex-col">
                   <a
                     href={`${window.location.pathname}#${scrap.code}`}
                     className={`text-sm font-mono font-bold ${config.theme.primary.text} hover:text-indigo-800`}
@@ -544,6 +544,25 @@ export default function NestedScrapPage(): React.JSX.Element {
                   >
                     #{scrap.code}
                   </a>
+                  {/* Open Nest button */}
+                  {scrap.nestedCount !== undefined && (
+                    <Link
+                      href={`/${scrap.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center px-2 py-1 border border-gray-300 rounded-md shadow-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer mt-1"
+                    >
+                      {scrap.nestedCount === 0 ? (
+                        'Start Nest'
+                      ) : (
+                        <>
+                          Open Nest{' '}
+                          <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                            {scrap.nestedCount}
+                          </span>
+                        </>
+                      )}
+                    </Link>
+                  )}
                 </div>
                 <div className="flex space-x-1">
                   <button
@@ -592,28 +611,6 @@ export default function NestedScrapPage(): React.JSX.Element {
                 />
               </div>
 
-              {/* Open Nest button */}
-              {scrap.nestedCount !== undefined && (
-                <div className="flex justify-center mb-3">
-                  <Link
-                    href={`/${scrap.id}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
-                  >
-                    {scrap.nestedCount === 0 ? (
-                      'No Nest'
-                    ) : (
-                      <>
-                        Open Nest{' '}
-                        <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                          {scrap.nestedCount}
-                        </span>
-                      </>
-                    )}
-                  </Link>
-                </div>
-              )}
-
               {/* Footer info */}
               <div className="text-xs text-gray-500 border-t pt-2 flex justify-between items-center">
                 <div>
@@ -641,8 +638,8 @@ export default function NestedScrapPage(): React.JSX.Element {
           <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full mx-4 flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="p-6 flex flex-col h-full overflow-hidden">
             {/* Header */}
-            <div className="flex justify-between items-center pb-4 border-b border-gray-200 mb-6">
-              <div className="flex items-center space-x-3">
+            <div className="flex justify-between items-start pb-4 border-b border-gray-200 mb-6">
+              <div className="flex flex-col">
                 <a
                   href={`${window.location.pathname}#${fullscreenModal.data.code}`}
                   className={`text-lg font-mono font-bold ${config.theme.primary.text} hover:text-indigo-800`}
@@ -650,6 +647,24 @@ export default function NestedScrapPage(): React.JSX.Element {
                 >
                   #{fullscreenModal.data.code}
                 </a>
+                {/* Open Nest button in modal header */}
+                {fullscreenModal.data.nestedCount !== undefined && (
+                  <Link
+                    href={`/${fullscreenModal.data.id}`}
+                    className="inline-flex items-center px-2 py-1 border border-gray-300 rounded-md shadow-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer mt-1"
+                  >
+                    {fullscreenModal.data.nestedCount === 0 ? (
+                      'Start Nest'
+                    ) : (
+                      <>
+                        Open Nest{' '}
+                        <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                          {fullscreenModal.data.nestedCount}
+                        </span>
+                      </>
+                    )}
+                  </Link>
+                )}
               </div>
               <div className="flex space-x-2">
                 {ScrapPermissions.canEdit(fullscreenModal.data, session?.user?.id) && (
@@ -704,27 +719,6 @@ export default function NestedScrapPage(): React.JSX.Element {
                 className="text-base text-gray-800 leading-relaxed froala-content"
                 dangerouslySetInnerHTML={{ __html: fullscreenModal.data.content }}
               />
-
-              {/* Open Nest button in modal */}
-              {fullscreenModal.data.nestedCount !== undefined && (
-                <div className="flex justify-center mt-6">
-                  <Link
-                    href={`/${fullscreenModal.data.id}`}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
-                  >
-                    {fullscreenModal.data.nestedCount === 0 ? (
-                      'No Nest'
-                    ) : (
-                      <>
-                        Open Nest{' '}
-                        <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                          {fullscreenModal.data.nestedCount}
-                        </span>
-                      </>
-                    )}
-                  </Link>
-                </div>
-              )}
             </div>
 
             {/* Footer */}
