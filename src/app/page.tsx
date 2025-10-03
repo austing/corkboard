@@ -12,6 +12,7 @@ import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { api, type Scrap } from '../lib/api';
 import { CanvasUtils } from '../utils/canvas';
 import { ScrapPermissions } from '../utils/permissions';
+import { NestButton } from '../components/NestButton';
 import type { ScrapFormData, Position, Size } from '../types';
 
 
@@ -604,22 +605,11 @@ export default function HomePage(): React.JSX.Element {
                   </a>
                   {/* Open Nest button */}
                   {scrap.nestedCount !== undefined && (
-                    <Link
-                      href={`/${scrap.id}`}
+                    <NestButton
+                      scrapId={scrap.id}
+                      nestedCount={scrap.nestedCount}
                       onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center px-2 py-1 border border-gray-300 rounded-md shadow-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer mt-1"
-                    >
-                      {scrap.nestedCount === 0 ? (
-                        'Start Nest'
-                      ) : (
-                        <>
-                          Open Nest{' '}
-                          <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                            {scrap.nestedCount}
-                          </span>
-                        </>
-                      )}
-                    </Link>
+                    />
                   )}
                 </div>
                 <div className="flex space-x-1">
@@ -707,21 +697,11 @@ export default function HomePage(): React.JSX.Element {
                 </a>
                 {/* Open Nest button in modal header */}
                 {fullscreenModal.data.nestedCount !== undefined && (
-                  <Link
-                    href={`/${fullscreenModal.data.id}`}
-                    className="inline-flex items-center px-2 py-1 border border-gray-300 rounded-md shadow-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer mt-1"
-                  >
-                    {fullscreenModal.data.nestedCount === 0 ? (
-                      'Start Nest'
-                    ) : (
-                      <>
-                        Open Nest{' '}
-                        <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                          {fullscreenModal.data.nestedCount}
-                        </span>
-                      </>
-                    )}
-                  </Link>
+                  <NestButton
+                    scrapId={fullscreenModal.data.id}
+                    nestedCount={fullscreenModal.data.nestedCount}
+                    size="medium"
+                  />
                 )}
               </div>
               <div className="flex space-x-2">
