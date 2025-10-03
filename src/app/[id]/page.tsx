@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeftIcon, PlusIcon, CogIcon, ArrowRightOnRectangleIcon, UserIcon, EyeIcon, EyeSlashIcon, MapPinIcon, PencilIcon, XMarkIcon, ArrowsPointingOutIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PlusIcon, CogIcon, ArrowRightOnRectangleIcon, UserIcon, EyeIcon, EyeSlashIcon, MapPinIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import dynamic from 'next/dynamic';
 import config from '../../../corkboard.config';
 import { useModal } from '../../hooks/useModal';
@@ -273,7 +273,6 @@ export default function NestedScrapPage(): React.JSX.Element {
     }
   });
 
-  const [_editScrapError, _setEditScrapError] = useState<string>('');
   const [_originalEditScrapForm, _setOriginalEditScrapForm] = useState<ScrapFormData>({
     content: '',
     x: 0,
@@ -281,19 +280,6 @@ export default function NestedScrapPage(): React.JSX.Element {
     visible: true,
     nestedWithin: parentId,
   });
-
-  const handleEditScrapClick = (scrap: Scrap): void => {
-    const formData: ScrapFormData = {
-      content: scrap.content,
-      x: scrap.x,
-      y: scrap.y,
-      visible: scrap.visible,
-      nestedWithin: scrap.nestedWithin || parentId,
-    };
-    editScrapForm.setInitialValues(formData);
-    _setOriginalEditScrapForm(formData);
-    editScrapModal.open(scrap);
-  };
 
   const getScrapPosition = (scrap: Scrap): Position => {
     return CanvasUtils.getScrapDisplayPosition(scrap, nestedScraps);
