@@ -20,7 +20,8 @@
  */
 
 import config from '../../../corkboard.config';
-import { ScrapHeader } from '../ScrapHeader';
+import { ScrapHeader } from './ScrapHeader';
+import { ScrapFooter } from './ScrapFooter';
 import type { Scrap } from '../../lib/api';
 
 interface ScrapCardProps {
@@ -97,14 +98,12 @@ export function ScrapCard({
       </div>
 
       {/* Footer metadata */}
-      <div className="text-xs text-gray-500 border-t pt-2 flex justify-between items-center">
-        <div>
-          {scrap.userName || scrap.userEmail}
-        </div>
-        <div>
-          {new Date(scrap.createdAt).toLocaleDateString()}
-        </div>
-      </div>
+      <ScrapFooter
+        userName={scrap.userName}
+        userEmail={scrap.userEmail}
+        createdAt={scrap.createdAt}
+        size="small"
+      />
     </div>
   );
 }
