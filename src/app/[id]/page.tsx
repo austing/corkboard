@@ -552,6 +552,9 @@ export default function NestedScrapPage(): React.JSX.Element {
                 }}
               />
 
+              {/* Divider line */}
+              <div className="border-t border-gray-200 mb-3"></div>
+
               {/* Content */}
               <div className="mb-3">
                 <div

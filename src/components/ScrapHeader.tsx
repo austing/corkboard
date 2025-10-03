@@ -113,8 +113,6 @@ export function ScrapHeader({
         )}
         </div>
       </div>
-      {/* Divider line */}
-      <div className="border-t border-gray-200 mb-3"></div>
     </>
   );
 }
