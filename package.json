@@ -12,7 +12,9 @@
     "test:coverage": "jest --coverage",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "tsx src/lib/db/seed.ts"
+    "db:seed": "tsx src/lib/db/seed.ts",
+    "db:export": "./scripts/db-export.sh",
+    "db:import": "./scripts/db-import.sh"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.10.0",

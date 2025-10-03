@@ -11,6 +11,8 @@
   - `npm run dev` - Start development server with turbopack
   - `npm run build` - Build for production (includes TypeScript and ESLint checks)
   - `npm run db:seed` - Seed database with default roles and admin user
+  - `npm run db:export` - Export database to SQL dump in fixtures/ directory (auto-detects SQLite/PostgreSQL)
+  - `npm run db:import <path-to-backup.sql>` - Import database from SQL dump (auto-detects SQLite/PostgreSQL)
   - `npm run lint` - Run ESLint to check for code quality issues
   - `npm run test` - Run unit tests with Jest
   - `npm run test:watch` - Run tests in watch mode
@@ -18,6 +20,12 @@
 
   **Note**: `npm run dev` with Turbopack does NOT show ESLint errors in real-time.
   Always run `npm run lint` manually or `npm run build` to see linting issues.
+
+  ## Database Export/Import
+  - Export and import use native database tools (sqlite3/.dump for SQLite, pg_dump/psql for PostgreSQL)
+  - The scripts automatically detect which database you're using based on NODE_ENV and DATABASE_URL
+  - Exports are timestamped and saved to the fixtures/ directory
+  - Import includes safety prompts and optional backup before overwriting
 
   ## Database & Permissions
   - Default admin: admin@example.com / admin123
