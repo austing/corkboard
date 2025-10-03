@@ -545,8 +545,8 @@ export default function NestedScrapPage(): React.JSX.Element {
                   >
                     #{scrap.code}
                   </a>
-                  {/* Open Nest button */}
-                  {scrap.nestedCount !== undefined && (
+                  {/* Open Nest button - hide on invisible scraps */}
+                  {scrap.nestedCount !== undefined && scrap.visible && (
                     <NestButton
                       scrapId={scrap.id}
                       nestedCount={scrap.nestedCount}
@@ -637,8 +637,8 @@ export default function NestedScrapPage(): React.JSX.Element {
                 >
                   #{fullscreenModal.data.code}
                 </a>
-                {/* Open Nest button in modal header */}
-                {fullscreenModal.data.nestedCount !== undefined && (
+                {/* Open Nest button in modal header - hide on invisible scraps */}
+                {fullscreenModal.data.nestedCount !== undefined && fullscreenModal.data.visible && (
                   <NestButton
                     scrapId={fullscreenModal.data.id}
                     nestedCount={fullscreenModal.data.nestedCount}
