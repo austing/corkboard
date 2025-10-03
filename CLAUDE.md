@@ -9,12 +9,15 @@
 
   ## Key Commands
   - `npm run dev` - Start development server with turbopack
-  - `npm run build` - Build for production
+  - `npm run build` - Build for production (includes TypeScript and ESLint checks)
   - `npm run db:seed` - Seed database with default roles and admin user
-  - `npm run lint` - Run ESLint
+  - `npm run lint` - Run ESLint to check for code quality issues
   - `npm run test` - Run unit tests with Jest
   - `npm run test:watch` - Run tests in watch mode
   - `npm run test:coverage` - Run tests with coverage report
+
+  **Note**: `npm run dev` with Turbopack does NOT show ESLint errors in real-time.
+  Always run `npm run lint` manually or `npm run build` to see linting issues.
 
   ## Database & Permissions
   - Default admin: admin@example.com / admin123
