@@ -172,6 +172,16 @@ export default function NestedScrapPage(): React.JSX.Element {
               inline: 'center'
             });
           }
+          // Initialize edit form with scrap data
+          const formData: ScrapFormData = {
+            content: targetScrap.content,
+            x: targetScrap.x,
+            y: targetScrap.y,
+            visible: targetScrap.visible,
+            nestedWithin: parentId
+          };
+          editScrapForm.setInitialValues(formData);
+          _setOriginalEditScrapForm(formData);
           setTimeout(() => {
             fullscreenModal.open(targetScrap);
           }, 500);
@@ -198,6 +208,16 @@ export default function NestedScrapPage(): React.JSX.Element {
               inline: 'center'
             });
           }
+          // Initialize edit form with scrap data
+          const formData: ScrapFormData = {
+            content: targetScrap.content,
+            x: targetScrap.x,
+            y: targetScrap.y,
+            visible: targetScrap.visible,
+            nestedWithin: parentId
+          };
+          editScrapForm.setInitialValues(formData);
+          _setOriginalEditScrapForm(formData);
           // Open the modal
           setTimeout(() => {
             fullscreenModal.open(targetScrap);
@@ -230,10 +250,12 @@ export default function NestedScrapPage(): React.JSX.Element {
   const editScrapForm = useFormWithSubmit<ScrapFormData>({
     initialValues: { content: '', x: 0, y: 0, visible: true, nestedWithin: parentId },
     onSubmit: async (values: ScrapFormData) => {
-      if (!editScrapModal.data) {
+      // Use fullscreenModal for inline editing
+      const modalData = fullscreenModal.data || editScrapModal.data;
+      if (!modalData) {
         throw new Error('No scrap selected for editing');
       }
-      await api.updateScrap(editScrapModal.data.id, {
+      await api.updateScrap(modalData.id, {
         content: values.content,
         x: values.x,
         y: values.y,
@@ -242,7 +264,11 @@ export default function NestedScrapPage(): React.JSX.Element {
       });
     },
     onSuccess: () => {
-      editScrapModal.close();
+      if (fullscreenModal.isOpen) {
+        fullscreenModal.close();
+      } else {
+        editScrapModal.close();
+      }
       fetchNestedScraps();
     }
   });
@@ -539,6 +565,16 @@ export default function NestedScrapPage(): React.JSX.Element {
                 if (fullscreenModal.data?.id === scrap.id) {
                   fullscreenModal.close();
                 } else {
+                  // Initialize edit form with scrap data
+                  const formData: ScrapFormData = {
+                    content: scrap.content,
+                    x: scrap.x,
+                    y: scrap.y,
+                    visible: scrap.visible,
+                    nestedWithin: parentId
+                  };
+                  editScrapForm.setInitialValues(formData);
+                  _setOriginalEditScrapForm(formData);
                   fullscreenModal.open(scrap);
                   window.history.pushState(null, '', `${window.location.pathname}#${scrap.code}`);
                 }
@@ -548,18 +584,6 @@ export default function NestedScrapPage(): React.JSX.Element {
                 scrap={scrap}
                 isOwner={session?.user?.id === scrap.userId}
                 pathPrefix={window.location.pathname}
-                onFullscreenClick={() => {
-                  if (!scrap.visible && session?.user?.id === scrap.userId) {
-                    updateScrapVisibility(scrap.id, true);
-                  } else {
-                    fullscreenModal.open(scrap);
-                    window.history.pushState(null, '', `${window.location.pathname}#${scrap.code}`);
-                  }
-                }}
-                onEditClick={() => {
-                  handleEditScrapClick(scrap);
-                  window.history.pushState(null, '', `${window.location.pathname}#${scrap.code}`);
-                }}
               />
 
               {/* Divider line */}
@@ -608,14 +632,6 @@ export default function NestedScrapPage(): React.JSX.Element {
                     isModal={true}
                     isOwner={ScrapPermissions.canEdit(fullscreenModal.data, session?.user?.id)}
                     pathPrefix={window.location.pathname}
-                    onFullscreenClick={() => {
-                      fullscreenModal.open(fullscreenModal.data!);
-                      window.history.pushState(null, '', `${window.location.pathname}#${fullscreenModal.data.code}`);
-                    }}
-                    onEditClick={() => {
-                      handleEditScrapClick(fullscreenModal.data!);
-                      fullscreenModal.close();
-                    }}
                     onVisibilityToggle={async () => {
                       const newVisibility = !fullscreenModal.data!.visible;
                       await updateScrapVisibility(fullscreenModal.data!.id, newVisibility);
@@ -631,30 +647,125 @@ export default function NestedScrapPage(): React.JSX.Element {
                 <button
                   onClick={() => fullscreenModal.close()}
                   className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer ml-2"
-                  title="Close fullscreen"
+                  title="Close"
                 >
                   <XMarkIcon className="h-5 w-5" />
                 </button>
               </div>
             </div>
 
-            {/* Content - scrollable */}
-            <div className="flex-1 overflow-y-auto mb-6">
-              <div
-                className="text-base text-gray-800 leading-relaxed froala-content"
-                dangerouslySetInnerHTML={{ __html: fullscreenModal.data.content }}
-              />
-            </div>
+            {/* Content - editable for owner, view-only for others */}
+            {ScrapPermissions.canEdit(fullscreenModal.data, session?.user?.id) ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  editScrapForm.handleSubmit();
+                }}
+                className="flex-1 flex flex-col overflow-hidden"
+              >
+                <div className="flex-1 overflow-y-auto mb-6">
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-900 mb-2">
+                      Content
+                    </label>
+                    <FroalaEditor
+                      content={editScrapForm.values.content || fullscreenModal.data.content}
+                      onChange={(content) => editScrapForm.setValue('content', content)}
+                      height={400}
+                      maxHeight={600}
+                    />
+                  </div>
 
-            {/* Footer */}
-            <div className="text-sm text-gray-500 border-t border-gray-200 pt-4 flex justify-between items-center">
-              <div>
-                {fullscreenModal.data.userName || fullscreenModal.data.userEmail}
-              </div>
-              <div>
-                {new Date(fullscreenModal.data.createdAt).toLocaleDateString()}
-              </div>
-            </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="fullscreen-nested-x" className="block text-sm font-medium text-gray-900 mb-2">
+                        X Position
+                      </label>
+                      <input
+                        type="number"
+                        name="x"
+                        id="fullscreen-nested-x"
+                        value={editScrapForm.values.x !== undefined ? editScrapForm.values.x : fullscreenModal.data.x}
+                        onChange={editScrapForm.handleInputChange}
+                        min={0}
+                        max={999999}
+                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2 border"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="fullscreen-nested-y" className="block text-sm font-medium text-gray-900 mb-2">
+                        Y Position
+                      </label>
+                      <input
+                        type="number"
+                        name="y"
+                        id="fullscreen-nested-y"
+                        value={editScrapForm.values.y !== undefined ? editScrapForm.values.y : fullscreenModal.data.y}
+                        onChange={editScrapForm.handleInputChange}
+                        min={0}
+                        max={999999}
+                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2 border"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {editScrapForm.error && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-md mb-4">
+                    <div className="text-red-800 text-sm">{editScrapForm.error}</div>
+                  </div>
+                )}
+
+                {/* Footer */}
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="text-sm text-gray-500 mb-4 flex justify-between items-center">
+                    <div>
+                      {fullscreenModal.data.userName || fullscreenModal.data.userEmail}
+                    </div>
+                    <div>
+                      {new Date(fullscreenModal.data.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => fullscreenModal.close()}
+                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={editScrapForm.loading || !editScrapForm.values.content || editScrapForm.values.content.trim() === '' || editScrapForm.values.content === '<p><br></p>'}
+                      className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${config.theme.primary.bg} ${config.theme.primary.hover} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {editScrapForm.loading ? 'Updating...' : 'Update Scrap'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            ) : (
+              <>
+                {/* Content - scrollable */}
+                <div className="flex-1 overflow-y-auto mb-6">
+                  <div
+                    className="text-base text-gray-800 leading-relaxed froala-content"
+                    dangerouslySetInnerHTML={{ __html: fullscreenModal.data.content }}
+                  />
+                </div>
+
+                {/* Footer */}
+                <div className="text-sm text-gray-500 border-t border-gray-200 pt-4 flex justify-between items-center">
+                  <div>
+                    {fullscreenModal.data.userName || fullscreenModal.data.userEmail}
+                  </div>
+                  <div>
+                    {new Date(fullscreenModal.data.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+              </>
+            )}
             </div>
           </div>
         </div>
