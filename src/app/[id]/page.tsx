@@ -63,28 +63,6 @@ export default function NestedScrapPage(): React.JSX.Element {
     }
   });
 
-  const handleHashNavigation = useCallback(() => {
-    const hash = window.location.hash.replace('#', '');
-    if (hash && nestedScraps.length > 0) {
-      const targetScrap = nestedScraps.find(scrap => scrap.code === hash);
-      if (targetScrap) {
-        // Scroll to the scrap
-        const scrapElement = document.getElementById(hash);
-        if (scrapElement) {
-          scrapElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-            inline: 'center'
-          });
-        }
-        // Open the modal
-        setTimeout(() => {
-          fullscreenModal.open(targetScrap);
-        }, 500); // Delay to let scroll complete
-      }
-    }
-  }, [nestedScraps, fullscreenModal]);
-
   const fetchNestedScraps = useCallback(async (): Promise<void> => {
     if (!parentId) return;
 
@@ -176,30 +154,61 @@ export default function NestedScrapPage(): React.JSX.Element {
     }
   ], [isMoveMode, newScrapModal.isOpen, editScrapModal.isOpen]);
 
-  const calculateCanvasSize = useCallback((): void => {
-    const size: Size = CanvasUtils.calculateCanvasSize(nestedScraps);
-    setCanvasSize(size);
-  }, [nestedScraps]);
-
   useEffect(() => {
     if (nestedScraps.length > 0 && !loading) {
-      calculateCanvasSize();
+      const size: Size = CanvasUtils.calculateCanvasSize(nestedScraps);
+      setCanvasSize(size);
+
       // Handle hash navigation after scraps are loaded
-      handleHashNavigation();
+      const hash = window.location.hash.replace('#', '');
+      if (hash) {
+        const targetScrap = nestedScraps.find(scrap => scrap.code === hash);
+        if (targetScrap) {
+          const scrapElement = document.getElementById(hash);
+          if (scrapElement) {
+            scrapElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+              inline: 'center'
+            });
+          }
+          setTimeout(() => {
+            fullscreenModal.open(targetScrap);
+          }, 500);
+        }
+      }
     } else if (nestedScraps.length === 0 && !loading) {
       setCanvasSize({ width: Math.max(window.innerWidth, 1000), height: Math.max(window.innerHeight, 800) });
     }
-  }, [nestedScraps, loading, calculateCanvasSize, handleHashNavigation]);
+  }, [nestedScraps, loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for hash changes
   useEffect(() => {
     const handleHashChange = () => {
-      handleHashNavigation();
+      const hash = window.location.hash.replace('#', '');
+      if (hash && nestedScraps.length > 0) {
+        const targetScrap = nestedScraps.find(scrap => scrap.code === hash);
+        if (targetScrap) {
+          // Scroll to the scrap
+          const scrapElement = document.getElementById(hash);
+          if (scrapElement) {
+            scrapElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+              inline: 'center'
+            });
+          }
+          // Open the modal
+          setTimeout(() => {
+            fullscreenModal.open(targetScrap);
+          }, 500); // Delay to let scroll complete
+        }
+      }
     };
 
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [nestedScraps, handleHashNavigation]);
+  }, [nestedScraps]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Form management using useFormWithSubmit hook
   const newScrapForm = useFormWithSubmit<ScrapFormData>({
