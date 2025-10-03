@@ -1,4 +1,4 @@
-import { EyeSlashIcon, EyeIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { EyeSlashIcon, EyeIcon, MapPinIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import config from '../../corkboard.config';
 import { NestButton } from './NestButton';
 import type { Scrap } from '../lib/api';
@@ -51,31 +51,49 @@ export function ScrapHeader({
           )}
         </div>
 
-        {/* Action buttons on right (only in modals for owner) */}
-        {isModal && isOwner && (
+        {/* Action buttons on right */}
+        {isModal && (
           <div className="flex space-x-1">
-            {onVisibilityToggle && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onVisibilityToggle();
-                }}
-                className={`text-gray-500 hover:text-gray-700 ${iconPadding} rounded hover:bg-gray-100 cursor-pointer`}
-                title={scrap.visible ? "Make private" : "Make visible"}
-              >
-                {scrap.visible ? <EyeIcon className={iconSize} /> : <EyeSlashIcon className={iconSize} />}
-              </button>
+            {/* Owner-only buttons */}
+            {isOwner && (
+              <>
+                {onVisibilityToggle && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onVisibilityToggle();
+                    }}
+                    className={`text-gray-500 hover:text-gray-700 ${iconPadding} rounded hover:bg-gray-100 cursor-pointer`}
+                    title={scrap.visible ? "Make private" : "Make visible"}
+                  >
+                    {scrap.visible ? <EyeIcon className={iconSize} /> : <EyeSlashIcon className={iconSize} />}
+                  </button>
+                )}
+                {onMoveClick && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMoveClick();
+                    }}
+                    className={`text-gray-500 hover:text-gray-700 ${iconPadding} rounded hover:bg-gray-100 cursor-pointer`}
+                    title="Move this scrap"
+                  >
+                    <MapPinIcon className={iconSize} />
+                  </button>
+                )}
+              </>
             )}
-            {onMoveClick && (
+            {/* Close button - always visible in modal */}
+            {onCloseClick && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onMoveClick();
+                  onCloseClick();
                 }}
                 className={`text-gray-500 hover:text-gray-700 ${iconPadding} rounded hover:bg-gray-100 cursor-pointer`}
-                title="Move this scrap"
+                title="Close"
               >
-                <MapPinIcon className={iconSize} />
+                <XMarkIcon className={iconSize} />
               </button>
             )}
           </div>

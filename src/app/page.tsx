@@ -660,32 +660,22 @@ export default function HomePage(): React.JSX.Element {
             <div className="p-6 flex flex-col h-full overflow-hidden">
             {/* Header */}
             <div className="pb-4 border-b border-gray-200 mb-6">
-              <div className="flex justify-between items-center">
-                <div className="flex-1">
-                  <ScrapHeader
-                    scrap={fullscreenModal.data}
-                    isModal={true}
-                    isOwner={ScrapPermissions.canEdit(fullscreenModal.data, session?.user?.id)}
-                    onVisibilityToggle={async () => {
-                      const newVisibility = !fullscreenModal.data!.visible;
-                      await updateScrapVisibility(fullscreenModal.data!.id, newVisibility);
-                      fullscreenModal.close();
-                    }}
-                    onMoveClick={() => {
-                      setMovingScrap(fullscreenModal.data!);
-                      setIsMoveMode(true);
-                      fullscreenModal.close();
-                    }}
-                  />
-                </div>
-                <button
-                  onClick={() => fullscreenModal.close()}
-                  className="text-gray-500 hover:text-gray-700 p-2 rounded hover:bg-gray-100 cursor-pointer ml-2"
-                  title="Close"
-                >
-                  <XMarkIcon className="h-5 w-5" />
-                </button>
-              </div>
+              <ScrapHeader
+                scrap={fullscreenModal.data}
+                isModal={true}
+                isOwner={ScrapPermissions.canEdit(fullscreenModal.data, session?.user?.id)}
+                onVisibilityToggle={async () => {
+                  const newVisibility = !fullscreenModal.data!.visible;
+                  await updateScrapVisibility(fullscreenModal.data!.id, newVisibility);
+                  fullscreenModal.close();
+                }}
+                onMoveClick={() => {
+                  setMovingScrap(fullscreenModal.data!);
+                  setIsMoveMode(true);
+                  fullscreenModal.close();
+                }}
+                onCloseClick={() => fullscreenModal.close()}
+              />
             </div>
 
             {/* Content - editable for owner, view-only for others */}
@@ -699,7 +689,7 @@ export default function HomePage(): React.JSX.Element {
               >
                 <div className="flex-1 overflow-y-auto mb-6">
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-900 mb-2">
+                    <label className="sr-only">
                       Content
                     </label>
                     <FroalaEditor
