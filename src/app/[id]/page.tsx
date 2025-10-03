@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeftIcon, PlusIcon, CogIcon, ArrowRightOnRectangleIcon, UserIcon, EyeIcon, EyeSlashIcon, MapPinIcon, PencilIcon, XMarkIcon, ArrowsPointingOutIcon } from '@heroicons/react/24/outline';
 import dynamic from 'next/dynamic';
@@ -25,6 +25,7 @@ const FroalaEditor = dynamic(() => import('../components/FroalaEditor'), {
 export default function NestedScrapPage(): React.JSX.Element {
   const { data: session } = useSession();
   const params = useParams();
+  const router = useRouter();
   const parentId = params.id as string;
 
   const [parentScrap, setParentScrap] = useState<Scrap | null>(null);
@@ -349,21 +350,19 @@ export default function NestedScrapPage(): React.JSX.Element {
           <div className="text-sm">
             <span className="text-gray-600">Nested in: </span>
             {parentScrap.nestedWithin ? (
-              <Link
-                href={`/${parentScrap.nestedWithin}#${parentScrap.code}`}
-                className="font-mono font-bold text-indigo-600 hover:text-indigo-800 underline"
-                scroll={true}
+              <button
+                onClick={() => router.push(`/${parentScrap.nestedWithin}#${parentScrap.code}`)}
+                className="font-mono font-bold text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
               >
                 #{parentScrap.code}
-              </Link>
+              </button>
             ) : (
-              <Link
-                href={`/#${parentScrap.code}`}
-                className="font-mono font-bold text-indigo-600 hover:text-indigo-800 underline"
-                scroll={true}
+              <button
+                onClick={() => router.push(`/#${parentScrap.code}`)}
+                className="font-mono font-bold text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
               >
                 #{parentScrap.code}
-              </Link>
+              </button>
             )}
           </div>
         </div>
