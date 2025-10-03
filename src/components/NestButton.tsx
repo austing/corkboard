@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { PlusIcon } from '@heroicons/react/24/outline';
 
 interface NestButtonProps {
   scrapId: string;
@@ -12,6 +13,7 @@ export function NestButton({ scrapId, nestedCount, size = 'small', onClick }: Ne
     ? 'px-2 py-1 text-xs'
     : 'px-3 py-1.5 text-sm';
 
+  const iconSize = size === 'small' ? 'h-3 w-3' : 'h-4 w-4';
   const borderColor = nestedCount === 0 ? 'border-gray-300' : 'border-indigo-600';
 
   return (
@@ -21,7 +23,10 @@ export function NestButton({ scrapId, nestedCount, size = 'small', onClick }: Ne
       className={`inline-flex items-center justify-center gap-1 border ${borderColor} rounded-md shadow-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer mt-1 ${sizeClasses}`}
     >
       {nestedCount === 0 ? (
-        'Build Nest'
+        <>
+          <PlusIcon className={iconSize} />
+          Nest
+        </>
       ) : (
         <>
           Nest
