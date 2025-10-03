@@ -352,6 +352,7 @@ export default function NestedScrapPage(): React.JSX.Element {
               <Link
                 href={`/${parentScrap.nestedWithin}#${parentScrap.code}`}
                 className="font-mono font-bold text-indigo-600 hover:text-indigo-800 underline"
+                scroll={true}
               >
                 #{parentScrap.code}
               </Link>
@@ -359,6 +360,7 @@ export default function NestedScrapPage(): React.JSX.Element {
               <Link
                 href={`/#${parentScrap.code}`}
                 className="font-mono font-bold text-indigo-600 hover:text-indigo-800 underline"
+                scroll={true}
               >
                 #{parentScrap.code}
               </Link>
