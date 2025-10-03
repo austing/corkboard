@@ -16,14 +16,14 @@ export function NestButton({ scrapId, nestedCount, size = 'small', onClick }: Ne
     <Link
       href={`/${scrapId}`}
       onClick={onClick}
-      className={`inline-flex items-center gap-1 border border-gray-300 rounded-md shadow-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer mt-1 ${sizeClasses}`}
+      className={`inline-flex items-center justify-center gap-1 border border-gray-800 rounded-md shadow-sm font-medium text-white bg-gray-800 hover:bg-gray-700 cursor-pointer mt-1 ${sizeClasses}`}
     >
       {nestedCount === 0 ? (
-        'Open Nest'
+        'Build Nest'
       ) : (
         <>
           Nest
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-gray-600 text-white">
             {nestedCount}
           </span>
         </>
