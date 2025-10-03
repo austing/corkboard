@@ -22,7 +22,7 @@ export function NestButton({ scrapId, nestedCount, size = 'small', onClick }: Ne
       className={`inline-flex items-center gap-1 rounded-full font-medium cursor-pointer mt-1 ${sizeClasses} ${
         nestedCount === 0
           ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          : 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200'
+          : 'bg-white text-gray-700 border border-indigo-600 hover:bg-gray-50'
       }`}
     >
       {nestedCount === 0 ? (
@@ -33,7 +33,7 @@ export function NestButton({ scrapId, nestedCount, size = 'small', onClick }: Ne
       ) : (
         <>
           Nest
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-200 text-indigo-900">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
             {nestedCount}
           </span>
         </>
