@@ -19,9 +19,9 @@ interface ScrapFooterProps {
   /** Author's display name (optional) */
   userName?: string | null;
   /** Author's email */
-  userEmail: string;
+  userEmail?: string | null;
   /** When the scrap was created */
-  createdAt: Date | number;
+  createdAt?: Date | number | null;
   /** Size variant - small for cards, large for modals */
   size?: 'small' | 'large';
   /** Additional CSS classes */
@@ -38,10 +38,15 @@ export function ScrapFooter({
   const textSize = size === 'small' ? 'text-xs' : 'text-sm';
   const paddingClass = size === 'small' ? 'border-t pt-2' : '';
 
+  // If no data is available (redacted for invisible scraps), don't show footer
+  if (!userEmail && !userName && !createdAt) {
+    return null;
+  }
+
   return (
     <div className={`${textSize} text-gray-500 flex justify-between items-center ${paddingClass} ${className}`}>
-      <div>{userName || userEmail}</div>
-      <div>{new Date(createdAt).toLocaleDateString()}</div>
+      <div>{userName || userEmail || 'Unknown'}</div>
+      <div>{createdAt ? new Date(createdAt).toLocaleDateString() : ''}</div>
     </div>
   );
 }

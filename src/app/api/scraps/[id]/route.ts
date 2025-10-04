@@ -13,11 +13,12 @@ export async function GET(
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const userId = session?.user?.id;
 
-    await requirePermission(session.user.id, 'scraps', 'read');
+    // No authentication required for GET - but check permissions if logged in
+    if (userId) {
+      await requirePermission(userId, 'scraps', 'read');
+    }
 
     const scrap = await db
       .select({
@@ -43,25 +44,39 @@ export async function GET(
       return NextResponse.json({ error: 'Scrap not found' }, { status: 404 });
     }
 
-    // Check if user can view this scrap (own scrap or has permission to view others)
-    if (scrap[0].userId !== session.user.id) {
-      try {
-        await requirePermission(session.user.id, 'scraps', 'read_others');
-      } catch (_err) {
-        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-      }
-    }
-
     // Get nested scrap count for this scrap
     const nestedCountResult = await db
       .select({ count: count() })
       .from(scraps)
       .where(eq(scraps.nestedWithin, id));
 
-    const scrapWithCount = {
-      ...scrap[0],
-      nestedCount: nestedCountResult[0]?.count || 0
-    };
+    const isOwner = userId && scrap[0].userId === userId;
+    const isInvisible = !scrap[0].visible;
+
+    // If scrap is invisible and user is not the owner, redact sensitive data
+    let scrapWithCount;
+    if (isInvisible && !isOwner) {
+      scrapWithCount = {
+        id: scrap[0].id,
+        code: scrap[0].code,
+        content: '', // Redacted
+        x: scrap[0].x,
+        y: scrap[0].y,
+        visible: scrap[0].visible,
+        userId: null, // Redacted
+        nestedWithin: scrap[0].nestedWithin,
+        userName: null, // Redacted
+        userEmail: null, // Redacted
+        createdAt: null, // Redacted
+        updatedAt: null, // Redacted
+        nestedCount: nestedCountResult[0]?.count || 0
+      };
+    } else {
+      scrapWithCount = {
+        ...scrap[0],
+        nestedCount: nestedCountResult[0]?.count || 0
+      };
+    }
 
     return NextResponse.json({ scrap: scrapWithCount });
   } catch (error: unknown) {

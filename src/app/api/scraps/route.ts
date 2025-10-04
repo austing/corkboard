@@ -10,23 +10,20 @@ import { randomUUID } from 'crypto';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const userId = session?.user?.id;
+
+    // No authentication required for GET - but check permissions if logged in
+    if (userId) {
+      try {
+        await requirePermission(userId, 'scraps', 'read');
+      } catch (permissionError) {
+        console.error('Permission check failed for user:', userId, 'Error:', permissionError);
+        throw permissionError;
+      }
     }
 
     const url = new URL(request.url);
     const onlyMine = url.searchParams.get('onlyMine') === 'true';
-
-    // Add debug logging to help identify permission issues
-    console.log('Checking permissions for user:', session.user.id);
-    
-    try {
-      await requirePermission(session.user.id, 'scraps', 'read');
-      console.log('Permission check successful for user:', session.user.id);
-    } catch (permissionError) {
-      console.error('Permission check failed for user:', session.user.id, 'Error:', permissionError);
-      throw permissionError;
-    }
 
     const baseQuery = db
       .select({
@@ -49,15 +46,14 @@ export async function GET(request: NextRequest) {
     // Filter scraps based on visibility and ownership
     // IMPORTANT: Only show scraps that are NOT nested (nestedWithin is null)
     let allScraps;
-    if (onlyMine) {
+    if (onlyMine && userId) {
       // Show all scraps owned by the user (visible and invisible) but only top-level scraps
       allScraps = await baseQuery.where(
-        eq(scraps.userId, session.user.id)
+        eq(scraps.userId, userId)
       ).where(isNull(scraps.nestedWithin));
     } else {
-      // Show visible scraps + user's own invisible scraps, but only top-level scraps
+      // Show all top-level scraps
       allScraps = await baseQuery.where(isNull(scraps.nestedWithin));
-      // Client-side filtering will be handled by the frontend
     }
 
     // Get nested scrap counts for each scrap
@@ -72,11 +68,35 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    // Add nested counts to scrap data
-    const scrapsWithCounts = allScraps.map(scrap => ({
-      ...scrap,
-      nestedCount: nestedCounts.find(nc => nc.scrapId === scrap.id)?.count || 0
-    }));
+    // Process scraps: hide content/author/date for invisible scraps from non-authors
+    const scrapsWithCounts = allScraps.map(scrap => {
+      const isOwner = userId && scrap.userId === userId;
+      const isInvisible = !scrap.visible;
+
+      // If scrap is invisible and user is not the owner, redact sensitive data
+      if (isInvisible && !isOwner) {
+        return {
+          id: scrap.id,
+          code: scrap.code,
+          content: '', // Redacted
+          x: scrap.x,
+          y: scrap.y,
+          visible: scrap.visible,
+          userId: null, // Redacted
+          nestedWithin: scrap.nestedWithin,
+          userName: null, // Redacted
+          userEmail: null, // Redacted
+          createdAt: null, // Redacted
+          updatedAt: null, // Redacted
+          nestedCount: nestedCounts.find(nc => nc.scrapId === scrap.id)?.count || 0
+        };
+      }
+
+      return {
+        ...scrap,
+        nestedCount: nestedCounts.find(nc => nc.scrapId === scrap.id)?.count || 0
+      };
+    });
 
     return NextResponse.json({ scraps: scrapsWithCounts });
   } catch (error: unknown) {

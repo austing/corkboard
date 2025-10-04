@@ -59,6 +59,10 @@ export function ScrapCard({
   onMouseEnter,
   onMouseLeave,
 }: ScrapCardProps) {
+  // Invisible scraps that user doesn't own should not be clickable
+  const isInvisibleNonOwner = !scrap.visible && !isOwner;
+  const isClickable = !isInvisibleNonOwner;
+
   // Determine card styling based on state
   const getCardClassName = () => {
     if (isMoving) {
@@ -67,21 +71,25 @@ export function ScrapCard({
     if (!scrap.visible && isOwner) {
       return `${config.theme.invisible.bg} ${config.theme.invisible.text} border border-gray-600 opacity-40 hover:opacity-100 hover:shadow-xl invert`;
     }
+    if (isInvisibleNonOwner) {
+      // Non-owner invisible scraps: no hover effect, no pointer
+      return 'bg-gray-100 border border-gray-300 opacity-30';
+    }
     return 'bg-white border border-gray-200 hover:shadow-xl';
   };
 
   return (
     <div
       id={scrap.code}
-      className={`absolute shadow-lg rounded-lg p-4 max-w-sm transition-shadow cursor-pointer ${getCardClassName()}`}
+      className={`absolute shadow-lg rounded-lg p-4 max-w-sm transition-shadow ${isClickable ? 'cursor-pointer' : 'cursor-default'} ${getCardClassName()}`}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
         zIndex: scrap.visible ? 10 + index : index,
       }}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      onClick={onClick}
+      onMouseEnter={isClickable ? onMouseEnter : undefined}
+      onMouseLeave={isClickable ? onMouseLeave : undefined}
+      onClick={isClickable ? onClick : undefined}
     >
       <ScrapHeader
         scrap={scrap}
