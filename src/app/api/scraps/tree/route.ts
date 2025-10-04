@@ -57,24 +57,25 @@ export async function GET() {
     const processedScraps = allScraps.map(scrap => {
       const isOwner = userId === scrap.userId;
       const isVisible = scrap.visible;
+      const isLoggedOut = !userId;
 
-      // Redact content for invisible scraps that user doesn't own
-      if (!isVisible && !isOwner) {
+      // If user is not logged in, redact ALL scraps (show only position and ID)
+      if (isLoggedOut) {
         return {
           ...scrap,
-          content: '',
-          userName: null,
-          userEmail: null,
+          content: '', // Redacted
+          userName: null, // Redacted
+          userEmail: null, // Redacted
         };
       }
 
-      // Redact user info for unauthenticated users viewing invisible scraps
-      if (!isVisible && !userId) {
+      // If scrap is invisible and user is not the owner, redact sensitive data
+      if (!isVisible && !isOwner) {
         return {
           ...scrap,
-          content: '',
-          userName: null,
-          userEmail: null,
+          content: '', // Redacted
+          userName: null, // Redacted
+          userEmail: null, // Redacted
         };
       }
 
