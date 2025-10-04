@@ -442,7 +442,7 @@ export default function HomePage(): React.JSX.Element {
       </div>
 
       {/* Fullscreen Modal - Update or View based on ownership */}
-      {ScrapPermissions.canEdit(fullscreenModal.data!, session?.user?.id) ? (
+      {fullscreenModal.data && ScrapPermissions.canEdit(fullscreenModal.data, session?.user?.id) ? (
         <UpdateScrapModal
           isOpen={fullscreenModal.isOpen}
           scrap={fullscreenModal.data}
