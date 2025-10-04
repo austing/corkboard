@@ -212,15 +212,6 @@ export function LatestView({
               }}
             >
               {/* Centered link above scrap */}
-              <div className="flex justify-center mb-2">
-                <Link
-                  href={getScrapLink(scrap)}
-                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                >
-                  {scrap.code}
-                </Link>
-              </div>
-
               <ScrapCard
                 scrap={scrap}
                 isOwner={session?.user?.id === scrap.userId}
