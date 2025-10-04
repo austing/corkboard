@@ -31,7 +31,7 @@ export function ScrapHeader({
     <>
       <div className="flex justify-between items-start mb-3">
         {/* Code and nest button on left */}
-        <div className="flex flex-col items-start">
+        <div className="flex items-center gap-2">
           <a
             href={`${pathPrefix}#${scrap.code}`}
             className={`${codeSize} font-mono font-bold ${config.theme.primary.text} hover:text-indigo-800`}
