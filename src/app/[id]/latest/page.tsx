@@ -102,9 +102,14 @@ export default function NestedLatestPage(): React.JSX.Element {
       });
 
       setScraps(sortedScraps);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching scraps:', err);
-      setError('An error occurred while fetching scraps');
+      // Check if it's a 404 error
+      if (err.message?.includes('not found') || err.status === 404) {
+        setError('404');
+      } else {
+        setError('An error occurred while fetching scraps');
+      }
       setScraps([]);
     } finally {
       setLoading(false);
@@ -158,7 +163,14 @@ export default function NestedLatestPage(): React.JSX.Element {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-500 mb-4">{error || 'Parent scrap not found'}</div>
+          {error === '404' ? (
+            <>
+              <div className="text-6xl font-bold text-gray-400 mb-4">404</div>
+              <div className="text-gray-600 mb-4">Scrap not found</div>
+            </>
+          ) : (
+            <div className="text-red-500 mb-4">{error || 'Parent scrap not found'}</div>
+          )}
           <Link href="/" className="text-blue-600 hover:text-blue-800">
             ← Back to main corkboard
           </Link>
