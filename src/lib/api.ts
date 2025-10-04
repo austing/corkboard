@@ -56,9 +56,10 @@ class ApiClient {
   }
 
   // Scrap-specific methods
-  async fetchScraps(authenticated: boolean): Promise<ScrapsResponse> {
-    const endpoint = authenticated ? '/api/scraps' : '/api/scraps/public';
-    return this.request<ScrapsResponse>(endpoint);
+  async fetchScraps(): Promise<ScrapsResponse> {
+    // Single endpoint handles both authenticated and unauthenticated requests
+    // API will redact content based on authentication status
+    return this.request<ScrapsResponse>('/api/scraps');
   }
 
   async createScrap(data: ScrapCreateData): Promise<ScrapWithUser> {

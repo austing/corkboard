@@ -195,8 +195,8 @@ export default function HomePage(): React.JSX.Element {
 
   const fetchScraps = async (): Promise<void> => {
     try {
-      const data = await api.fetchScraps(!!session?.user?.id);
-      const filteredScraps = session?.user?.id 
+      const data = await api.fetchScraps();
+      const filteredScraps = session?.user?.id
         ? ScrapPermissions.filterViewableScraps(data.scraps, session.user.id)
         : data.scraps;
       setScraps(filteredScraps);
