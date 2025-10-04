@@ -53,6 +53,7 @@ export function ScrapHeader({
               isHovered={isHovered}
               isModal={isModal}
               isAuthenticated={isAuthenticated}
+              isOwner={isOwner}
               onClick={(e) => e.stopPropagation()}
             />
           )}

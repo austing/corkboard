@@ -8,17 +8,19 @@ interface NestButtonProps {
   isHovered?: boolean;
   isModal?: boolean;
   isAuthenticated?: boolean;
+  isOwner?: boolean;
   onClick?: (e: React.MouseEvent) => void;
 }
 
-export function NestButton({ scrapId, nestedCount, size = 'small', isHovered = false, isModal = false, isAuthenticated = false, onClick }: NestButtonProps) {
+export function NestButton({ scrapId, nestedCount, size = 'small', isHovered = false, isModal = false, isAuthenticated = false, isOwner = false, onClick }: NestButtonProps) {
   const sizeClasses = size === 'small'
     ? 'px-1.5 py-0.5 text-[10px]'
     : 'px-2 py-1 text-xs';
 
   const iconSize = size === 'small' ? 'h-2.5 w-2.5' : 'h-3 w-3';
   const badgeSize = size === 'small' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-xs';
-  const shouldShowAddButton = (isHovered || isModal) && nestedCount === 0 && isAuthenticated;
+  // Show +Nest if: (hovered or modal) AND authenticated AND (owner OR nestedCount === 0)
+  const shouldShowAddButton = (isHovered || isModal) && isAuthenticated && (isOwner || nestedCount === 0);
 
   return (
     <div className="inline-flex items-center gap-1">
