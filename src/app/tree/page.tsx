@@ -150,7 +150,7 @@ export default function TreePage(): React.JSX.Element {
     };
   };
 
-  // Render connection lines - from right edge center to left edge center
+  // Render connection lines - right angles (horizontal then vertical)
   const renderConnections = (positions: Map<string, { x: number; y: number }>) => {
     const lines: JSX.Element[] = [];
 
@@ -168,11 +168,41 @@ export default function TreePage(): React.JSX.Element {
         const childLeftX = childPos.x;
         const childCenterY = childPos.y + CARD_HEIGHT / 2;
 
+        // Calculate midpoint for right angle
+        const midX = (parentRightX + childLeftX) / 2;
+
+        // Draw horizontal line from parent to midpoint
         lines.push(
           <line
-            key={`${node.scrap.id}-${child.scrap.id}`}
+            key={`${node.scrap.id}-${child.scrap.id}-h`}
             x1={parentRightX}
             y1={parentCenterY}
+            x2={midX}
+            y2={parentCenterY}
+            stroke="#9ca3af"
+            strokeWidth="2"
+          />
+        );
+
+        // Draw vertical line at midpoint
+        lines.push(
+          <line
+            key={`${node.scrap.id}-${child.scrap.id}-v`}
+            x1={midX}
+            y1={parentCenterY}
+            x2={midX}
+            y2={childCenterY}
+            stroke="#9ca3af"
+            strokeWidth="2"
+          />
+        );
+
+        // Draw horizontal line from midpoint to child
+        lines.push(
+          <line
+            key={`${node.scrap.id}-${child.scrap.id}-h2`}
+            x1={midX}
+            y1={childCenterY}
             x2={childLeftX}
             y2={childCenterY}
             stroke="#9ca3af"
