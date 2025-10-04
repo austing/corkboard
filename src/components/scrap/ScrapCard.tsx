@@ -80,11 +80,11 @@ export function ScrapCard({
     }
     if (isInvisibleScrap) {
       // All invisible scraps use the same styling and raise opacity on hover
-      const highlightClass = isHighlighted ? 'border-indigo-500 border-4' : 'border-gray-300';
+      const highlightClass = isHighlighted ? `${config.theme.accent.border} border-4` : 'border-gray-300';
       return `${config.theme.invisible.bg} ${config.theme.invisible.text} border ${highlightClass} opacity-80 hover:opacity-100 hover:shadow-xl`;
     }
-    const highlightClass = isHighlighted ? 'border-indigo-500 border-4' : 'border-gray-200';
-    return `bg-white border ${highlightClass} hover:shadow-xl`;
+    const highlightClass = isHighlighted ? `${config.theme.accent.border} border-4` : 'border-gray-200';
+    return `${config.theme.visible.bg} ${config.theme.visible.text} border ${highlightClass} hover:shadow-xl`;
   };
 
   return (
@@ -114,7 +114,7 @@ export function ScrapCard({
       {/* Content preview - grows to fill available space */}
       <div className="mb-3 flex-grow min-h-[120px]">
         <div
-          className={`text-sm text-gray-800 line-clamp-24 froala-content ${isInvisibleScrap ? 'opacity-0' : ''}`}
+          className={`text-sm line-clamp-24 froala-content ${isInvisibleScrap ? config.theme.invisible.textColor : ''}`}
           dangerouslySetInnerHTML={{ __html: scrap.content }}
         />
       </div>
