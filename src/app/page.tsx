@@ -170,8 +170,8 @@ export default function HomePage(): React.JSX.Element {
       // Handle hash navigation after scraps are loaded
       handleHashNavigation();
     } else if (scraps.length === 0 && !loading) {
-      // No scraps - set minimal canvas size
-      setCanvasSize({ width: Math.max(window.innerWidth, 1000), height: Math.max(window.innerHeight, 800) });
+      // No scraps - canvas will use min-content with CSS min-width/min-height
+      setCanvasSize({ width: 0, height: 0 });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scraps, loading, handleHashNavigation]);
@@ -365,11 +365,13 @@ export default function HomePage(): React.JSX.Element {
       />
 
       {/* Infinite canvas - no size restrictions */}
-      <div 
-        className="bg-transparent" 
-        style={{ 
-          width: `${canvasSize.width}px`, 
-          height: `${canvasSize.height}px`,
+      <div
+        className="bg-transparent"
+        style={{
+          minWidth: '100vw',
+          minHeight: '100vh',
+          width: canvasSize.width > 0 ? `${canvasSize.width}px` : 'auto',
+          height: canvasSize.height > 0 ? `${canvasSize.height}px` : 'auto',
           position: 'relative',
           cursor: (isShiftPressed && session && !isMoveMode) || isMoveMode ? 'none' : 'default'
         }}

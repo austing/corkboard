@@ -160,39 +160,31 @@ export default function NestedScrapPage(): React.JSX.Element {
   ], [isMoveMode, newScrapModal.isOpen, editScrapModal.isOpen]);
 
   useEffect(() => {
-    const updateCanvasSize = () => {
-      if (nestedScraps.length > 0 && !loading) {
-        const size: Size = CanvasUtils.calculateCanvasSize(nestedScraps);
-        setCanvasSize(size);
+    if (nestedScraps.length > 0 && !loading) {
+      const size: Size = CanvasUtils.calculateCanvasSize(nestedScraps);
+      setCanvasSize(size);
 
-        // Handle hash navigation after scraps are loaded
-        const hash = window.location.hash.replace('#', '');
-        if (hash) {
-          const targetScrap = nestedScraps.find(scrap => scrap.code === hash);
-          if (targetScrap) {
-            const scrapElement = document.getElementById(hash);
-            if (scrapElement) {
-              scrapElement.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-                inline: 'center'
-              });
-            }
-            // Highlight the scrap instead of opening modal
-            setHighlightedScrapCode(hash);
+      // Handle hash navigation after scraps are loaded
+      const hash = window.location.hash.replace('#', '');
+      if (hash) {
+        const targetScrap = nestedScraps.find(scrap => scrap.code === hash);
+        if (targetScrap) {
+          const scrapElement = document.getElementById(hash);
+          if (scrapElement) {
+            scrapElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+              inline: 'center'
+            });
           }
+          // Highlight the scrap instead of opening modal
+          setHighlightedScrapCode(hash);
         }
-      } else if (nestedScraps.length === 0 && !loading) {
-        // No scraps - set canvas to viewport size
-        setCanvasSize({ width: window.innerWidth, height: window.innerHeight });
       }
-    };
-
-    updateCanvasSize();
-
-    // Update canvas size on window resize
-    window.addEventListener('resize', updateCanvasSize);
-    return () => window.removeEventListener('resize', updateCanvasSize);
+    } else if (nestedScraps.length === 0 && !loading) {
+      // No scraps - canvas will use min-content with CSS min-width/min-height
+      setCanvasSize({ width: 0, height: 0 });
+    }
   }, [nestedScraps, loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for hash changes
@@ -370,8 +362,10 @@ export default function NestedScrapPage(): React.JSX.Element {
       <div
         className="bg-transparent"
         style={{
-          width: `${canvasSize.width}px`,
-          height: `${canvasSize.height}px`,
+          minWidth: '100vw',
+          minHeight: '100vh',
+          width: canvasSize.width > 0 ? `${canvasSize.width}px` : 'auto',
+          height: canvasSize.height > 0 ? `${canvasSize.height}px` : 'auto',
           position: 'relative',
           marginTop: '80px', // Account for fixed header
           cursor: (isShiftPressed && session && !isMoveMode) || isMoveMode ? 'none' : 'default'
