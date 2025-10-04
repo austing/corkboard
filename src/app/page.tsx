@@ -33,13 +33,14 @@ export default function HomePage(): React.JSX.Element {
   const [scraps, setScraps] = useState<Scrap[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [_error, setError] = useState<string>('');
-  const [_hasAdminAccess, setHasAdminAccess] = useState<boolean>(false);
   const [canvasSize, setCanvasSize] = useState<Size>({ width: 0, height: 0 });
   const [isShiftPressed, setIsShiftPressed] = useState<boolean>(false);
   const [cursorPosition, setCursorPosition] = useState<Position>({ x: 0, y: 0 });
   const [isHoveringScrap, setIsHoveringScrap] = useState<boolean>(false);
+  const [hoveredScrapId, setHoveredScrapId] = useState<string | null>(null);
   const [isMoveMode, setIsMoveMode] = useState<boolean>(false);
   const [movingScrap, setMovingScrap] = useState<Scrap | null>(null);
+  const [highlightedScrapCode, setHighlightedScrapCode] = useState<string | null>(null);
 
   // Modal management using useModal hook
   const fullscreenModal = useModal<Scrap>(null, {
@@ -58,7 +59,7 @@ export default function HomePage(): React.JSX.Element {
   const editScrapModal = useModal<Scrap>(null, {
     updateUrlHash: null,
     onClose: () => {
-      editScrapForm.reset();
+      updateScrapForm.reset();
       setOriginalEditScrapForm({ content: '', x: 0, y: 0, visible: true });
       setEditScrapError('');
       window.history.pushState(null, '', window.location.pathname);
@@ -79,19 +80,8 @@ export default function HomePage(): React.JSX.Element {
             inline: 'center'
           });
         }
-        // Initialize edit form with scrap data
-        const formData: ScrapFormData = {
-          content: targetScrap.content,
-          x: targetScrap.x,
-          y: targetScrap.y,
-          visible: targetScrap.visible,
-        };
-        editScrapForm.setInitialValues(formData);
-        setOriginalEditScrapForm(formData);
-        // Open the modal
-        setTimeout(() => {
-          fullscreenModal.open(targetScrap);
-        }, 500); // Delay to let scroll complete
+        // Highlight the scrap instead of opening modal
+        setHighlightedScrapCode(hash);
       }
     }
   }, [scraps]);
@@ -102,9 +92,6 @@ export default function HomePage(): React.JSX.Element {
 
   useEffect(() => {
     fetchScraps();
-    if (session?.user?.id) {
-      checkAdminAccess();
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
@@ -170,9 +157,9 @@ export default function HomePage(): React.JSX.Element {
       ctrl: true,
       handler: () => {
         if (newScrapModal.isOpen) {
-          newScrapForm.handleSubmit();
+          createScrapForm.handleSubmit();
         } else if (editScrapModal.isOpen) {
-          editScrapForm.handleSubmit();
+          updateScrapForm.handleSubmit();
         }
       },
       enabled: newScrapModal.isOpen || editScrapModal.isOpen
@@ -196,62 +183,10 @@ export default function HomePage(): React.JSX.Element {
     setCanvasSize(size);
   };
 
-  // Keep centering function for potential future use
-  const _centerViewport = () => {
-    if (scraps.length === 0) return;
-
-    const bounds = scraps.reduce(
-      (acc, scrap) => ({
-        minX: Math.min(acc.minX, scrap.x),
-        maxX: Math.max(acc.maxX, scrap.x + 300),
-        minY: Math.min(acc.minY, scrap.y),
-        maxY: Math.max(acc.maxY, scrap.y + 200),
-      }),
-      { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity }
-    );
-
-    bounds.minX = Math.min(bounds.minX, 0);
-    bounds.minY = Math.min(bounds.minY, 0);
-    bounds.maxX = Math.max(bounds.maxX, 0);
-    bounds.maxY = Math.max(bounds.maxY, 0);
-
-    const centerX = (bounds.minX + bounds.maxX) / 2;
-    const centerY = (bounds.minY + bounds.maxY) / 2;
-    const padding = 100;
-
-    const scrollX = centerX - Math.min(bounds.minX, 0) - window.innerWidth / 2 + padding;
-    const scrollY = centerY - Math.min(bounds.minY, 0) - window.innerHeight / 2 + padding;
-
-    window.scrollTo({
-      left: Math.max(0, scrollX),
-      top: Math.max(0, scrollY),
-      behavior: 'smooth'
-    });
-  };
-  
-  const checkAdminAccess = async (): Promise<void> => {
-    if (!session?.user?.id) {
-      setHasAdminAccess(false);
-      return;
-    }
-
-    try {
-      const response = await api.checkPermission({
-        userId: session.user.id,
-        resource: 'admin',
-        action: 'access'
-      });
-      setHasAdminAccess(response.hasPermission);
-    } catch (err) {
-      console.error('Error checking admin permissions:', err);
-      setHasAdminAccess(false);
-    }
-  };
-
   const fetchScraps = async (): Promise<void> => {
     try {
-      const data = await api.fetchScraps(!!session?.user?.id);
-      const filteredScraps = session?.user?.id 
+      const data = await api.fetchScraps();
+      const filteredScraps = session?.user?.id
         ? ScrapPermissions.filterViewableScraps(data.scraps, session.user.id)
         : data.scraps;
       setScraps(filteredScraps);
@@ -264,22 +199,8 @@ export default function HomePage(): React.JSX.Element {
     }
   };
 
-  const _scrapToText = (scrap: Scrap) => {
-    const scrapData = {
-      id: scrap.id,
-      code: scrap.code,
-      content: scrap.content,
-      position: { x: scrap.x, y: scrap.y },
-      author: scrap.userName || scrap.userEmail,
-      created: new Date(scrap.createdAt).toISOString(),
-      updated: new Date(scrap.updatedAt).toISOString()
-    };
-    
-    return JSON.stringify(scrapData, null, 2);
-  };
-
   // Form management using useFormWithSubmit hook
-  const newScrapForm = useFormWithSubmit<ScrapFormData>({
+  const createScrapForm = useFormWithSubmit<ScrapFormData>({
     initialValues: { content: '', x: 0, y: 0 },
     onSubmit: async (values: ScrapFormData) => {
       await api.createScrap({
@@ -294,7 +215,7 @@ export default function HomePage(): React.JSX.Element {
     }
   });
 
-  const editScrapForm = useFormWithSubmit<ScrapFormData>({
+  const updateScrapForm = useFormWithSubmit<ScrapFormData>({
     initialValues: { content: '', x: 0, y: 0, visible: true },
     onSubmit: async (values: ScrapFormData) => {
       // Use fullscreenModal for inline editing
@@ -319,38 +240,12 @@ export default function HomePage(): React.JSX.Element {
     }
   });
 
-  const [editScrapError, setEditScrapError] = useState<string>('');
   const [originalEditScrapForm, setOriginalEditScrapForm] = useState<ScrapFormData>({
     content: '',
     x: 0,
     y: 0,
     visible: true,
   });
-
-  const handleEditScrapClick = (scrap: Scrap): void => {
-    const formData: ScrapFormData = {
-      content: scrap.content,
-      x: scrap.x,
-      y: scrap.y,
-      visible: scrap.visible,
-    };
-    editScrapForm.setInitialValues(formData);
-    setOriginalEditScrapForm(formData);
-    editScrapModal.open(scrap);
-  };
-
-  // Quill editor configuration - only basic formatting, no font size
-  const _quillModules = {
-    toolbar: [
-      ['bold', 'italic', 'underline'],
-      [{ 'align': [] }],
-      [{ 'color': [] }]
-    ],
-  };
-
-  const _quillFormats = [
-    'bold', 'italic', 'underline', 'align', 'color'
-  ];
 
   // Listen for hash changes
   useEffect(() => {
@@ -376,6 +271,11 @@ export default function HomePage(): React.JSX.Element {
   }
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>): void => {
+    // Clear highlight when clicking anywhere
+    if (highlightedScrapCode) {
+      setHighlightedScrapCode(null);
+    }
+
     if (isMoveMode && movingScrap) {
       const coords: Position = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, scraps);
       updateScrapPosition(movingScrap.id, coords.x, coords.y);
@@ -384,9 +284,9 @@ export default function HomePage(): React.JSX.Element {
       setIsShiftPressed(false);
     } else if (isShiftPressed && session && !isHoveringScrap && !isMoveMode) {
       const coords: Position = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, scraps);
-      newScrapForm.setValues({ 
-        content: '', 
-        x: coords.x, 
+      createScrapForm.setValues({
+        content: '',
+        x: coords.x,
         y: coords.y,
         visible: true
       });
@@ -424,9 +324,9 @@ export default function HomePage(): React.JSX.Element {
 
   const hasFormChanged = (): boolean => {
     return (
-      editScrapForm.values.content !== originalEditScrapForm.content ||
-      editScrapForm.values.x !== originalEditScrapForm.x ||
-      editScrapForm.values.y !== originalEditScrapForm.y
+      updateScrapForm.values.content !== originalEditScrapForm.content ||
+      updateScrapForm.values.x !== originalEditScrapForm.x ||
+      updateScrapForm.values.y !== originalEditScrapForm.y
     );
   };
 
@@ -442,7 +342,7 @@ export default function HomePage(): React.JSX.Element {
     
     // Update modal data and form state
     editScrapModal.setData(prev => prev ? { ...prev, visible: newVisibility } : null);
-    editScrapForm.setValue('visible', newVisibility);
+    updateScrapForm.setValue('visible', newVisibility);
     setOriginalEditScrapForm(prev => ({ ...prev, visible: newVisibility }));
     
     // If no other changes, close the modal
@@ -485,7 +385,7 @@ export default function HomePage(): React.JSX.Element {
               const buttonCenterX = window.scrollX + window.innerWidth / 2;
               const buttonCenterY = window.scrollY + window.innerHeight / 2;
               const coords = CanvasUtils.pageToCanvasCoordinates(buttonCenterX, buttonCenterY, scraps);
-              newScrapForm.setValues({ content: '', x: coords.x, y: coords.y, visible: true });
+              createScrapForm.setValues({ content: '', x: coords.x, y: coords.y, visible: true });
               newScrapModal.open();
             }}
           />
@@ -515,6 +415,9 @@ export default function HomePage(): React.JSX.Element {
             index={index}
             isMoving={movingScrap?.id === scrap.id}
             isOwner={session?.user?.id === scrap.userId}
+            isHovered={hoveredScrapId === scrap.id}
+            isHighlighted={highlightedScrapCode === scrap.code}
+            isAuthenticated={!!session}
             onClick={() => {
               if (fullscreenModal.data?.id === scrap.id) {
                 fullscreenModal.close();
@@ -525,24 +428,30 @@ export default function HomePage(): React.JSX.Element {
                   y: scrap.y,
                   visible: scrap.visible,
                 };
-                editScrapForm.setInitialValues(formData);
+                updateScrapForm.setInitialValues(formData);
                 setOriginalEditScrapForm(formData);
                 fullscreenModal.open(scrap);
                 window.history.pushState(null, '', `#${scrap.code}`);
               }
             }}
-            onMouseEnter={() => setIsHoveringScrap(true)}
-            onMouseLeave={() => setIsHoveringScrap(false)}
+            onMouseEnter={() => {
+              setIsHoveringScrap(true);
+              setHoveredScrapId(scrap.id);
+            }}
+            onMouseLeave={() => {
+              setIsHoveringScrap(false);
+              setHoveredScrapId(null);
+            }}
           />
         ))}
       </div>
 
       {/* Fullscreen Modal - Update or View based on ownership */}
-      {ScrapPermissions.canEdit(fullscreenModal.data!, session?.user?.id) ? (
+      {fullscreenModal.data && ScrapPermissions.canEdit(fullscreenModal.data, session?.user?.id) ? (
         <UpdateScrapModal
           isOpen={fullscreenModal.isOpen}
           scrap={fullscreenModal.data}
-          form={editScrapForm}
+          form={updateScrapForm}
           onClose={() => fullscreenModal.close()}
           onVisibilityToggle={async () => {
             const newVisibility = !fullscreenModal.data!.visible;
@@ -567,7 +476,7 @@ export default function HomePage(): React.JSX.Element {
       {/* New Scrap Modal */}
       <CreateScrapModal
         isOpen={newScrapModal.isOpen}
-        form={newScrapForm}
+        form={createScrapForm}
         onClose={() => newScrapModal.close()}
         FroalaEditor={FroalaEditor}
       />
@@ -576,7 +485,7 @@ export default function HomePage(): React.JSX.Element {
       <UpdateScrapModal
         isOpen={editScrapModal.isOpen}
         scrap={editScrapModal.data}
-        form={editScrapForm}
+        form={updateScrapForm}
         onClose={() => editScrapModal.close()}
         onVisibilityToggle={handleVisibilityToggle}
         onMoveClick={() => {

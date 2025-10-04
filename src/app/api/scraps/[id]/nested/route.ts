@@ -13,13 +13,14 @@ export async function GET(
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const userId = session?.user?.id;
+
+    // No authentication required for GET - but check permissions if logged in
+    if (userId) {
+      await requirePermission(userId, 'scraps', 'read');
     }
 
-    await requirePermission(session.user.id, 'scraps', 'read');
-
-    // First, verify the parent scrap exists and user can access it
+    // First, verify the parent scrap exists
     const parentScrap = await db
       .select({
         id: scraps.id,
@@ -33,15 +34,6 @@ export async function GET(
 
     if (!parentScrap[0]) {
       return NextResponse.json({ error: 'Parent scrap not found' }, { status: 404 });
-    }
-
-    // Check if user can view this parent scrap
-    if (parentScrap[0].userId !== session.user.id && !parentScrap[0].visible) {
-      try {
-        await requirePermission(session.user.id, 'scraps', 'read_others');
-      } catch (_err) {
-        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-      }
     }
 
     // Get all scraps nested within this parent scrap
@@ -76,24 +68,60 @@ export async function GET(
       })
     );
 
-    // Add nested counts to scrap data and filter based on visibility and ownership
-    const scrapsWithCounts = nestedScraps.map(scrap => ({
-      ...scrap,
-      nestedCount: nestedCounts.find(nc => nc.scrapId === scrap.id)?.count || 0
-    }));
+    // Process scraps: hide content/author/date based on auth status and ownership
+    const isLoggedOut = !userId;
+    const processedScraps = nestedScraps.map(scrap => {
+      const isOwner = userId && scrap.userId === userId;
+      const isInvisible = !scrap.visible;
+      const nestedCount = nestedCounts.find(nc => nc.scrapId === scrap.id)?.count || 0;
 
-    const filteredScraps = scrapsWithCounts.filter(scrap => {
-      // Always show user's own scraps (visible or not)
-      if (scrap.userId === session.user.id) {
-        return true;
+      // If user is not logged in, redact ALL scraps (show position, ID, and dates)
+      if (isLoggedOut) {
+        return {
+          id: scrap.id,
+          code: scrap.code,
+          content: '', // Redacted
+          x: scrap.x,
+          y: scrap.y,
+          visible: scrap.visible,
+          userId: null, // Redacted
+          nestedWithin: scrap.nestedWithin,
+          userName: null, // Redacted
+          userEmail: null, // Redacted
+          createdAt: scrap.createdAt,
+          updatedAt: scrap.updatedAt,
+          nestedCount
+        };
       }
-      // Show visible scraps from other users
-      return scrap.visible;
+
+      // If scrap is invisible and user is not the owner, redact sensitive data
+      if (isInvisible && !isOwner) {
+        return {
+          id: scrap.id,
+          code: scrap.code,
+          content: '', // Redacted
+          x: scrap.x,
+          y: scrap.y,
+          visible: scrap.visible,
+          userId: null, // Redacted
+          nestedWithin: scrap.nestedWithin,
+          userName: null, // Redacted
+          userEmail: null, // Redacted
+          createdAt: null, // Redacted
+          updatedAt: null, // Redacted
+          nestedCount
+        };
+      }
+
+      return {
+        ...scrap,
+        nestedCount
+      };
     });
 
     return NextResponse.json({
       parentScrap: parentScrap[0],
-      nestedScraps: filteredScraps
+      nestedScraps: processedScraps
     });
   } catch (error: unknown) {
     console.error('Error fetching nested scraps:', error);

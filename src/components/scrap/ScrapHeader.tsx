@@ -7,6 +7,8 @@ interface ScrapHeaderProps {
   scrap: Scrap;
   isModal?: boolean;
   isOwner?: boolean;
+  isHovered?: boolean;
+  isAuthenticated?: boolean;
   pathPrefix?: string; // For nested pages, e.g., window.location.pathname
   onVisibilityToggle?: () => void;
   onMoveClick?: () => void;
@@ -17,6 +19,8 @@ export function ScrapHeader({
   scrap,
   isModal = false,
   isOwner = false,
+  isHovered = false,
+  isAuthenticated = false,
   pathPrefix = '',
   onVisibilityToggle,
   onMoveClick,
@@ -31,7 +35,7 @@ export function ScrapHeader({
     <>
       <div className="flex justify-between items-start mb-3">
         {/* Code and nest button on left */}
-        <div className="flex flex-col items-start">
+        <div className="flex items-center gap-1.5">
           <a
             href={`${pathPrefix}#${scrap.code}`}
             className={`${codeSize} font-mono font-bold ${config.theme.primary.text} hover:text-indigo-800`}
@@ -40,12 +44,15 @@ export function ScrapHeader({
           >
             #{scrap.code}
           </a>
-          {/* Open Nest button - hide on invisible scraps */}
-          {scrap.nestedCount !== undefined && scrap.visible && (
+          {/* Nest button and count - always show if nestedCount is available */}
+          {scrap.nestedCount !== undefined && (
             <NestButton
               scrapId={scrap.id}
               nestedCount={scrap.nestedCount}
               size={nestButtonSize}
+              isHovered={isHovered}
+              isModal={isModal}
+              isAuthenticated={isAuthenticated}
               onClick={(e) => e.stopPropagation()}
             />
           )}

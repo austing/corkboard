@@ -5,7 +5,7 @@
 
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { SessionProvider } from 'next-auth/react';
-import PermissionCheck from '@/components/auth/permission-check';
+import PermissionCheck from '@/guards/PermissionCheck';
 
 // Mock next-auth
 jest.mock('next-auth/react', () => ({
