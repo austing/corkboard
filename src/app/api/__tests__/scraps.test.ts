@@ -53,7 +53,8 @@ describe('/api/scraps', () => {
 
       mockDb.select.mockReturnValue({
         from: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockResolvedValue(mockScraps),
+        leftJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(mockScraps),
       } as any)
 
       const response = await GET_AllScraps()
@@ -69,7 +70,8 @@ describe('/api/scraps', () => {
 
       mockDb.select.mockReturnValue({
         from: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockResolvedValue([]),
+        leftJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([]),
       } as any)
 
       const response = await GET_AllScraps()
@@ -79,14 +81,22 @@ describe('/api/scraps', () => {
       expect(data.scraps).toEqual([])
     })
 
-    it('should return 401 when user not authenticated', async () => {
+    it('should return scraps when user not authenticated', async () => {
       mockGetServerSession.mockResolvedValue(null)
+
+      mockDb.select.mockReturnValue({
+        from: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([
+          { id: '1', content: '', visible: true, userId: null },
+        ]),
+      } as any)
 
       const response = await GET_AllScraps()
 
-      expect(response.status).toBe(401)
+      expect(response.status).toBe(200)
       const data = await response.json()
-      expect(data.error).toBe('Unauthorized')
+      expect(data.scraps).toBeDefined()
     })
   })
 
@@ -476,11 +486,11 @@ describe('/api/scraps', () => {
 // Mock implementation functions
 async function GET_AllScraps() {
   const session = await mockGetServerSession()
-  if (!session?.user?.id) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
-  }
+  // No authentication required - anonymous users can view scraps with content filtering
 
-  const scraps = await mockDb.select().from({}).orderBy({})
+  // Mock chain returns from where() in the final call
+  const queryResult = mockDb.select().from({})
+  const scraps = queryResult.leftJoin ? await queryResult.leftJoin({}).where({}) : await queryResult.where?.({}) || []
   return new Response(JSON.stringify({ scraps }), { status: 200 })
 }
 

@@ -12,15 +12,9 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
 
-    // No authentication required for GET - but check permissions if logged in
-    if (userId) {
-      try {
-        await requirePermission(userId, 'scraps', 'read');
-      } catch (permissionError) {
-        console.error('Permission check failed for user:', userId, 'Error:', permissionError);
-        throw permissionError;
-      }
-    }
+    // No authentication or permissions required for GET
+    // Anonymous users and all logged-in users can view scraps
+    // (content is filtered based on visibility and ownership below)
 
     const url = new URL(request.url);
     const onlyMine = url.searchParams.get('onlyMine') === 'true';
