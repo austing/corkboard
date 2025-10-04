@@ -1,5 +1,6 @@
 import { db } from './index';
 import { users, roles, permissions, userRoles, rolePermissions } from './schema';
+import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
 
@@ -33,111 +34,191 @@ export async function seedDatabase() {
   const permissionIds: Record<string, string> = {};
 
   for (const perm of defaultPermissions) {
-    const id = randomUUID();
-    await db.insert(permissions).values({
-      id,
-      name: `${perm.resource}:${perm.action}`,
-      description: perm.description,
-      resource: perm.resource,
-      action: perm.action,
-      createdAt: new Date(),
-    });
-    permissionIds[`${perm.resource}:${perm.action}`] = id;
+    const permName = `${perm.resource}:${perm.action}`;
+
+    // Check if permission already exists
+    const existing = await db
+      .select()
+      .from(permissions)
+      .where(eq(permissions.name, permName))
+      .limit(1);
+
+    if (existing.length > 0) {
+      permissionIds[permName] = existing[0].id;
+    } else {
+      const id = randomUUID();
+      await db.insert(permissions).values({
+        id,
+        name: permName,
+        description: perm.description,
+        resource: perm.resource,
+        action: perm.action,
+        createdAt: new Date(),
+      });
+      permissionIds[permName] = id;
+    }
   }
 
-  // Create default roles
-  const adminRoleId = randomUUID();
-  const editorRoleId = randomUUID();
-  const viewerRoleId = randomUUID();
-  const scrapperRoleId = randomUUID();
+  // Create default roles (check if they exist first)
+  const roleNames = ['admin', 'editor', 'viewer', 'scrapper'];
+  const roleDescriptions = {
+    admin: 'Full system access',
+    editor: 'Can create and edit content',
+    viewer: 'Read-only access',
+    scrapper: 'Can create, read, update scraps and view all. Can edit own profile. Cannot delete or manage other users.',
+  };
 
-  await db.insert(roles).values([
-    {
-      id: adminRoleId,
-      name: 'admin',
-      description: 'Full system access',
-      createdAt: new Date(),
-    },
-    {
-      id: editorRoleId,
-      name: 'editor',
-      description: 'Can create and edit content',
-      createdAt: new Date(),
-    },
-    {
-      id: viewerRoleId,
-      name: 'viewer',
-      description: 'Read-only access',
-      createdAt: new Date(),
-    },
-    {
-      id: scrapperRoleId,
-      name: 'scrapper',
-      description: 'Can create, read, update scraps and view all. Can edit own profile. Cannot delete or manage other users.',
-      createdAt: new Date(),
-    },
-  ]);
+  const roleIds: Record<string, string> = {};
 
-  // Assign all permissions to admin role
-  const adminPermissions = Object.values(permissionIds).map(permissionId => ({
-    roleId: adminRoleId,
-    permissionId,
-    assignedAt: new Date(),
-  }));
-  await db.insert(rolePermissions).values(adminPermissions);
+  for (const roleName of roleNames) {
+    const existing = await db
+      .select()
+      .from(roles)
+      .where(eq(roles.name, roleName))
+      .limit(1);
+
+    if (existing.length > 0) {
+      roleIds[roleName] = existing[0].id;
+    } else {
+      const id = randomUUID();
+      await db.insert(roles).values({
+        id,
+        name: roleName,
+        description: roleDescriptions[roleName as keyof typeof roleDescriptions],
+        createdAt: new Date(),
+      });
+      roleIds[roleName] = id;
+    }
+  }
+
+  const adminRoleId = roleIds.admin;
+  const editorRoleId = roleIds.editor;
+  const viewerRoleId = roleIds.viewer;
+  const scrapperRoleId = roleIds.scrapper;
+
+  // Assign all permissions to admin role (skip if already assigned)
+  for (const permissionId of Object.values(permissionIds)) {
+    const existing = await db
+      .select()
+      .from(rolePermissions)
+      .where(eq(rolePermissions.roleId, adminRoleId))
+      .where(eq(rolePermissions.permissionId, permissionId))
+      .limit(1);
+
+    if (existing.length === 0) {
+      await db.insert(rolePermissions).values({
+        roleId: adminRoleId,
+        permissionId,
+        assignedAt: new Date(),
+      });
+    }
+  }
 
   // Assign limited permissions to editor role
   const editorPermissionNames = ['users:read', 'users:update', 'admin:access'];
-  const editorPermissions = editorPermissionNames.map(name => ({
-    roleId: editorRoleId,
-    permissionId: permissionIds[name],
-    assignedAt: new Date(),
-  }));
-  await db.insert(rolePermissions).values(editorPermissions);
+  for (const name of editorPermissionNames) {
+    const existing = await db
+      .select()
+      .from(rolePermissions)
+      .where(eq(rolePermissions.roleId, editorRoleId))
+      .where(eq(rolePermissions.permissionId, permissionIds[name]))
+      .limit(1);
+
+    if (existing.length === 0) {
+      await db.insert(rolePermissions).values({
+        roleId: editorRoleId,
+        permissionId: permissionIds[name],
+        assignedAt: new Date(),
+      });
+    }
+  }
 
   // Assign read permissions to viewer role
   const viewerPermissionNames = ['users:read', 'roles:read', 'permissions:read', 'admin:access'];
-  const viewerPermissions = viewerPermissionNames.map(name => ({
-    roleId: viewerRoleId,
-    permissionId: permissionIds[name],
-    assignedAt: new Date(),
-  }));
-  await db.insert(rolePermissions).values(viewerPermissions);
+  for (const name of viewerPermissionNames) {
+    const existing = await db
+      .select()
+      .from(rolePermissions)
+      .where(eq(rolePermissions.roleId, viewerRoleId))
+      .where(eq(rolePermissions.permissionId, permissionIds[name]))
+      .limit(1);
+
+    if (existing.length === 0) {
+      await db.insert(rolePermissions).values({
+        roleId: viewerRoleId,
+        permissionId: permissionIds[name],
+        assignedAt: new Date(),
+      });
+    }
+  }
 
   // Assign scrapper permissions - can create, read, update scraps and view all, edit own profile, but not delete or manage others
   const scrapperPermissionNames = [
-    'scraps:create', 
-    'scraps:read', 
-    'scraps:update', 
+    'scraps:create',
+    'scraps:read',
+    'scraps:update',
     'scraps:view_all',
     'users:update_self'
   ];
-  const scrapperPermissions = scrapperPermissionNames.map(name => ({
-    roleId: scrapperRoleId,
-    permissionId: permissionIds[name],
-    assignedAt: new Date(),
-  }));
-  await db.insert(rolePermissions).values(scrapperPermissions);
+  for (const name of scrapperPermissionNames) {
+    const existing = await db
+      .select()
+      .from(rolePermissions)
+      .where(eq(rolePermissions.roleId, scrapperRoleId))
+      .where(eq(rolePermissions.permissionId, permissionIds[name]))
+      .limit(1);
 
-  // Create default admin user
-  const hashedPassword = await bcrypt.hash('admin123', 12);
-  const adminUserId = randomUUID();
+    if (existing.length === 0) {
+      await db.insert(rolePermissions).values({
+        roleId: scrapperRoleId,
+        permissionId: permissionIds[name],
+        assignedAt: new Date(),
+      });
+    }
+  }
 
-  await db.insert(users).values({
-    id: adminUserId,
-    name: 'Admin User',
-    email: 'admin@example.com',
-    password: hashedPassword,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
+  // Create default admin user (skip if exists)
+  const existingAdmin = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, 'admin@example.com'))
+    .limit(1);
 
-  // Assign admin role to admin user
-  await db.insert(userRoles).values({
-    userId: adminUserId,
-    roleId: adminRoleId,
-    assignedAt: new Date(),
-  });
+  let adminUserId: string;
+
+  if (existingAdmin.length > 0) {
+    adminUserId = existingAdmin[0].id;
+    console.log('ℹ️  Admin user already exists');
+  } else {
+    const hashedPassword = await bcrypt.hash('admin123', 12);
+    adminUserId = randomUUID();
+
+    await db.insert(users).values({
+      id: adminUserId,
+      name: 'Admin User',
+      email: 'admin@example.com',
+      password: hashedPassword,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    console.log('✅ Created admin user');
+  }
+
+  // Assign admin role to admin user (skip if already assigned)
+  const existingUserRole = await db
+    .select()
+    .from(userRoles)
+    .where(eq(userRoles.userId, adminUserId))
+    .where(eq(userRoles.roleId, adminRoleId))
+    .limit(1);
+
+  if (existingUserRole.length === 0) {
+    await db.insert(userRoles).values({
+      userId: adminUserId,
+      roleId: adminRoleId,
+      assignedAt: new Date(),
+    });
+  }
 
   console.log('✅ Database seeded successfully!');
   console.log('Admin credentials:');
