@@ -106,7 +106,7 @@ export function ScrapCard({
       />
 
       {/* Divider line */}
-      <div className="border-t border-gray-200 mb-3"></div>
+      <div className="border-t border-gray-500 mb-3"></div>
 
       {/* Content preview - grows to fill available space */}
       <div className="mb-3 flex-grow min-h-[120px]">
