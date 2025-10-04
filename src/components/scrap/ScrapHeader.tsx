@@ -42,8 +42,8 @@ export function ScrapHeader({
           >
             #{scrap.code}
           </a>
-          {/* Nest button and count - hide on invisible scraps */}
-          {scrap.nestedCount !== undefined && scrap.visible && (
+          {/* Nest button and count - always show if nestedCount is available */}
+          {scrap.nestedCount !== undefined && (
             <NestButton
               scrapId={scrap.id}
               nestedCount={scrap.nestedCount}
