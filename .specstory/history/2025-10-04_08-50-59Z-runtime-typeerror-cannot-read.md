@@ -4986,3 +4986,298 @@ Time:        4.276 s
 Ran all test suites.
 ```
 
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Commit author field change
+
+`git add -A && git commit -m "$(cat <<'EOF'
+Remove 'Unknown' fallback text from author field
+
+When author is unknown (redacted scraps), show empty string instead
+of 'Unknown' text. This keeps the footer cleaner and less cluttered.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"`
+
+Result:
+
+```
+[modularity 2c2bdce] Remove 'Unknown' fallback text from author field
+ 2 files changed, 181 insertions(+), 1 deletion(-)
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Now let me make invisible scraps have a reasonable size instead of being tiny stubs. I need to add min-height to the scrap cards:
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Read** `./src/components/scrap/ScrapCard.tsx`
+
+Result:
+
+```
+82→
+    83→  return (
+    84→    <div
+    85→      id={scrap.code}
+    86→      className={`absolute shadow-lg rounded-lg p-4 max-w-sm transition-shadow ${isClickable ? 'cursor-pointer' : 'cursor-default'} ${getCardClassName()}`}
+    87→      style={{
+    88→        left: `${position.x}px`,
+    89→        top: `${position.y}px`,
+    90→        zIndex: scrap.visible ? 10 + index : index,
+    91→      }}
+    92→      onMouseEnter={isClickable ? onMouseEnter : undefined}
+    93→      onMouseLeave={isClickable ? onMouseLeave : undefined}
+    94→      onClick={isClickable ? onClick : undefined}
+    95→    >
+    96→      <ScrapHeader
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Edit**
+
+Result:
+
+```
+The file /Users/austin/Coding/claudeland/corkboard/src/components/scrap/ScrapCard.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    79→    }
+    80→    return 'bg-white border border-gray-200 hover:shadow-xl';
+    81→  };
+    82→
+    83→  return (
+    84→    <div
+    85→      id={scrap.code}
+    86→      className={`absolute shadow-lg rounded-lg p-4 max-w-sm min-h-[200px] transition-shadow ${isClickable ? 'cursor-pointer' : 'cursor-default'} ${getCardClassName()}`}
+    87→      style={{
+    88→        left: `${position.x}px`,
+    89→        top: `${position.y}px`,
+    90→        zIndex: scrap.visible ? 10 + index : index,
+    91→      }}
+    92→      onMouseEnter={isClickable ? onMouseEnter : undefined}
+    93→      onMouseLeave={isClickable ? onMouseLeave : undefined}
+    94→      onClick={isClickable ? onClick : undefined}
+    95→    >
+    96→      <ScrapHeader
+    97→        scrap={scrap}
+    98→        isOwner={isOwner}
+    99→        isHovered={isHovered}
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Run tests to verify changes
+
+`npm run test 2>&1 | tail -15`
+
+Result:
+
+```
+PASS tests/content/processing.test.ts
+PASS tests/utils/canvas.test.ts
+PASS tests/validation/forms.test.ts
+PASS src/app/api/__tests__/auth.test.ts
+PASS src/app/api/__tests__/profile.test.ts
+(node:33932) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS tests/utils/keyboard.test.ts
+PASS tests/accessibility/a11y.test.tsx
+
+Test Suites: 19 passed, 19 total
+Tests:       12 skipped, 324 passed, 336 total
+Snapshots:   0 total
+Time:        4.095 s
+Ran all test suites.
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Edit**
+
+Result:
+
+```
+The file /Users/austin/Coding/claudeland/corkboard/src/components/scrap/ScrapCard.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    79→    }
+    80→    return 'bg-white border border-gray-200 hover:shadow-xl';
+    81→  };
+    82→
+    83→  return (
+    84→    <div
+    85→      id={scrap.code}
+    86→      className={`absolute shadow-lg rounded-lg p-4 w-80 min-h-[200px] transition-shadow ${isClickable ? 'cursor-pointer' : 'cursor-default'} ${getCardClassName()}`}
+    87→      style={{
+    88→        left: `${position.x}px`,
+    89→        top: `${position.y}px`,
+    90→        zIndex: scrap.visible ? 10 + index : index,
+    91→      }}
+    92→      onMouseEnter={isClickable ? onMouseEnter : undefined}
+    93→      onMouseLeave={isClickable ? onMouseLeave : undefined}
+    94→      onClick={isClickable ? onClick : undefined}
+    95→    >
+    96→      <ScrapHeader
+    97→        scrap={scrap}
+    98→        isOwner={isOwner}
+    99→        isHovered={isHovered}
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Run tests to verify changes
+
+`npm run test 2>&1 | tail -15`
+
+Result:
+
+```
+(node:34069) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS tests/validation/forms.test.ts
+PASS tests/components/hooks.test.tsx
+PASS tests/utils/canvas.test.ts
+PASS tests/utils/keyboard.test.ts
+PASS src/app/api/__tests__/auth.test.ts
+PASS src/app/api/__tests__/profile.test.ts
+PASS tests/accessibility/a11y.test.tsx
+
+Test Suites: 19 passed, 19 total
+Tests:       12 skipped, 324 passed, 336 total
+Snapshots:   0 total
+Time:        4.348 s
+Ran all test suites.
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+You're right - I should make the content area grow, not add min-height to the whole card. Let me use flexbox to properly space things:
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Read** `./src/components/scrap/ScrapCard.tsx`
+
+Result:
+
+```
+83→  return (
+    84→    <div
+    85→      id={scrap.code}
+    86→      className={`absolute shadow-lg rounded-lg p-4 w-80 min-h-[200px] transition-shadow ${isClickable ? 'cursor-pointer' : 'cursor-default'} ${getCardClassName()}`}
+    87→      style={{
+    88→        left: `${position.x}px`,
+    89→        top: `${position.y}px`,
+    90→        zIndex: scrap.visible ? 10 + index : index,
+    91→      }}
+    92→      onMouseEnter={isClickable ? onMouseEnter : undefined}
+    93→      onMouseLeave={isClickable ? onMouseLeave : undefined}
+    94→      onClick={isClickable ? onClick : undefined}
+    95→    >
+    96→      <ScrapHeader
+    97→        scrap={scrap}
+    98→        isOwner={isOwner}
+    99→        isHovered={isHovered}
+   100→        pathPrefix={pathPrefix}
+   101→      />
+   102→
+   103→      {/* Divider line */}
+   104→      <div className="border-t border-gray-200 mb-3"></div>
+   105→
+   106→      {/* Content preview */}
+   107→      <div className="mb-3">
+   108→        <div
+   109→          className="text-sm text-gray-800 line-clamp-24 froala-content"
+   110→          dangerouslySetInnerHTML={{ __html: scrap.content }}
+   111→        />
+   112→      </div>
+   113→
+   114→      {/* Footer metadata */}
+   115→      <ScrapFooter
+   116→        userName={scrap.userName}
+   117→        userEmail={scrap.userEmail}
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Edit**
+
+Result:
+
+```
+The file /Users/austin/Coding/claudeland/corkboard/src/components/scrap/ScrapCard.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    79→    }
+    80→    return 'bg-white border border-gray-200 hover:shadow-xl';
+    81→  };
+    82→
+    83→  return (
+    84→    <div
+    85→      id={scrap.code}
+    86→      className={`absolute shadow-lg rounded-lg p-4 w-80 flex flex-col transition-shadow ${isClickable ? 'cursor-pointer' : 'cursor-default'} ${getCardClassName()}`}
+    87→      style={{
+    88→        left: `${position.x}px`,
+    89→        top: `${position.y}px`,
+    90→        zIndex: scrap.visible ? 10 + index : index,
+    91→      }}
+    92→      onMouseEnter={isClickable ? onMouseEnter : undefined}
+    93→      onMouseLeave={isClickable ? onMouseLeave : undefined}
+    94→      onClick={isClickable ? onClick : undefined}
+    95→    >
+    96→      <ScrapHeader
+    97→        scrap={scrap}
+    98→        isOwner={isOwner}
+    99→        isHovered={isHovered}
+   100→        pathPrefix={pathPrefix}
+   101→      />
+   102→
+   103→      {/* Divider line */}
+   104→      <div className="border-t border-gray-200 mb-3"></div>
+   105→
+   106→      {/* Content preview - grows to fill available space */}
+   107→      <div className="mb-3 flex-grow min-h-[120px]">
+   108→        <div
+   109→          className="text-sm text-gray-800 line-clamp-24 froala-content"
+   110→          dangerouslySetInnerHTML={{ __html: scrap.content }}
+   111→        />
+   112→      </div>
+   113→
+   114→      {/* Footer metadata - stays at bottom */}
+   115→      <ScrapFooter
+   116→        userName={scrap.userName}
+   117→        userEmail={scrap.userEmail}
+   118→        createdAt={scrap.createdAt}
+   119→        size="small"
+   120→      />
+   121→    </div>
+   122→  );
+   123→}
+   124→
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Run tests to verify changes
+
+`npm run test 2>&1 | tail -15`
+
+Result:
+
+```
+at error (tests/error-handling/edge-cases.test.ts:104:19)
+      at Object.<anonymous> (tests/error-handling/edge-cases.test.ts:109:22)
+
+PASS tests/components/hooks.test.tsx
+PASS tests/utils/keyboard.test.ts
+PASS tests/utils/canvas.test.ts
+(node:34226) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS tests/accessibility/a11y.test.tsx
+
+Test Suites: 19 passed, 19 total
+Tests:       12 skipped, 324 passed, 336 total
+Snapshots:   0 total
+Time:        3.481 s
+Ran all test suites.
+```
+

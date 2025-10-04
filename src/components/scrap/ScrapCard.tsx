@@ -83,7 +83,7 @@ export function ScrapCard({
   return (
     <div
       id={scrap.code}
-      className={`absolute shadow-lg rounded-lg p-4 max-w-sm transition-shadow ${isClickable ? 'cursor-pointer' : 'cursor-default'} ${getCardClassName()}`}
+      className={`absolute shadow-lg rounded-lg p-4 w-80 flex flex-col transition-shadow ${isClickable ? 'cursor-pointer' : 'cursor-default'} ${getCardClassName()}`}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -103,15 +103,15 @@ export function ScrapCard({
       {/* Divider line */}
       <div className="border-t border-gray-200 mb-3"></div>
 
-      {/* Content preview */}
-      <div className="mb-3">
+      {/* Content preview - grows to fill available space */}
+      <div className="mb-3 flex-grow min-h-[120px]">
         <div
           className="text-sm text-gray-800 line-clamp-24 froala-content"
           dangerouslySetInnerHTML={{ __html: scrap.content }}
         />
       </div>
 
-      {/* Footer metadata */}
+      {/* Footer metadata - stays at bottom */}
       <ScrapFooter
         userName={scrap.userName}
         userEmail={scrap.userEmail}
