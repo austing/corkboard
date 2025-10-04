@@ -27,10 +27,10 @@ import type { Scrap } from '../../lib/api';
 interface ScrapCardProps {
   /** The scrap data to display */
   scrap: Scrap;
-  /** Position on the canvas */
-  position: { x: number; y: number };
-  /** Visual index for z-index calculation */
-  index: number;
+  /** Position on the canvas (optional for tree mode) */
+  position?: { x: number; y: number };
+  /** Visual index for z-index calculation (optional for tree mode) */
+  index?: number;
   /** Whether this scrap is currently being moved */
   isMoving?: boolean;
   /** Whether the current user owns this scrap */
@@ -43,6 +43,8 @@ interface ScrapCardProps {
   isAuthenticated?: boolean;
   /** Path prefix for nested page links */
   pathPrefix?: string;
+  /** Tree mode - use fixed dimensions instead of canvas positioning */
+  treeMode?: boolean;
   /** Click handler */
   onClick?: () => void;
   /** Mouse enter handler */
@@ -54,13 +56,14 @@ interface ScrapCardProps {
 export function ScrapCard({
   scrap,
   position,
-  index,
+  index = 0,
   isMoving = false,
   isOwner = false,
   isHovered = false,
   isHighlighted = false,
   isAuthenticated = false,
   pathPrefix = '',
+  treeMode = false,
   onClick,
   onMouseEnter,
   onMouseLeave,
@@ -87,15 +90,23 @@ export function ScrapCard({
     return `${config.theme.visible.bg} ${config.theme.visible.text} border ${highlightClass} hover:shadow-xl`;
   };
 
+  const cardStyle = treeMode
+    ? {} // No positioning in tree mode - handled by parent
+    : {
+        left: `${position?.x ?? 0}px`,
+        top: `${position?.y ?? 0}px`,
+        zIndex: scrap.visible ? 10 + index : index,
+      };
+
+  const positionClass = treeMode ? '' : 'absolute';
+  const sizeClass = treeMode ? 'w-80 h-80' : 'w-80';
+  const contentHeightClass = treeMode ? 'line-clamp-[14]' : 'line-clamp-24 min-h-[120px]';
+
   return (
     <div
       id={scrap.code}
-      className={`absolute shadow-lg rounded-lg p-4 w-80 flex flex-col transition-shadow ${isClickable ? 'cursor-pointer' : 'cursor-default'} ${getCardClassName()}`}
-      style={{
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-        zIndex: scrap.visible ? 10 + index : index,
-      }}
+      className={`${positionClass} shadow-lg rounded-lg p-4 ${sizeClass} flex flex-col transition-shadow ${isClickable ? 'cursor-pointer' : 'cursor-default'} ${getCardClassName()}`}
+      style={cardStyle}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onClick={isClickable ? onClick : undefined}
@@ -112,9 +123,9 @@ export function ScrapCard({
       <div className="border-t border-gray-500 mb-3"></div>
 
       {/* Content preview - grows to fill available space */}
-      <div className="mb-3 flex-grow min-h-[120px]">
+      <div className="mb-3 flex-grow overflow-hidden">
         <div
-          className={`text-sm line-clamp-24 froala-content ${isInvisibleScrap ? config.theme.invisible.textColor : ''}`}
+          className={`text-sm ${contentHeightClass} froala-content ${isInvisibleScrap ? config.theme.invisible.textColor : ''}`}
           dangerouslySetInnerHTML={{ __html: scrap.content }}
         />
       </div>

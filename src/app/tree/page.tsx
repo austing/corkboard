@@ -7,7 +7,7 @@ import { useModal } from '../../hooks/useModal';
 import { useFormWithSubmit } from '../../hooks/useFormWithSubmit';
 import { api } from '../../lib/api';
 import type { Scrap, ScrapFormData } from '../../types';
-import { TreeScrapCard } from '../../components/scrap/TreeScrapCard';
+import { ScrapCard } from '../../components/scrap/ScrapCard';
 import { UpdateScrapModal } from '../../components/scrap/UpdateScrapModal';
 import { ViewScrapModal } from '../../components/scrap/ViewScrapModal';
 import { ScrapPermissions } from '../../utils/permissions';
@@ -291,12 +291,13 @@ export default function TreePage(): React.JSX.Element {
                 zIndex: 10
               }}
             >
-              <TreeScrapCard
+              <ScrapCard
                 scrap={node.scrap}
                 isOwner={session?.user?.id === node.scrap.userId}
                 isHovered={hoveredScrapId === node.scrap.id}
                 isAuthenticated={!!session}
                 pathPrefix="/tree"
+                treeMode={true}
                 onClick={() => {
                   const formData: ScrapFormData = {
                     content: node.scrap.content,
