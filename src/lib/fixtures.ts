@@ -84,27 +84,22 @@ export async function generateMirrorFixture(currentUserId: string): Promise<Mirr
     name: currentUser.name || '',
   };
 
-  // Filter and transform scraps
-  const mirrorScraps = allScraps
-    .filter(scrap => {
-      // Include if: owned by me OR visible to everyone
-      return scrap.userId === currentUserId || scrap.visible === true;
-    })
-    .map(scrap => {
-      // Replace other users' IDs with dummy
-      const userId = scrap.userId === currentUserId ? currentUserId : dummyUser.id;
+  // Transform all scraps (include everything, even other users' private scraps)
+  const mirrorScraps = allScraps.map(scrap => {
+    // Replace other users' IDs with dummy
+    const userId = scrap.userId === currentUserId ? currentUserId : dummyUser.id;
 
-      // Hide content if invisible and not mine
-      const content = (scrap.visible === false && scrap.userId !== currentUserId)
-        ? ''
-        : scrap.content;
+    // Hide content if invisible and not mine
+    const content = (scrap.visible === false && scrap.userId !== currentUserId)
+      ? ''
+      : scrap.content;
 
-      return {
-        ...scrap,
-        userId,
-        content,
-      };
-    });
+    return {
+      ...scrap,
+      userId,
+      content,
+    };
+  });
 
   return {
     users: [dummyUser, meUser],

@@ -68,8 +68,8 @@ npm run dev2
 4. Confirm the import (this will wipe all scraps!)
 5. Verify you can see:
    - All public scraps (mapped to dummy user)
-   - Your own scraps (both public and private)
-   - Content is hidden for other users' private scraps
+   - Your own scraps (both public and private with full content)
+   - Other users' private scraps (mapped to dummy user, content hidden)
 
 ### Phase 2: Work Offline
 
@@ -107,10 +107,10 @@ npm run dev2
 - **Test**: Mirror to offline, verify all 5 appear
 - **Expected**: All scraps visible, owned by dummy user
 
-### Scenario 2: Private Scraps
-- **Setup**: Create private scrap on main instance
-- **Test**: Mirror to offline as different user
-- **Expected**: Private scrap not included in mirror
+### Scenario 2: Other Users' Private Scraps
+- **Setup**: Create private scrap on main instance as User A
+- **Test**: Mirror to offline as User B
+- **Expected**: Private scrap included but with empty content, mapped to dummy user
 
 ### Scenario 3: Own Private Scraps
 - **Setup**: Create private scrap as admin on main
@@ -148,11 +148,11 @@ npm run dev2
 
 ### Mirror Fixture Generation
 - ✅ Includes all public scraps
-- ✅ Includes your own private scraps
-- ✅ Excludes other users' private scraps
+- ✅ Includes your own private scraps (with full content)
+- ✅ Includes other users' private scraps (with content hidden)
 - ✅ Maps all other users to single dummy user
 - ✅ No passwords included
-- ✅ Content hidden for invisible scraps you don't own
+- ✅ Preserves scrap structure and relationships even for invisible scraps
 
 ### Mirror Fixture Import
 - ⚠️ **DESTRUCTIVE**: Wipes all existing scraps

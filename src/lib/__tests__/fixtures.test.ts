@@ -70,27 +70,22 @@ class FixtureGenerator {
       name: currentUser.name,
     };
 
-    // Filter and transform scraps
-    const mirrorScraps = allScraps
-      .filter(scrap => {
-        // Include if: owned by me OR visible to everyone
-        return scrap.userId === currentUserId || scrap.visible === true;
-      })
-      .map(scrap => {
-        // Replace other users' IDs with dummy
-        const userId = scrap.userId === currentUserId ? currentUserId : dummyUser.id;
+    // Transform all scraps (include everything, even other users' private scraps)
+    const mirrorScraps = allScraps.map(scrap => {
+      // Replace other users' IDs with dummy
+      const userId = scrap.userId === currentUserId ? currentUserId : dummyUser.id;
 
-        // Hide content if invisible and not mine
-        const content = (scrap.visible === false && scrap.userId !== currentUserId)
-          ? ''
-          : scrap.content;
+      // Hide content if invisible and not mine
+      const content = (scrap.visible === false && scrap.userId !== currentUserId)
+        ? ''
+        : scrap.content;
 
-        return {
-          ...scrap,
-          userId,
-          content,
-        };
-      });
+      return {
+        ...scrap,
+        userId,
+        content,
+      };
+    });
 
     return {
       users: [dummyUser, meUser],
@@ -311,15 +306,15 @@ describe('Mirror Fixture Generation', () => {
     ];
   });
 
-  it('should include only viewable scraps', () => {
+  it('should include all scraps (including invisible ones)', () => {
     const fixture = FixtureGenerator.generateMirrorFixture(currentUserId, users, scraps);
 
-    // Should have: my 2 scraps + 2 visible others = 4 total
-    expect(fixture.scraps).toHaveLength(4);
+    // Should have all 5 scraps (including other users' invisible scraps)
+    expect(fixture.scraps).toHaveLength(5);
 
-    // Should NOT include other user's invisible scrap
+    // Should include other user's invisible scrap
     const invisibleOtherScrap = fixture.scraps.find(s => s.id === 'scrap-4');
-    expect(invisibleOtherScrap).toBeUndefined();
+    expect(invisibleOtherScrap).toBeDefined();
   });
 
   it('should replace all other users with dummy user', () => {
@@ -378,6 +373,15 @@ describe('Mirror Fixture Generation', () => {
     visibleScraps.forEach(scrap => {
       expect(scrap.content).not.toBe('');
     });
+  });
+
+  it('should hide content for other users invisible scraps', () => {
+    const fixture = FixtureGenerator.generateMirrorFixture(currentUserId, users, scraps);
+
+    const otherUserInvisibleScrap = fixture.scraps.find(s => s.id === 'scrap-4');
+    expect(otherUserInvisibleScrap).toBeDefined();
+    expect(otherUserInvisibleScrap?.content).toBe('');
+    expect(otherUserInvisibleScrap?.userId).toBe('dummy-user-id');
   });
 });
 

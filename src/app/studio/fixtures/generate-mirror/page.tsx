@@ -91,11 +91,11 @@ export default function GenerateMirrorPage() {
             </li>
             <li className="flex items-start">
               <span className="text-green-600 mr-2">✓</span>
-              <span>All other users mapped to single "dummy" user</span>
+              <span>Other users' private scraps (with content hidden)</span>
             </li>
             <li className="flex items-start">
-              <span className="text-red-600 mr-2">✗</span>
-              <span>Other users' private scraps (excluded)</span>
+              <span className="text-green-600 mr-2">✓</span>
+              <span>All other users mapped to single "dummy" user</span>
             </li>
             <li className="flex items-start">
               <span className="text-red-600 mr-2">✗</span>

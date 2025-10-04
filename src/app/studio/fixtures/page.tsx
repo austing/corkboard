@@ -59,9 +59,9 @@ export default function FixturesPage() {
             <div className="flex-1">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">Mirror Fixture</h2>
               <p className="text-sm text-gray-600 mb-4">
-                Download a complete snapshot of all viewable scraps for offline work.
-                Includes all public scraps and your private scraps. Excludes passwords and
-                hides content of other users' private scraps.
+                Download a complete snapshot of all scraps for offline work.
+                Includes all scraps (public and private), but hides content of other users'
+                private scraps. All other users are mapped to a single dummy user. Excludes passwords.
               </p>
             </div>
           </div>
