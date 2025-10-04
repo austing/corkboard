@@ -12,10 +12,11 @@ interface NestButtonProps {
 
 export function NestButton({ scrapId, nestedCount, size = 'small', isHovered = false, isModal = false, onClick }: NestButtonProps) {
   const sizeClasses = size === 'small'
-    ? 'px-2 py-1 text-xs'
-    : 'px-2.5 py-1.5 text-sm';
+    ? 'px-1.5 py-0.5 text-[10px]'
+    : 'px-2 py-1 text-xs';
 
-  const iconSize = size === 'small' ? 'h-3 w-3' : 'h-4 w-4';
+  const iconSize = size === 'small' ? 'h-2.5 w-2.5' : 'h-3 w-3';
+  const badgeSize = size === 'small' ? 'px-1 py-0.5 text-[10px]' : 'px-1.5 py-0.5 text-xs';
   const shouldShowAddButton = isHovered || isModal;
 
   return (
@@ -25,7 +26,7 @@ export function NestButton({ scrapId, nestedCount, size = 'small', isHovered = f
         <Link
           href={`/${scrapId}`}
           onClick={onClick}
-          className={`inline-flex items-center gap-1 rounded-full font-medium cursor-pointer bg-gray-200 text-gray-700 hover:bg-gray-300 ${sizeClasses}`}
+          className={`inline-flex items-center gap-0.5 rounded-full font-medium cursor-pointer bg-gray-200 text-gray-700 hover:bg-gray-300 ${sizeClasses}`}
         >
           <PlusIcon className={iconSize} />
           Nest
@@ -37,7 +38,7 @@ export function NestButton({ scrapId, nestedCount, size = 'small', isHovered = f
         <Link
           href={`/${scrapId}`}
           onClick={onClick}
-          className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200 cursor-pointer"
+          className={`inline-flex items-center rounded-full font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200 cursor-pointer ${badgeSize}`}
         >
           {nestedCount}
         </Link>

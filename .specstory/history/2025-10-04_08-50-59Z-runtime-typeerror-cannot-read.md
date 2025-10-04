@@ -2701,3 +2701,348 @@ _**Agent (claude-sonnet-4-5-20250929)**_
 - [X] 🌡️ Run tests to verify authentication changes
 
 
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Commit authentication changes
+
+`git add -A && git commit -m "$(cat <<'EOF'
+Implement authentication-based scrap visibility and access control
+
+API Changes:
+- Allow unauthenticated GET requests to scrap endpoints
+- Redact content, author, and date for invisible scraps from non-authors
+- Only expose position (x, y) for invisible scraps to non-authors
+- Keep PUT/DELETE/POST requiring authentication and ownership validation
+
+Frontend Changes:
+- Make invisible non-owner scraps non-clickable (no pointer, no modal)
+- Hide footer metadata for redacted scraps
+- Update ScrapCard to disable interactions for invisible non-owner scraps
+- Visual styling: gray background with reduced opacity for redacted scraps
+
+All 324 tests passing.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"`
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Verify commit succeeded
+
+`git status`
+
+Result:
+
+```
+[modularity 4d3360f] Implement authentication-based scrap visibility and access control
+ 6 files changed, 1620 insertions(+), 73 deletions(-)
+```
+
+Result:
+
+```
+On branch modularity
+nothing to commit, working tree clean
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Perfect! I've successfully implemented all the requested authentication and visibility changes:
+
+## Summary of Changes
+
+### API Authentication
+- **GET endpoints** now work without authentication but return limited data
+- **Invisible scraps** from non-authors are redacted:
+  - Content → empty string
+  - Author (userId, userName, userEmail) → null
+  - Dates (createdAt, updatedAt) → null  
+  - Position (x, y) → preserved (as requested)
+- **PUT/DELETE/POST** still require authentication and ownership validation
+- Applied to all scrap routes: `/api/scraps`, `/api/scraps/[id]`, and `/api/scraps/[id]/nested`
+
+### Frontend UI Changes
+- **Invisible non-owner scraps**:
+  - No cursor pointer (cursor-default instead of cursor-pointer)
+  - No click handler (modal won't open)
+  - No hover effects
+  - Gray background with 30% opacity
+- **Footer metadata** hidden when data is redacted (null values)
+- **ScrapFooter** component handles null values gracefully
+
+### Testing
+All 324 tests passing, confirming the changes work correctly without breaking existing functionality.
+
+---
+
+_**User**_
+
+Show me how to make the nest button smaller and align its middle with the middle of the id
+
+---
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Read** `./src/components/scrap/ScrapHeader.tsx`
+
+Result:
+
+```
+1→import { EyeSlashIcon, EyeIcon, MapPinIcon, XMarkIcon } from '@heroicons/react/24/outline';
+     2→import config from '../../../corkboard.config';
+     3→import { NestButton } from './NestButton';
+     4→import type { Scrap } from '../../lib/api';
+     5→
+     6→interface ScrapHeaderProps {
+     7→  scrap: Scrap;
+     8→  isModal?: boolean;
+     9→  isOwner?: boolean;
+    10→  isHovered?: boolean;
+    11→  pathPrefix?: string; // For nested pages, e.g., window.location.pathname
+    12→  onVisibilityToggle?: () => void;
+    13→  onMoveClick?: () => void;
+    14→  onCloseClick?: () => void;
+    15→}
+    16→
+    17→export function ScrapHeader({
+    18→  scrap,
+    19→  isModal = false,
+    20→  isOwner = false,
+    21→  isHovered = false,
+    22→  pathPrefix = '',
+    23→  onVisibilityToggle,
+    24→  onMoveClick,
+    25→  onCloseClick,
+    26→}: ScrapHeaderProps) {
+    27→  const codeSize = isModal ? 'text-lg' : 'text-sm';
+    28→  const iconSize = isModal ? 'h-5 w-5' : 'h-4 w-4';
+    29→  const iconPadding = isModal ? 'p-2' : 'p-1';
+    30→  const nestButtonSize = isModal ? 'medium' : 'small';
+    31→
+    32→  return (
+    33→    <>
+    34→      <div className="flex justify-between items-start mb-3">
+    35→        {/* Code and nest button on left */}
+    36→        <div className="flex items-center gap-2">
+    37→          <a
+    38→            href={`${pathPrefix}#${scrap.code}`}
+    39→            className={`${codeSize} font-mono font-bold mb-2 ${config.theme.primary.text} hover:text-indigo-800`}
+    40→            title={`Anchor to ${scrap.code}`}
+    41→            onClick={(e) => e.stopPropagation()}
+    42→          >
+    43→            #{scrap.code}
+    44→          </a>
+    45→          {/* Nest button and count - hide on invisible scraps */}
+    46→          {scrap.nestedCount !== undefined && scrap.visible && (
+    47→            <NestButton
+    48→              scrapId={scrap.id}
+    49→              nestedCount={scrap.nestedCount}
+    50→              size={nestButtonSize}
+    51→              isHovered={isHovered}
+    52→              isModal={isModal}
+    53→              onClick={(e) => e.stopPropagation()}
+    54→            />
+    55→          )}
+    56→        </div>
+    57→
+    58→        {/* Action buttons on right */}
+    59→        {isModal && (
+    60→          <div className="flex space-x-1">
+    61→            {/* Owner-only buttons */}
+    62→            {isOwner && (
+    63→              <>
+    64→                {onVisibilityToggle && (
+    65→                  <button
+    66→                    onClick={(e) => {
+    67→                      e.stopPropagation();
+    68→                      onVisibilityToggle();
+    69→                    }}
+    70→                    className={`text-gray-500 hover:text-gray-700 ${iconPadding} rounded hover:bg-gray-100 cursor-pointer`}
+    71→                    title={scrap.visible ? "Make private" : "Make visible"}
+    72→                  >
+    73→                    {scrap.visible ? <EyeIcon className={iconSize} /> : <EyeSlashIcon className={iconSize} />}
+    74→                  </button>
+    75→                )}
+    76→                {onMoveClick && (
+    77→                  <button
+    78→                    onClick={(e) => {
+    79→                      e.stopPropagation();
+    80→                      onMoveClick();
+    81→                    }}
+    82→                    className={`text-gray-500 hover:text-gray-700 ${iconPadding} rounded hover:bg-gray-100 cursor-pointer`}
+    83→                    title="Move this scrap"
+    84→                  >
+    85→                    <MapPinIcon className={iconSize} />
+    86→                  </button>
+    87→                )}
+    88→              </>
+    89→            )}
+    90→            {/* Close button - always visible in modal */}
+    91→            {onCloseClick && (
+    92→              <button
+    93→                onClick={(e) => {
+    94→                  e.stopPropagation();
+    95→                  onCloseClick();
+    96→                }}
+    97→                className={`text-gray-500 hover:text-gray-700 ${iconPadding} rounded hover:bg-gray-100 cursor-pointer`}
+    98→                title="Close"
+    99→              >
+   100→                <XMarkIcon className={iconSize} />
+   101→              </button>
+   102→            )}
+   103→          </div>
+   104→        )}
+   105→      </div>
+   106→    </>
+   107→  );
+   108→}
+   109→
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Read** `./src/components/scrap/NestButton.tsx`
+
+Result:
+
+```
+1→import Link from 'next/link';
+     2→import { PlusIcon } from '@heroicons/react/24/outline';
+     3→
+     4→interface NestButtonProps {
+     5→  scrapId: string;
+     6→  nestedCount: number;
+     7→  size?: 'small' | 'medium';
+     8→  isHovered?: boolean;
+     9→  isModal?: boolean;
+    10→  onClick?: (e: React.MouseEvent) => void;
+    11→}
+    12→
+    13→export function NestButton({ scrapId, nestedCount, size = 'small', isHovered = false, isModal = false, onClick }: NestButtonProps) {
+    14→  const sizeClasses = size === 'small'
+    15→    ? 'px-2 py-1 text-xs'
+    16→    : 'px-2.5 py-1.5 text-sm';
+    17→
+    18→  const iconSize = size === 'small' ? 'h-3 w-3' : 'h-4 w-4';
+    19→  const shouldShowAddButton = isHovered || isModal;
+    20→
+    21→  return (
+    22→    <div className="inline-flex items-center gap-1">
+    23→      {/* +Nest button - only visible on hover or in modal */}
+    24→      {shouldShowAddButton && (
+    25→        <Link
+    26→          href={`/${scrapId}`}
+    27→          onClick={onClick}
+    28→          className={`inline-flex items-center gap-1 rounded-full font-medium cursor-pointer bg-gray-200 text-gray-700 hover:bg-gray-300 ${sizeClasses}`}
+    29→        >
+    30→          <PlusIcon className={iconSize} />
+    31→          Nest
+    32→        </Link>
+    33→      )}
+    34→
+    35→      {/* Nest count badge - always visible when count > 0 */}
+    36→      {nestedCount > 0 && (
+    37→        <Link
+    38→          href={`/${scrapId}`}
+    39→          onClick={onClick}
+    40→          className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200 cursor-pointer"
+    41→        >
+    42→          {nestedCount}
+    43→        </Link>
+    44→      )}
+    45→    </div>
+    46→  );
+    47→}
+    48→
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+To make the nest button smaller and align its middle with the ID, I need to:
+
+1. Remove the `mb-2` from the ID link (which is pushing it off-center)
+2. Make the nest button even smaller
+3. Ensure vertical centering with `items-center`
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Edit**
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Edit**
+
+Result:
+
+```
+The file /Users/austin/Coding/claudeland/corkboard/src/components/scrap/ScrapHeader.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    31→
+    32→  return (
+    33→    <>
+    34→      <div className="flex justify-between items-start mb-3">
+    35→        {/* Code and nest button on left */}
+    36→        <div className="flex items-center gap-1.5">
+    37→          <a
+    38→            href={`${pathPrefix}#${scrap.code}`}
+    39→            className={`${codeSize} font-mono font-bold ${config.theme.primary.text} hover:text-indigo-800`}
+    40→            title={`Anchor to ${scrap.code}`}
+    41→            onClick={(e) => e.stopPropagation()}
+    42→          >
+    43→            #{scrap.code}
+    44→          </a>
+    45→          {/* Nest button and count - hide on invisible scraps */}
+    46→          {scrap.nestedCount !== undefined && scrap.visible && (
+    47→            <NestButton
+    48→              scrapId={scrap.id}
+```
+
+Result:
+
+```
+The file /Users/austin/Coding/claudeland/corkboard/src/components/scrap/NestButton.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+     9→  isModal?: boolean;
+    10→  onClick?: (e: React.MouseEvent) => void;
+    11→}
+    12→
+    13→export function NestButton({ scrapId, nestedCount, size = 'small', isHovered = false, isModal = false, onClick }: NestButtonProps) {
+    14→  const sizeClasses = size === 'small'
+    15→    ? 'px-1.5 py-0.5 text-[10px]'
+    16→    : 'px-2 py-1 text-xs';
+    17→
+    18→  const iconSize = size === 'small' ? 'h-2.5 w-2.5' : 'h-3 w-3';
+    19→  const badgeSize = size === 'small' ? 'px-1 py-0.5 text-[10px]' : 'px-1.5 py-0.5 text-xs';
+    20→  const shouldShowAddButton = isHovered || isModal;
+    21→
+    22→  return (
+    23→    <div className="inline-flex items-center gap-1">
+    24→      {/* +Nest button - only visible on hover or in modal */}
+    25→      {shouldShowAddButton && (
+    26→        <Link
+    27→          href={`/${scrapId}`}
+    28→          onClick={onClick}
+    29→          className={`inline-flex items-center gap-0.5 rounded-full font-medium cursor-pointer bg-gray-200 text-gray-700 hover:bg-gray-300 ${sizeClasses}`}
+    30→        >
+    31→          <PlusIcon className={iconSize} />
+    32→          Nest
+    33→        </Link>
+    34→      )}
+    35→
+    36→      {/* Nest count badge - always visible when count > 0 */}
+    37→      {nestedCount > 0 && (
+    38→        <Link
+    39→          href={`/${scrapId}`}
+    40→          onClick={onClick}
+    41→          className={`inline-flex items-center rounded-full font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200 cursor-pointer ${badgeSize}`}
+    42→        >
+    43→          {nestedCount}
+    44→        </Link>
+    45→      )}
+    46→    </div>
+    47→  );
+    48→}
+    49→
+```
+
