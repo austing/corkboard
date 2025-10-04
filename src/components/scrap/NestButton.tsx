@@ -16,12 +16,12 @@ export function NestButton({ scrapId, nestedCount, size = 'small', isHovered = f
     : 'px-2 py-1 text-xs';
 
   const iconSize = size === 'small' ? 'h-2.5 w-2.5' : 'h-3 w-3';
-  const badgeSize = size === 'small' ? 'px-1 py-0.5 text-[10px]' : 'px-1.5 py-0.5 text-xs';
-  const shouldShowAddButton = isHovered || isModal;
+  const badgeSize = size === 'small' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-xs';
+  const shouldShowAddButton = (isHovered || isModal) && nestedCount === 0;
 
   return (
     <div className="inline-flex items-center gap-1">
-      {/* +Nest button - only visible on hover or in modal */}
+      {/* +Nest button - only visible on hover/modal when count is 0 */}
       {shouldShowAddButton && (
         <Link
           href={`/${scrapId}`}
@@ -33,14 +33,15 @@ export function NestButton({ scrapId, nestedCount, size = 'small', isHovered = f
         </Link>
       )}
 
-      {/* Nest count badge - always visible when count > 0 */}
+      {/* Nest count badge - always visible when count > 0, shows "Nest {n}" */}
       {nestedCount > 0 && (
         <Link
           href={`/${scrapId}`}
           onClick={onClick}
-          className={`inline-flex items-center rounded-full font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200 cursor-pointer ${badgeSize}`}
+          className={`inline-flex items-center gap-1 rounded-full font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200 cursor-pointer ${badgeSize}`}
         >
-          {nestedCount}
+          <span>Nest</span>
+          <span>{nestedCount}</span>
         </Link>
       )}
     </div>
