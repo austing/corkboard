@@ -1,7 +1,7 @@
 import { EyeSlashIcon, EyeIcon, MapPinIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import config from '../../../corkboard.config';
-import { NestButton } from './NestButton';
-import type { Scrap } from '../../lib/api';
+import config from '../../../../corkboard.config';
+import { NestButton } from '@/components/scrapnest/elements/NestButton';
+import type { Scrap } from '@/lib/api';
 
 interface ScrapHeaderProps {
   scrap: Scrap;

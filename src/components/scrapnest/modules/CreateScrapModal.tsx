@@ -16,9 +16,9 @@
  */
 
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { ScrapModal } from './ScrapModal';
-import { PositionInputs } from '../elements/PositionInputs';
-import config from '../../../corkboard.config';
+import { ScrapModal } from '@/components/scrapnest/modules/ScrapModal';
+import { PositionInputs } from '@/components/common/elements/PositionInputs';
+import config from '../../../../corkboard.config';
 import type { ComponentType } from 'react';
 
 interface CreateScrapModalProps {

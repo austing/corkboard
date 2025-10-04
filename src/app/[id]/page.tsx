@@ -11,13 +11,13 @@ import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { api, type Scrap } from '../../lib/api';
 import { CanvasUtils } from '../../utils/canvas';
 import { ScrapPermissions } from '../../utils/permissions';
-import { CursorIndicator } from '../../components/canvas/CursorIndicator';
-import { CreateButton } from '../../components/canvas/CreateButton';
-import { ErrorMessage } from '../../components/elements/ErrorMessage';
-import { ScrapCard } from '../../components/scrap/ScrapCard';
-import { CreateScrapModal } from '../../components/scrap/CreateScrapModal';
-import { UpdateScrapModal } from '../../components/scrap/UpdateScrapModal';
-import { ViewScrapModal } from '../../components/scrap/ViewScrapModal';
+import { CursorIndicator } from '@/components/scrapnest/elements/CursorIndicator';
+import { CreateButton } from '@/components/scrapnest/elements/CreateButton';
+import { ErrorMessage } from '@/components/common/elements/ErrorMessage';
+import { ScrapCard } from '@/components/scrapnest/modules/ScrapCard';
+import { CreateScrapModal } from '@/components/scrapnest/modules/CreateScrapModal';
+import { UpdateScrapModal } from '@/components/scrapnest/modules/UpdateScrapModal';
+import { ViewScrapModal } from '@/components/scrapnest/modules/ViewScrapModal';
 import type { ScrapFormData, Position, Size } from '../../types';
 
 // Dynamically import Froala editor to avoid SSR issues

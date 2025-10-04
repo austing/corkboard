@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import StudioLayout from '@/components/layout/studio-layout';
+import StudioLayout from '@/components/studio/layout/StudioLayout';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 

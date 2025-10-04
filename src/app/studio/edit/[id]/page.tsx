@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import StudioLayout from '@/components/layout/studio-layout';
+import StudioLayout from '@/components/studio/layout/StudioLayout';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 // Dynamically import Froala editor to avoid SSR issues

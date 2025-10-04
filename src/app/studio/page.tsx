@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import StudioLayout from '@/components/layout/studio-layout';
+import StudioLayout from '@/components/studio/layout/StudioLayout';
 import PermissionCheck from '@/guards/PermissionCheck';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import config from '../../../corkboard.config';

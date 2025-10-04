@@ -17,7 +17,7 @@
  */
 
 import { PlusIcon } from '@heroicons/react/24/outline';
-import config from '../../../corkboard.config';
+import config from '../../../../corkboard.config';
 
 interface CursorIndicatorProps {
   /** Whether the cursor indicator should be visible */

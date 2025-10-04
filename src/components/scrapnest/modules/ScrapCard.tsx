@@ -19,10 +19,10 @@
  * ```
  */
 
-import config from '../../../corkboard.config';
-import { ScrapHeader } from './ScrapHeader';
-import { ScrapFooter } from './ScrapFooter';
-import type { Scrap } from '../../lib/api';
+import config from '../../../../corkboard.config';
+import { ScrapHeader } from '@/components/scrapnest/modules/ScrapHeader';
+import { ScrapFooter } from '@/components/scrapnest/modules/ScrapFooter';
+import type { Scrap } from '@/lib/api';
 
 interface ScrapCardProps {
   /** The scrap data to display */

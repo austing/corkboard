@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import StudioLayout from '@/components/layout/studio-layout';
+import StudioLayout from '@/components/studio/layout/StudioLayout';
 import PermissionCheck from '@/guards/PermissionCheck';
-import AddRoleModal from '@/components/admin/add-role-modal';
-import EditRoleModal from '@/components/admin/edit-role-modal';
+import AddRoleModal from '@/components/studio/modules/AddRoleModal';
+import EditRoleModal from '@/components/studio/modules/EditRoleModal';
 import { TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 

@@ -1,3 +1,17 @@
+/**
+ * NestedLatestPage Component
+ *
+ * Displays scraps nested within a parent scrap, sorted by most recently updated.
+ * Shows scraps in a vertical column layout (latest first).
+ *
+ * @example
+ * Route: /PARENT_ID/latest
+ * ```tsx
+ * // Accessed via /{parentId}/latest
+ * <NestedLatestPage />
+ * ```
+ */
+
 'use client';
 
 import { useSession } from 'next-auth/react';
@@ -9,9 +23,9 @@ import { useModal } from '../../../hooks/useModal';
 import { useFormWithSubmit } from '../../../hooks/useFormWithSubmit';
 import { api } from '../../../lib/api';
 import type { Scrap, ScrapFormData } from '../../../types';
-import { ScrapCard } from '../../../components/scrap/ScrapCard';
-import { UpdateScrapModal } from '../../../components/scrap/UpdateScrapModal';
-import { ViewScrapModal } from '../../../components/scrap/ViewScrapModal';
+import { ScrapCard } from '@/components/scrapnest/modules/ScrapCard';
+import { UpdateScrapModal } from '@/components/scrapnest/modules/UpdateScrapModal';
+import { ViewScrapModal } from '@/components/scrapnest/modules/ViewScrapModal';
 import { ScrapPermissions } from '../../../utils/permissions';
 
 // Dynamically import Froala editor to avoid SSR issues

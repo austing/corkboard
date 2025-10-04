@@ -14,10 +14,10 @@
  * ```
  */
 
-import { ScrapModal } from './ScrapModal';
-import { ScrapHeader } from './ScrapHeader';
-import { ScrapFooter } from './ScrapFooter';
-import type { Scrap } from '../../lib/api';
+import { ScrapModal } from '@/components/scrapnest/modules/ScrapModal';
+import { ScrapHeader } from '@/components/scrapnest/modules/ScrapHeader';
+import { ScrapFooter } from '@/components/scrapnest/modules/ScrapFooter';
+import type { Scrap } from '@/lib/api';
 
 interface ViewScrapModalProps {
   /** Whether the modal is open */
