@@ -59,9 +59,11 @@ export function ScrapCard({
   onMouseEnter,
   onMouseLeave,
 }: ScrapCardProps) {
+  // Check if scrap content is redacted (empty content, null user data = not logged in OR invisible non-owner)
+  const isRedacted = scrap.content === '' && scrap.userId === null;
   // Invisible scraps that user doesn't own should not be clickable
   const isInvisibleNonOwner = !scrap.visible && !isOwner;
-  const isClickable = !isInvisibleNonOwner;
+  const isClickable = !isRedacted && !isInvisibleNonOwner;
 
   // Determine card styling based on state
   const getCardClassName = () => {
@@ -71,8 +73,8 @@ export function ScrapCard({
     if (!scrap.visible && isOwner) {
       return `${config.theme.invisible.bg} ${config.theme.invisible.text} border border-gray-600 opacity-40 hover:opacity-100 hover:shadow-xl invert`;
     }
-    if (isInvisibleNonOwner) {
-      // Non-owner invisible scraps: no hover effect, no pointer
+    if (isRedacted || isInvisibleNonOwner) {
+      // Redacted scraps (not logged in or non-owner invisible): no hover effect, no pointer
       return 'bg-gray-100 border border-gray-300 opacity-30';
     }
     return 'bg-white border border-gray-200 hover:shadow-xl';

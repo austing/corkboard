@@ -52,10 +52,12 @@ export async function GET(
 
     const isOwner = userId && scrap[0].userId === userId;
     const isInvisible = !scrap[0].visible;
+    const isLoggedOut = !userId;
 
-    // If scrap is invisible and user is not the owner, redact sensitive data
+    // If user is not logged in, redact ALL scraps (show only position and ID)
+    // OR if scrap is invisible and user is not the owner, redact sensitive data
     let scrapWithCount;
-    if (isInvisible && !isOwner) {
+    if (isLoggedOut || (isInvisible && !isOwner)) {
       scrapWithCount = {
         id: scrap[0].id,
         code: scrap[0].code,

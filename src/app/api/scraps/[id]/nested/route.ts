@@ -68,14 +68,16 @@ export async function GET(
       })
     );
 
-    // Process scraps: hide content/author/date for invisible scraps from non-authors
+    // Process scraps: hide content/author/date based on auth status and ownership
+    const isLoggedOut = !userId;
     const processedScraps = nestedScraps.map(scrap => {
       const isOwner = userId && scrap.userId === userId;
       const isInvisible = !scrap.visible;
       const nestedCount = nestedCounts.find(nc => nc.scrapId === scrap.id)?.count || 0;
 
-      // If scrap is invisible and user is not the owner, redact sensitive data
-      if (isInvisible && !isOwner) {
+      // If user is not logged in, redact ALL scraps (show only position and ID)
+      // OR if scrap is invisible and user is not the owner, redact sensitive data
+      if (isLoggedOut || (isInvisible && !isOwner)) {
         return {
           id: scrap.id,
           code: scrap.code,
