@@ -7,6 +7,7 @@ interface ScrapHeaderProps {
   scrap: Scrap;
   isModal?: boolean;
   isOwner?: boolean;
+  isHovered?: boolean;
   pathPrefix?: string; // For nested pages, e.g., window.location.pathname
   onVisibilityToggle?: () => void;
   onMoveClick?: () => void;
@@ -17,6 +18,7 @@ export function ScrapHeader({
   scrap,
   isModal = false,
   isOwner = false,
+  isHovered = false,
   pathPrefix = '',
   onVisibilityToggle,
   onMoveClick,
@@ -40,12 +42,14 @@ export function ScrapHeader({
           >
             #{scrap.code}
           </a>
-          {/* Open Nest button - hide on invisible scraps */}
+          {/* Nest button and count - hide on invisible scraps */}
           {scrap.nestedCount !== undefined && scrap.visible && (
             <NestButton
               scrapId={scrap.id}
               nestedCount={scrap.nestedCount}
               size={nestButtonSize}
+              isHovered={isHovered}
+              isModal={isModal}
               onClick={(e) => e.stopPropagation()}
             />
           )}

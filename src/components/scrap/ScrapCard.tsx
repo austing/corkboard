@@ -35,6 +35,8 @@ interface ScrapCardProps {
   isMoving?: boolean;
   /** Whether the current user owns this scrap */
   isOwner?: boolean;
+  /** Whether the mouse is hovering over this scrap */
+  isHovered?: boolean;
   /** Path prefix for nested page links */
   pathPrefix?: string;
   /** Click handler */
@@ -51,6 +53,7 @@ export function ScrapCard({
   index,
   isMoving = false,
   isOwner = false,
+  isHovered = false,
   pathPrefix = '',
   onClick,
   onMouseEnter,
@@ -83,6 +86,7 @@ export function ScrapCard({
       <ScrapHeader
         scrap={scrap}
         isOwner={isOwner}
+        isHovered={isHovered}
         pathPrefix={pathPrefix}
       />
 
