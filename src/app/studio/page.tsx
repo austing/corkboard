@@ -141,7 +141,7 @@ export default function StudioPage() {
                       >
                         <button
                           onClick={() => handleEditScrap(scrap)}
-                          className="text-indigo-600 hover:text-indigo-900 p-1"
+                          className="text-indigo-600 hover:text-indigo-900 p-1 cursor-pointer"
                         >
                           <PencilIcon className="h-4 w-4" />
                         </button>

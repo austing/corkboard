@@ -3,8 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import StudioLayout from '@/components/layout/studio-layout';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+
+// Dynamically import Froala editor to avoid SSR issues
+const FroalaEditor = dynamic(() => import('../../../components/FroalaEditor'), {
+  ssr: false,
+  loading: () => <div className="flex-1 border border-gray-300 rounded-md p-3 text-sm">Loading editor...</div>
+});
 
 
 interface Scrap {
@@ -166,14 +173,11 @@ export default function EditScrapPage() {
                 <label htmlFor="content" className="block text-lg font-medium text-gray-900 mb-2">
                   Content
                 </label>
-                <textarea
-                  name="content"
-                  id="content"
-                  required
-                  rows={12}
-                  value={formData.content}
-                  onChange={handleInputChange}
-                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-base px-4 py-3 border resize-none"
+                <FroalaEditor
+                  content={formData.content}
+                  onChange={(content: string) => setFormData(prev => ({ ...prev, content }))}
+                  height={400}
+                  maxHeight={600}
                 />
                 <p className="mt-2 text-sm text-gray-500">
                   Edit your content above. Changes will be automatically timestamped.
