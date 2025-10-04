@@ -29,7 +29,7 @@ import { ViewScrapModal } from '@/components/scrapnest/modules/ViewScrapModal';
 import { ScrapPermissions } from '../../../utils/permissions';
 
 // Dynamically import Froala editor to avoid SSR issues
-const FroalaEditor = dynamic(() => import('../../components/FroalaEditor'), {
+const FroalaEditor = dynamic(() => import('@/components/common/input/FroalaEditor'), {
   ssr: false,
   loading: () => <div className="flex-1 border border-gray-300 rounded-md p-3 text-sm">Loading editor...</div>
 });

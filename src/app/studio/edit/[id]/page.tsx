@@ -8,7 +8,7 @@ import StudioLayout from '@/components/studio/layout/StudioLayout';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 // Dynamically import Froala editor to avoid SSR issues
-const FroalaEditor = dynamic(() => import('../../../components/FroalaEditor'), {
+const FroalaEditor = dynamic(() => import('@/components/common/input/FroalaEditor'), {
   ssr: false,
   loading: () => <div className="flex-1 border border-gray-300 rounded-md p-3 text-sm">Loading editor...</div>
 });
