@@ -3734,3 +3734,447 @@ Time:        8.997 s
 Ran all test suites.
 ```
 
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Commit timestamp inclusion for logged-out users
+
+`git add -A && git commit -m "$(cat <<'EOF'
+Include createdAt and updatedAt for not-logged-in users
+
+Updated API to include timestamp fields when user is not logged in:
+- createdAt and updatedAt now included in redacted responses
+- Only content and author info (userId, userName, userEmail) are redacted
+- Invisible non-owner scraps still have all dates redacted (null)
+
+This allows not-logged-in users to see when scraps were created/updated
+while still protecting content and author identity.
+
+All 324 tests passing.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"`
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Verify commit succeeded
+
+`git status`
+
+Result:
+
+```
+[modularity 40d47b0] Include createdAt and updatedAt for not-logged-in users
+ 4 files changed, 319 insertions(+), 8 deletions(-)
+```
+
+Result:
+
+```
+On branch modularity
+nothing to commit, working tree clean
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Perfect! I've updated the API to include `createdAt` and `updatedAt` timestamps for not-logged-in users.
+
+## Updated Behavior
+
+### For Not-Logged-In Users (No Auth Token):
+**Included:**
+- ✅ `id`, `code` - identifiers
+- ✅ `x`, `y` - position
+- ✅ `visible` - visibility flag
+- ✅ `nestedWithin`, `nestedCount` - nesting info
+- ✅ **`createdAt`, `updatedAt`** - timestamps
+
+**Redacted:**
+- ❌ `content` - empty string
+- ❌ `userId`, `userName`, `userEmail` - null (author info hidden)
+
+### For Logged-In Users Viewing Invisible Non-Owner Scraps:
+- Everything redacted including dates (stricter privacy for invisible scraps)
+
+This allows not-logged-in users to see when scraps were created/modified while keeping content and authorship private.
+
+---
+
+_**User**_
+
+By the way it doesn't look like the previous request was really finished. I am a non-logged in user on a second browser and I am seeing the full text. Which means that neither the api changes nor the interface changes have worked.
+
+---
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Let me check the actual API behavior and frontend by looking at what's really happening:
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Test API without auth token
+
+`curl -s http://localhost:3000/api/scraps | jq '.' | head -50`
+
+Error:
+
+```
+Command timed out after 10s
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+The server isn't running. Let me check how the frontend is actually fetching the data:
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Read** `./src/lib/api.ts`
+
+Result:
+
+```
+1→import type {
+     2→  ScrapWithUser,
+     3→  ScrapCreateData,
+     4→  ScrapUpdateData,
+     5→  ScrapsResponse,
+     6→  PermissionCheckResponse,
+     7→  VisibilityUpdateResponse,
+     8→  PermissionCheck,
+     9→  ApiError,
+    10→  User,
+    11→  Role
+    12→} from '../types';
+    13→
+    14→interface ApiRequestOptions extends RequestInit {
+    15→  timeout?: number;
+    16→}
+    17→
+    18→class ApiClient {
+    19→  private readonly baseTimeout = 10000; // 10 seconds
+    20→  private async request<T>(
+    21→    url: string,
+    22→    options?: ApiRequestOptions
+    23→  ): Promise<T> {
+    24→    try {
+    25→      const response = await fetch(url, {
+    26→        headers: {
+    27→          'Content-Type': 'application/json',
+    28→          ...options?.headers,
+    29→        },
+    30→        ...options,
+    31→      });
+    32→
+    33→      if (!response.ok) {
+    34→        const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
+    35→        const apiError: ApiError = new Error(errorData.error || `HTTP ${response.status}`) as ApiError;
+    36→        apiError.statusCode = response.status;
+    37→        apiError.endpoint = url;
+    38→        apiError.method = options?.method || 'GET';
+    39→        apiError.requestData = options?.body;
+    40→        throw apiError;
+    41→      }
+    42→
+    43→      return response.json() as Promise<T>;
+    44→    } catch (error) {
+    45→      if (error instanceof Error && 'statusCode' in error) {
+    46→        throw error; // Re-throw API errors as-is
+    47→      }
+    48→      // Wrap other errors
+    49→      const apiError: ApiError = new Error('Network error occurred') as ApiError;
+    50→      apiError.endpoint = url;
+    51→      apiError.method = options?.method || 'GET';
+    52→      apiError.details = { originalError: error };
+    53→      console.error(`API Error: ${url}`, apiError);
+    54→      throw apiError;
+    55→    }
+    56→  }
+    57→
+    58→  // Scrap-specific methods
+    59→  async fetchScraps(authenticated: boolean): Promise<ScrapsResponse> {
+    60→    const endpoint = authenticated ? '/api/scraps' : '/api/scraps/public';
+    61→    return this.request<ScrapsResponse>(endpoint);
+    62→  }
+    63→
+    64→  async createScrap(data: ScrapCreateData): Promise<ScrapWithUser> {
+    65→    return this.request<ScrapWithUser>('/api/scraps', {
+    66→      method: 'POST',
+    67→      body: JSON.stringify(data),
+    68→    });
+    69→  }
+    70→
+    71→  async updateScrap(id: string, data: ScrapUpdateData): Promise<ScrapWithUser> {
+    72→    if (!id || typeof id !== 'string') {
+    73→      throw new Error('Invalid scrap ID provided');
+    74→    }
+    75→    return this.request<ScrapWithUser>(`/api/scraps/${id}`, {
+    76→      method: 'PUT',
+    77→      body: JSON.stringify(data),
+    78→    });
+    79→  }
+    80→
+    81→  async updateScrapVisibility(id: string, visible: boolean): Promise<VisibilityUpdateResponse> {
+    82→    if (!id || typeof id !== 'string') {
+    83→      throw new Error('Invalid scrap ID provided');
+    84→    }
+    85→    if (typeof visible !== 'boolean') {
+    86→      throw new Error('Visibility must be a boolean value');
+    87→    }
+    88→    return this.request<VisibilityUpdateResponse>(`/api/scraps/${id}/visibility`, {
+    89→      method: 'PUT',
+    90→      body: JSON.stringify({ visible }),
+    91→    });
+    92→  }
+    93→
+    94→  async checkPermission(data: PermissionCheck): Promise<PermissionCheckResponse> {
+    95→    const { userId, resource, action } = data;
+    96→    if (!userId || !resource || !action) {
+    97→      throw new Error('Missing required permission check parameters');
+    98→    }
+    99→    return this.request<PermissionCheckResponse>('/api/permissions/check', {
+   100→      method: 'POST',
+   101→      body: JSON.stringify({ userId, resource, action }),
+   102→    });
+   103→  }
+   104→
+   105→  async fetchNestedScraps(parentId: string): Promise<{ parentScrap: ScrapWithUser; nestedScraps: ScrapWithUser[] }> {
+   106→    if (!parentId || typeof parentId !== 'string') {
+   107→      throw new Error('Invalid parent scrap ID provided');
+   108→    }
+   109→    return this.request<{ parentScrap: ScrapWithUser; nestedScraps: ScrapWithUser[] }>(`/api/scraps/${parentId}/nested`);
+   110→  }
+   111→
+   112→  async fetchScrapByCode(code: string): Promise<{ scrap: ScrapWithUser }> {
+   113→    if (!code || typeof code !== 'string') {
+   114→      throw new Error('Invalid scrap code provided');
+   115→    }
+   116→    return this.request<{ scrap: ScrapWithUser }>(`/api/scraps/code/${code}`);
+   117→  }
+   118→
+   119→  // User management methods
+   120→  async fetchUsers(): Promise<{ users: User[] }> {
+   121→    return this.request<{ users: User[] }>('/api/users');
+   122→  }
+   123→
+   124→  async fetchRoles(): Promise<{ roles: Role[] }> {
+   125→    return this.request<{ roles: Role[] }>('/api/roles');
+   126→  }
+   127→}
+   128→
+   129→export const api = new ApiClient();
+   130→
+   131→// Re-export commonly used types
+   132→export type {
+   133→  ScrapWithUser as Scrap,
+   134→  ScrapCreateData,
+   135→  ScrapUpdateData,
+   136→  ScrapsResponse,
+   137→  PermissionCheckResponse,
+   138→  ApiError
+   139→} from '../types';
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+I see the issue! The frontend is using `/api/scraps/public` for unauthenticated users (line 60), but we updated `/api/scraps` to allow unauthenticated access. Let me check if the public endpoint exists and what it does:
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Read** `./src/app/api/scraps/public/route.ts`
+
+Result:
+
+```
+1→import { NextRequest, NextResponse } from 'next/server';
+     2→import { db } from '@/lib/db';
+     3→import { scraps, users } from '@/lib/db/schema';
+     4→import { eq, isNull, and, count } from 'drizzle-orm';
+     5→
+     6→export async function GET(_request: NextRequest) {
+     7→  try {
+     8→    // Public endpoint - no authentication required, shows only visible top-level scraps
+     9→    const allScraps = await db
+    10→      .select({
+    11→        id: scraps.id,
+    12→        code: scraps.code,
+    13→        content: scraps.content,
+    14→        x: scraps.x,
+    15→        y: scraps.y,
+    16→        visible: scraps.visible,
+    17→        userId: scraps.userId,
+    18→        nestedWithin: scraps.nestedWithin,
+    19→        userName: users.name,
+    20→        userEmail: users.email,
+    21→        createdAt: scraps.createdAt,
+    22→        updatedAt: scraps.updatedAt,
+    23→      })
+    24→      .from(scraps)
+    25→      .leftJoin(users, eq(scraps.userId, users.id))
+    26→      .where(and(eq(scraps.visible, true), isNull(scraps.nestedWithin)));
+    27→
+    28→    // Get nested scrap counts for each scrap
+    29→    const scrapIds = allScraps.map(scrap => scrap.id);
+    30→    const nestedCounts = await Promise.all(
+    31→      scrapIds.map(async (scrapId) => {
+    32→        const result = await db
+    33→          .select({ count: count() })
+    34→          .from(scraps)
+    35→          .where(eq(scraps.nestedWithin, scrapId));
+    36→        return { scrapId, count: result[0]?.count || 0 };
+    37→      })
+    38→    );
+    39→
+    40→    // Add nested counts to scrap data
+    41→    const scrapsWithCounts = allScraps.map(scrap => ({
+    42→      ...scrap,
+    43→      nestedCount: nestedCounts.find(nc => nc.scrapId === scrap.id)?.count || 0
+    44→    }));
+    45→
+    46→    return NextResponse.json({ scraps: scrapsWithCounts });
+    47→  } catch (error: unknown) {
+    48→    console.error('Error fetching public scraps:', error);
+    49→    return NextResponse.json(
+    50→      { error: 'Internal server error' },
+    51→      { status: 500 }
+    52→    );
+    53→  }
+    54→}
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Found it! The `/api/scraps/public` endpoint is returning full content without redaction. I need to update this endpoint to redact the data:
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Edit**
+
+Result:
+
+```
+The file /Users/austin/Coding/claudeland/corkboard/src/app/api/scraps/public/route.ts has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+     2→import { db } from '@/lib/db';
+     3→import { scraps, users } from '@/lib/db/schema';
+     4→import { eq, isNull, and, count } from 'drizzle-orm';
+     5→
+     6→export async function GET(_request: NextRequest) {
+     7→  try {
+     8→    // Public endpoint - no authentication required, shows ALL top-level scraps with redacted content
+     9→    const allScraps = await db
+    10→      .select({
+    11→        id: scraps.id,
+    12→        code: scraps.code,
+    13→        content: scraps.content,
+    14→        x: scraps.x,
+    15→        y: scraps.y,
+    16→        visible: scraps.visible,
+    17→        userId: scraps.userId,
+    18→        nestedWithin: scraps.nestedWithin,
+    19→        userName: users.name,
+    20→        userEmail: users.email,
+    21→        createdAt: scraps.createdAt,
+    22→        updatedAt: scraps.updatedAt,
+    23→      })
+    24→      .from(scraps)
+    25→      .leftJoin(users, eq(scraps.userId, users.id))
+    26→      .where(isNull(scraps.nestedWithin));
+    27→
+    28→    // Get nested scrap counts for each scrap
+    29→    const scrapIds = allScraps.map(scrap => scrap.id);
+    30→    const nestedCounts = await Promise.all(
+    31→      scrapIds.map(async (scrapId) => {
+    32→        const result = await db
+    33→          .select({ count: count() })
+    34→          .from(scraps)
+    35→          .where(eq(scraps.nestedWithin, scrapId));
+    36→        return { scrapId, count: result[0]?.count || 0 };
+    37→      })
+    38→    );
+    39→
+    40→    // Redact all scraps for unauthenticated users (show position, ID, and dates only)
+    41→    const scrapsWithCounts = allScraps.map(scrap => ({
+    42→      id: scrap.id,
+    43→      code: scrap.code,
+    44→      content: '', // Redacted
+    45→      x: scrap.x,
+    46→      y: scrap.y,
+    47→      visible: scrap.visible,
+    48→      userId: null, // Redacted
+    49→      nestedWithin: scrap.nestedWithin,
+    50→      userName: null, // Redacted
+    51→      userEmail: null, // Redacted
+    52→      createdAt: scrap.createdAt,
+    53→      updatedAt: scrap.updatedAt,
+    54→      nestedCount: nestedCounts.find(nc => nc.scrapId === scrap.id)?.count || 0
+    55→    }));
+    56→
+    57→    return NextResponse.json({ scraps: scrapsWithCounts });
+    58→  } catch (error: unknown) {
+    59→    console.error('Error fetching public scraps:', error);
+    60→    return NextResponse.json(
+    61→      { error: 'Internal server error' },
+    62→      { status: 500 }
+    63→    );
+    64→  }
+    65→}
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Good! Now I also need to remove the unused `and` import:
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Edit**
+
+Result:
+
+```
+The file /Users/austin/Coding/claudeland/corkboard/src/app/api/scraps/public/route.ts has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+     1→import { NextRequest, NextResponse } from 'next/server';
+     2→import { db } from '@/lib/db';
+     3→import { scraps, users } from '@/lib/db/schema';
+     4→import { eq, isNull, count } from 'drizzle-orm';
+     5→
+     6→export async function GET(_request: NextRequest) {
+     7→  try {
+     8→    // Public endpoint - no authentication required, shows ALL top-level scraps with redacted content
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Now let me run the tests and commit:
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Run tests to verify changes
+
+`npm run test 2>&1 | tail -20`
+
+Result:
+
+```
+165 |       };
+
+      at warn (tests/browser/compatibility.test.ts:162:19)
+      at Object.safeSetItem (tests/browser/compatibility.test.ts:167:22)
+
+PASS tests/utils/canvas.test.ts
+PASS src/app/api/__tests__/profile.test.ts
+(node:32714) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS tests/components/hooks.test.tsx
+PASS tests/validation/forms.test.ts
+PASS tests/utils/keyboard.test.ts
+PASS src/app/api/__tests__/auth.test.ts
+PASS tests/accessibility/a11y.test.tsx
+
+Test Suites: 19 passed, 19 total
+Tests:       12 skipped, 324 passed, 336 total
+Snapshots:   0 total
+Time:        3.71 s, estimated 5 s
+Ran all test suites.
+```
+

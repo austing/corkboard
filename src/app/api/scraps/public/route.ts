@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { scraps, users } from '@/lib/db/schema';
-import { eq, isNull, and, count } from 'drizzle-orm';
+import { eq, isNull, count } from 'drizzle-orm';
 
 export async function GET(_request: NextRequest) {
   try {
-    // Public endpoint - no authentication required, shows only visible top-level scraps
+    // Public endpoint - no authentication required, shows ALL top-level scraps with redacted content
     const allScraps = await db
       .select({
         id: scraps.id,
@@ -23,7 +23,7 @@ export async function GET(_request: NextRequest) {
       })
       .from(scraps)
       .leftJoin(users, eq(scraps.userId, users.id))
-      .where(and(eq(scraps.visible, true), isNull(scraps.nestedWithin)));
+      .where(isNull(scraps.nestedWithin));
 
     // Get nested scrap counts for each scrap
     const scrapIds = allScraps.map(scrap => scrap.id);
@@ -37,9 +37,20 @@ export async function GET(_request: NextRequest) {
       })
     );
 
-    // Add nested counts to scrap data
+    // Redact all scraps for unauthenticated users (show position, ID, and dates only)
     const scrapsWithCounts = allScraps.map(scrap => ({
-      ...scrap,
+      id: scrap.id,
+      code: scrap.code,
+      content: '', // Redacted
+      x: scrap.x,
+      y: scrap.y,
+      visible: scrap.visible,
+      userId: null, // Redacted
+      nestedWithin: scrap.nestedWithin,
+      userName: null, // Redacted
+      userEmail: null, // Redacted
+      createdAt: scrap.createdAt,
+      updatedAt: scrap.updatedAt,
       nestedCount: nestedCounts.find(nc => nc.scrapId === scrap.id)?.count || 0
     }));
 
