@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev2": "DATABASE_URL=file:./sqlite2.db PORT=3001 next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
@@ -13,6 +14,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/lib/db/seed.ts",
+    "db:seed2": "DATABASE_URL=file:./sqlite2.db tsx src/lib/db/seed.ts",
     "db:export": "./scripts/db-export.sh",
     "db:import": "./scripts/db-import.sh"
   },

@@ -55,3 +55,6 @@ sqlite.db
 .idea/
 *.swp
 *.swo
+sqlite2.db
+sqlite2.db-shm
+sqlite2.db-wal
