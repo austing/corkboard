@@ -129,9 +129,7 @@ export async function generateUpdateFixture(
   since?: Date
 ): Promise<UpdateFixture> {
   // Fetch user's scraps
-  let query = db.select().from(scraps).where(eq(scraps.userId, currentUserId));
-
-  const userScraps = await query;
+  const userScraps = await db.select().from(scraps).where(eq(scraps.userId, currentUserId));
 
   // Filter by date if provided
   const updateScraps = since
@@ -328,7 +326,7 @@ export function parseFixture(json: string): MirrorFixture | UpdateFixture {
 
   // Convert date strings back to Date objects
   if (parsed.scraps) {
-    parsed.scraps = parsed.scraps.map((scrap: any) => ({
+    parsed.scraps = parsed.scraps.map((scrap: Scrap) => ({
       ...scrap,
       createdAt: new Date(scrap.createdAt),
       updatedAt: new Date(scrap.updatedAt),

@@ -15,6 +15,7 @@ import {
   PlusIcon,
   UserGroupIcon,
   ShieldCheckIcon,
+  ArrowsRightLeftIcon,
 } from '@heroicons/react/24/outline';
 import PermissionCheck from '@/guards/PermissionCheck';
 
@@ -25,6 +26,7 @@ interface StudioLayoutProps {
 const navigation = [
   { name: 'my scraps', href: '/studio', icon: DocumentTextIcon },
   { name: 'create scrap', href: '/studio/new', icon: PlusIcon },
+  { name: 'fixtures', href: '/studio/fixtures', icon: ArrowsRightLeftIcon },
   { name: 'me', href: '/profile', icon: UserCircleIcon },
 ];
 
