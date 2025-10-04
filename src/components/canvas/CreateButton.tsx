@@ -28,9 +28,14 @@ export function CreateButton({ isAuthenticated, onClick }: CreateButtonProps) {
     return (
       <button
         onClick={onClick}
-        className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 inline-flex items-center justify-center w-16 h-16 rounded-full ${config.theme.primary.bg} ${config.theme.primary.hover} text-white shadow-lg transition-all hover:scale-110 cursor-pointer`}
+        className={`fixed inline-flex items-center justify-center w-16 h-16 rounded-full ${config.theme.primary.bg} ${config.theme.primary.hover} text-white shadow-lg transition-all hover:scale-110 cursor-pointer`}
         title="Create new scrap (or hold Shift and click anywhere)"
-        style={{ zIndex: 1000 }}
+        style={{
+          zIndex: 1000,
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)'
+        }}
       >
         <PlusIcon className="h-8 w-8" />
       </button>
@@ -39,8 +44,13 @@ export function CreateButton({ isAuthenticated, onClick }: CreateButtonProps) {
 
   return (
     <div
-      className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-300 text-gray-600 shadow-lg"
-      style={{ zIndex: 1000 }}
+      className="fixed inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-300 text-gray-600 shadow-lg"
+      style={{
+        zIndex: 1000,
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)'
+      }}
       title="Sign in to create scraps"
     >
       <span className="text-2xl">⚘</span>

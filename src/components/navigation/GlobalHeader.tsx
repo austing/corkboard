@@ -37,7 +37,7 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
   return (
     <div className="fixed top-4 left-4 right-4 z-[100] flex items-center justify-between bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-3">
       {/* Left side - Navigation links */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-0">
         <Link
           href="/"
           className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
@@ -72,14 +72,14 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
             className="inline-flex items-center text-gray-600 hover:text-gray-800 p-2 rounded-md hover:bg-gray-100 transition-colors"
             title="Settings"
           >
-            <Cog6ToothIcon className="h-5 w-5" />
+            <Cog6ToothIcon className="h-4 w-4" />
           </Link>
         )}
 
         {isAuthenticated ? (
           <button
             onClick={() => signOut({ callbackUrl: '/' })}
-            className="inline-flex items-center space-x-1.5 text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-md hover:bg-gray-100 text-sm font-medium transition-colors"
+            className="inline-flex items-center space-x-1.5 text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-md hover:bg-gray-100 text-sm font-medium transition-colors cursor-pointer"
             title="Sign Out"
           >
             <ArrowRightOnRectangleIcon className="h-4 w-4" />
