@@ -114,7 +114,7 @@ export function ScrapCard({
       {/* Content preview - grows to fill available space */}
       <div className="mb-3 flex-grow min-h-[120px]">
         <div
-          className="text-sm text-gray-800 line-clamp-24 froala-content"
+          className={`text-sm text-gray-800 line-clamp-24 froala-content ${isInvisibleScrap && isAuthenticated ? 'opacity-0' : ''}`}
           dangerouslySetInnerHTML={{ __html: scrap.content }}
         />
       </div>
