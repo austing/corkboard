@@ -41,7 +41,7 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
   const getTreeLink = () => {
     // If on a nest page (/{id}), link to tree view of that nest
     const nestMatch = pathname.match(/^\/([^\/]+)\/?$/);
-    if (nestMatch && nestMatch[1] !== 'tree' && nestMatch[1] !== 'latest') {
+    if (nestMatch && nestMatch[1] !== 'tree' && nestMatch[1] !== 'latest' && nestMatch[1] !== 'studio' && nestMatch[1] !== 'profile') {
       return `/${nestMatch[1]}/tree/`;
     }
     // If already on a nested tree page, stay there

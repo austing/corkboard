@@ -22,12 +22,15 @@ interface Scrap {
   updatedAt: number;
 }
 
+type SortOption = 'created' | 'modified' | 'distance';
+
 export default function StudioPage() {
   const { data: _session } = useSession();
   const router = useRouter();
   const [scraps, setScraps] = useState<Scrap[]>([]);
   const [loading, setLoading] = useState(true);
   const [_error, setError] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('modified');
 
   useEffect(() => {
     document.title = 'Corkboard > Scraps and Settings';
@@ -52,6 +55,27 @@ export default function StudioPage() {
       setLoading(false);
     }
   };
+
+  const sortScraps = (scrapsToSort: Scrap[]): Scrap[] => {
+    const sorted = [...scrapsToSort];
+
+    switch (sortBy) {
+      case 'created':
+        return sorted.sort((a, b) => b.createdAt - a.createdAt);
+      case 'modified':
+        return sorted.sort((a, b) => b.updatedAt - a.updatedAt);
+      case 'distance':
+        return sorted.sort((a, b) => {
+          const distA = Math.sqrt(a.x * a.x + a.y * a.y);
+          const distB = Math.sqrt(b.x * b.x + b.y * b.y);
+          return distA - distB;
+        });
+      default:
+        return sorted;
+    }
+  };
+
+  const sortedScraps = sortScraps(scraps);
 
   const handleEditScrap = (scrap: Scrap) => {
     router.push(`/studio/edit/${scrap.id}`);
@@ -96,7 +120,22 @@ export default function StudioPage() {
               Create and manage your content scraps. Each scrap has a unique code and can be positioned anywhere on your virtual corkboard.
             </p>
           </div>
-          <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+          <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <label htmlFor="sort-by" className="text-sm text-gray-700">
+                Sort by:
+              </label>
+              <select
+                id="sort-by"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="rounded-md border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+              >
+                <option value="modified">modified date</option>
+                <option value="created">created date</option>
+                <option value="distance">distance from 0,0</option>
+              </select>
+            </div>
             <PermissionCheck
               resource="scraps"
               action="create"
@@ -121,7 +160,7 @@ export default function StudioPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {scraps.map((scrap) => (
+              {sortedScraps.map((scrap) => (
                 <div
                   key={scrap.id}
                   className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
