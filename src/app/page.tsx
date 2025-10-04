@@ -417,6 +417,7 @@ export default function HomePage(): React.JSX.Element {
             isOwner={session?.user?.id === scrap.userId}
             isHovered={hoveredScrapId === scrap.id}
             isHighlighted={highlightedScrapCode === scrap.code}
+            isAuthenticated={!!session}
             onClick={() => {
               if (fullscreenModal.data?.id === scrap.id) {
                 fullscreenModal.close();

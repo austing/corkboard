@@ -429,6 +429,7 @@ export default function NestedScrapPage(): React.JSX.Element {
             isOwner={session?.user?.id === scrap.userId}
             isHovered={hoveredScrapId === scrap.id}
             isHighlighted={highlightedScrapCode === scrap.code}
+            isAuthenticated={!!session}
             pathPrefix={window.location.pathname}
             onClick={() => {
               if (fullscreenModal.data?.id === scrap.id) {

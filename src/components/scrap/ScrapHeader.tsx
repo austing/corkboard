@@ -8,6 +8,7 @@ interface ScrapHeaderProps {
   isModal?: boolean;
   isOwner?: boolean;
   isHovered?: boolean;
+  isAuthenticated?: boolean;
   pathPrefix?: string; // For nested pages, e.g., window.location.pathname
   onVisibilityToggle?: () => void;
   onMoveClick?: () => void;
@@ -19,6 +20,7 @@ export function ScrapHeader({
   isModal = false,
   isOwner = false,
   isHovered = false,
+  isAuthenticated = false,
   pathPrefix = '',
   onVisibilityToggle,
   onMoveClick,
@@ -50,6 +52,7 @@ export function ScrapHeader({
               size={nestButtonSize}
               isHovered={isHovered}
               isModal={isModal}
+              isAuthenticated={isAuthenticated}
               onClick={(e) => e.stopPropagation()}
             />
           )}

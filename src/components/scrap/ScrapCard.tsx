@@ -39,6 +39,8 @@ interface ScrapCardProps {
   isHovered?: boolean;
   /** Whether this scrap is highlighted from an anchor link */
   isHighlighted?: boolean;
+  /** Whether the user is authenticated */
+  isAuthenticated?: boolean;
   /** Path prefix for nested page links */
   pathPrefix?: string;
   /** Click handler */
@@ -57,6 +59,7 @@ export function ScrapCard({
   isOwner = false,
   isHovered = false,
   isHighlighted = false,
+  isAuthenticated = false,
   pathPrefix = '',
   onClick,
   onMouseEnter,
@@ -76,10 +79,9 @@ export function ScrapCard({
       return `${config.theme.moving.bg} ${config.theme.moving.text} border ${config.theme.moving.border}`;
     }
     if (isInvisibleScrap) {
-      // All invisible scraps use the same styling; only owners can interact
-      const hoverClass = isOwner ? 'hover:opacity-100 hover:shadow-xl' : '';
+      // All invisible scraps use the same styling and raise opacity on hover
       const highlightClass = isHighlighted ? 'border-indigo-500 border-4' : 'border-gray-300';
-      return `${config.theme.invisible.bg} ${config.theme.invisible.text} border ${highlightClass} opacity-80 ${hoverClass}`;
+      return `${config.theme.invisible.bg} ${config.theme.invisible.text} border ${highlightClass} opacity-80 hover:opacity-100 hover:shadow-xl`;
     }
     const highlightClass = isHighlighted ? 'border-indigo-500 border-4' : 'border-gray-200';
     return `bg-white border ${highlightClass} hover:shadow-xl`;
@@ -102,6 +104,7 @@ export function ScrapCard({
         scrap={scrap}
         isOwner={isOwner}
         isHovered={isHovered}
+        isAuthenticated={isAuthenticated}
         pathPrefix={pathPrefix}
       />
 
