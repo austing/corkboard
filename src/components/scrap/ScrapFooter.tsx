@@ -43,9 +43,11 @@ export function ScrapFooter({
     return null;
   }
 
+  const authorName = userName || userEmail || '';
+
   return (
     <div className={`${textSize} text-gray-500 flex justify-between items-center ${paddingClass} ${className}`}>
-      <div>{userName || userEmail || 'Unknown'}</div>
+      <div>{authorName}</div>
       <div>{createdAt ? new Date(createdAt).toLocaleDateString() : ''}</div>
     </div>
   );

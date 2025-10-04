@@ -4808,3 +4808,181 @@ Time:        3.963 s
 Ran all test suites.
 ```
 
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Commit unified invisible scrap styling
+
+`git add -A && git commit -m "$(cat <<'EOF'
+Unify invisible scrap styling across all scenarios
+
+All invisible scraps now use the same brownish styling (bg-gray-800 
+with invert filter), whether they are:
+- Owner's invisible scraps
+- Non-owner invisible scraps  
+- Redacted scraps (logged-out users)
+
+The only difference is that owners get hover effects on their scraps.
+This eliminates code duplication and ensures consistent visual treatment
+for all invisible content - the only distinction is whether there's text.
+
+All 324 tests passing.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"`
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Verify commit succeeded
+
+`git status`
+
+Result:
+
+```
+[modularity 50310eb] Unify invisible scrap styling across all scenarios
+ 2 files changed, 309 insertions(+), 6 deletions(-)
+```
+
+Result:
+
+```
+On branch modularity
+nothing to commit, working tree clean
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Perfect! I've unified the invisible scrap styling. Now all invisible scraps (whether owned, non-owned, or redacted for logged-out users) use the same brownish appearance:
+
+- **Same styling**: `bg-gray-800` with `invert` filter, `opacity-40`, `border-gray-600`
+- **Only difference**: Owners get `hover:opacity-100 hover:shadow-xl` for their invisible scraps
+- **No code duplication**: Single conditional check `isInvisibleScrap` determines the styling
+
+The visual difference between owner's invisible scraps and others is only:
+1. **Text content**: Owners see their text, others see empty
+2. **Hover effect**: Owners can hover to see more clearly, others cannot
+3. **Clickability**: Owners can click to edit, others cannot
+
+---
+
+_**User**_
+
+by the way, if the author is unknown, no need to say "unknown" just print nothing
+
+---
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Read** `./src/components/scrap/ScrapFooter.tsx`
+
+Result:
+
+```
+1→/**
+     2→ * ScrapFooter Component
+     3→ *
+     4→ * Displays author and creation date metadata for a scrap.
+     5→ * Used in both ScrapCard previews and modal views.
+     6→ *
+     7→ * @example
+     8→ * \```tsx
+     9→ * <ScrapFooter
+    10→ *   userName="John Doe"
+    11→ *   userEmail="john@example.com"
+    12→ *   createdAt={new Date()}
+    13→ *   size="small"
+    14→ * />
+    15→ * \```
+    16→ */
+    17→
+    18→interface ScrapFooterProps {
+    19→  /** Author's display name (optional) */
+    20→  userName?: string | null;
+    21→  /** Author's email */
+    22→  userEmail?: string | null;
+    23→  /** When the scrap was created */
+    24→  createdAt?: Date | number | null;
+    25→  /** Size variant - small for cards, large for modals */
+    26→  size?: 'small' | 'large';
+    27→  /** Additional CSS classes */
+    28→  className?: string;
+    29→}
+    30→
+    31→export function ScrapFooter({
+    32→  userName,
+    33→  userEmail,
+    34→  createdAt,
+    35→  size = 'small',
+    36→  className = '',
+    37→}: ScrapFooterProps) {
+    38→  const textSize = size === 'small' ? 'text-xs' : 'text-sm';
+    39→  const paddingClass = size === 'small' ? 'border-t pt-2' : '';
+    40→
+    41→  // If no data is available (redacted for invisible scraps), don't show footer
+    42→  if (!userEmail && !userName && !createdAt) {
+    43→    return null;
+    44→  }
+    45→
+    46→  return (
+    47→    <div className={`${textSize} text-gray-500 flex justify-between items-center ${paddingClass} ${className}`}>
+    48→      <div>{userName || userEmail || 'Unknown'}</div>
+    49→      <div>{createdAt ? new Date(createdAt).toLocaleDateString() : ''}</div>
+    50→    </div>
+    51→  );
+    52→}
+    53→
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Edit**
+
+Result:
+
+```
+The file /Users/austin/Coding/claudeland/corkboard/src/components/scrap/ScrapFooter.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    42→  if (!userEmail && !userName && !createdAt) {
+    43→    return null;
+    44→  }
+    45→
+    46→  const authorName = userName || userEmail || '';
+    47→
+    48→  return (
+    49→    <div className={`${textSize} text-gray-500 flex justify-between items-center ${paddingClass} ${className}`}>
+    50→      <div>{authorName}</div>
+    51→      <div>{createdAt ? new Date(createdAt).toLocaleDateString() : ''}</div>
+    52→    </div>
+    53→  );
+    54→}
+    55→
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Run tests to verify changes
+
+`npm run test 2>&1 | tail -15`
+
+Result:
+
+```
+164 |         }
+      165 |       };
+
+      at warn (tests/browser/compatibility.test.ts:162:19)
+      at Object.safeSetItem (tests/browser/compatibility.test.ts:167:22)
+
+PASS src/app/api/__tests__/profile.test.ts
+PASS tests/utils/keyboard.test.ts
+PASS tests/accessibility/a11y.test.tsx
+
+Test Suites: 19 passed, 19 total
+Tests:       12 skipped, 324 passed, 336 total
+Snapshots:   0 total
+Time:        4.276 s
+Ran all test suites.
+```
+
