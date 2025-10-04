@@ -20,31 +20,8 @@ import {
   ArrowRightOnRectangleIcon,
   ArrowLeftOnRectangleIcon,
   Cog6ToothIcon,
+  MapIcon,
 } from '@heroicons/react/24/outline';
-
-// Tree icon - using a simple hierarchical structure representation
-const TreeIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-    />
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 12h6m-6 4h6"
-    />
-  </svg>
-);
 
 interface GlobalHeaderProps {
   /** Whether the user is authenticated */
@@ -83,7 +60,7 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
           }`}
           title="Tree View"
         >
-          <TreeIcon className="h-4 w-4" />
+          <MapIcon className="h-4 w-4" />
           <span>Tree</span>
         </Link>
       </div>
