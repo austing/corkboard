@@ -89,8 +89,8 @@ export function ScrapCard({
         top: `${position.y}px`,
         zIndex: scrap.visible ? 10 + index : index,
       }}
-      onMouseEnter={isClickable ? onMouseEnter : undefined}
-      onMouseLeave={isClickable ? onMouseLeave : undefined}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       onClick={isClickable ? onClick : undefined}
     >
       <ScrapHeader
