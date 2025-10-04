@@ -160,31 +160,39 @@ export default function NestedScrapPage(): React.JSX.Element {
   ], [isMoveMode, newScrapModal.isOpen, editScrapModal.isOpen]);
 
   useEffect(() => {
-    if (nestedScraps.length > 0 && !loading) {
-      const size: Size = CanvasUtils.calculateCanvasSize(nestedScraps);
-      setCanvasSize(size);
+    const updateCanvasSize = () => {
+      if (nestedScraps.length > 0 && !loading) {
+        const size: Size = CanvasUtils.calculateCanvasSize(nestedScraps);
+        setCanvasSize(size);
 
-      // Handle hash navigation after scraps are loaded
-      const hash = window.location.hash.replace('#', '');
-      if (hash) {
-        const targetScrap = nestedScraps.find(scrap => scrap.code === hash);
-        if (targetScrap) {
-          const scrapElement = document.getElementById(hash);
-          if (scrapElement) {
-            scrapElement.scrollIntoView({
-              behavior: 'smooth',
-              block: 'center',
-              inline: 'center'
-            });
+        // Handle hash navigation after scraps are loaded
+        const hash = window.location.hash.replace('#', '');
+        if (hash) {
+          const targetScrap = nestedScraps.find(scrap => scrap.code === hash);
+          if (targetScrap) {
+            const scrapElement = document.getElementById(hash);
+            if (scrapElement) {
+              scrapElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'center'
+              });
+            }
+            // Highlight the scrap instead of opening modal
+            setHighlightedScrapCode(hash);
           }
-          // Highlight the scrap instead of opening modal
-          setHighlightedScrapCode(hash);
         }
+      } else if (nestedScraps.length === 0 && !loading) {
+        // No scraps - set canvas to viewport size
+        setCanvasSize({ width: window.innerWidth, height: window.innerHeight });
       }
-    } else if (nestedScraps.length === 0 && !loading) {
-      // No scraps - set minimal canvas size
-      setCanvasSize({ width: Math.max(window.innerWidth, 1000), height: Math.max(window.innerHeight, 800) });
-    }
+    };
+
+    updateCanvasSize();
+
+    // Update canvas size on window resize
+    window.addEventListener('resize', updateCanvasSize);
+    return () => window.removeEventListener('resize', updateCanvasSize);
   }, [nestedScraps, loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for hash changes
