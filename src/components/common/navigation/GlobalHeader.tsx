@@ -108,7 +108,6 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
             className="inline-flex items-center space-x-1.5 text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-md hover:bg-gray-100 text-sm font-medium transition-colors cursor-pointer"
             title="Sign Out"
           >
-            <ArrowRightOnRectangleIcon className="h-4 w-4" />
             <span>Sign Out</span>
           </button>
         ) : (
@@ -117,7 +116,6 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
             className="inline-flex items-center space-x-1.5 text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-md hover:bg-gray-100 text-sm font-medium transition-colors"
             title="Sign In"
           >
-            <ArrowLeftOnRectangleIcon className="h-4 w-4" />
             <span>Sign In</span>
           </Link>
         )}
