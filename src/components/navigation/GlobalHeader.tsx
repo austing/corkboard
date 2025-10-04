@@ -48,7 +48,6 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
           title="Home"
         >
           <HomeIcon className="h-4 w-4" />
-          <span>Home</span>
         </Link>
 
         <Link

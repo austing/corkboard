@@ -302,10 +302,6 @@ export default function TreePage(): React.JSX.Element {
             await updateScrapVisibility(fullscreenModal.data!.id, newVisibility);
             fullscreenModal.close();
           }}
-          onMoveClick={() => {
-            // Move not available in tree view
-            fullscreenModal.close();
-          }}
           FroalaEditor={FroalaEditor}
         />
       ) : (
