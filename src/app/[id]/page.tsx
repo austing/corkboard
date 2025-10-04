@@ -268,6 +268,20 @@ export default function NestedScrapPage(): React.JSX.Element {
     return CanvasUtils.getScrapDisplayPosition(scrap, nestedScraps);
   };
 
+  const findAvailablePosition = (x: number, y: number): Position => {
+    const offset = 100;
+    let newX = x;
+    let newY = y;
+
+    // Check if any scrap exists at this position
+    while (nestedScraps.some(scrap => scrap.x === newX && scrap.y === newY)) {
+      newX += offset;
+      newY += offset;
+    }
+
+    return { x: newX, y: newY };
+  };
+
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>): void => {
     // Clear highlight when clicking anywhere
     if (highlightedScrapCode) {
@@ -282,10 +296,11 @@ export default function NestedScrapPage(): React.JSX.Element {
       setIsShiftPressed(false);
     } else if (isShiftPressed && session && !isHoveringScrap && !isMoveMode) {
       const coords: Position = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, nestedScraps);
+      const availableCoords = findAvailablePosition(coords.x, coords.y);
       createScrapForm.setValues({
         content: '',
-        x: coords.x,
-        y: coords.y,
+        x: availableCoords.x,
+        y: availableCoords.y,
         visible: true,
         nestedWithin: parentId
       });
@@ -380,7 +395,8 @@ export default function NestedScrapPage(): React.JSX.Element {
               const buttonCenterX = window.scrollX + window.innerWidth / 2;
               const buttonCenterY = window.scrollY + window.innerHeight / 2;
               const coords = CanvasUtils.pageToCanvasCoordinates(buttonCenterX, buttonCenterY, nestedScraps);
-              createScrapForm.setValues({ content: '', x: coords.x, y: coords.y, visible: true, nestedWithin: parentId });
+              const availableCoords = findAvailablePosition(coords.x, coords.y);
+              createScrapForm.setValues({ content: '', x: availableCoords.x, y: availableCoords.y, visible: true, nestedWithin: parentId });
               newScrapModal.open();
             }}
           />
