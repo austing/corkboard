@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AdminLayout from '@/components/layout/admin-layout';
-import PermissionCheck from '@/components/auth/permission-check';
+import PermissionCheck from '@/guards/PermissionCheck';
 import AddScrapModal from '@/components/admin/add-scrap-modal';
 import EditScrapModal from '@/components/admin/edit-scrap-modal';
 import { TrashIcon, MapPinIcon } from '@heroicons/react/24/outline';

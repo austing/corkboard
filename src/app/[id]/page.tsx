@@ -62,7 +62,7 @@ export default function NestedScrapPage(): React.JSX.Element {
   const editScrapModal = useModal<Scrap>(null, {
     updateUrlHash: null,
     onClose: () => {
-      editScrapForm.reset();
+      updateScrapForm.reset();
       _setOriginalEditScrapForm({ content: '', x: 0, y: 0, visible: true, nestedWithin: parentId });
       _setEditScrapError('');
       window.history.pushState(null, '', window.location.pathname);
@@ -151,9 +151,9 @@ export default function NestedScrapPage(): React.JSX.Element {
       ctrl: true,
       handler: () => {
         if (newScrapModal.isOpen) {
-          newScrapForm.handleSubmit();
+          createScrapForm.handleSubmit();
         } else if (editScrapModal.isOpen) {
-          editScrapForm.handleSubmit();
+          updateScrapForm.handleSubmit();
         }
       },
       enabled: newScrapModal.isOpen || editScrapModal.isOpen
@@ -186,7 +186,7 @@ export default function NestedScrapPage(): React.JSX.Element {
             visible: targetScrap.visible,
             nestedWithin: parentId
           };
-          editScrapForm.setInitialValues(formData);
+          updateScrapForm.setInitialValues(formData);
           _setOriginalEditScrapForm(formData);
           setTimeout(() => {
             fullscreenModal.open(targetScrap);
@@ -222,7 +222,7 @@ export default function NestedScrapPage(): React.JSX.Element {
             visible: targetScrap.visible,
             nestedWithin: parentId
           };
-          editScrapForm.setInitialValues(formData);
+          updateScrapForm.setInitialValues(formData);
           _setOriginalEditScrapForm(formData);
           // Open the modal
           setTimeout(() => {
@@ -237,7 +237,7 @@ export default function NestedScrapPage(): React.JSX.Element {
   }, [nestedScraps]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Form management using useFormWithSubmit hook
-  const newScrapForm = useFormWithSubmit<ScrapFormData>({
+  const createScrapForm = useFormWithSubmit<ScrapFormData>({
     initialValues: { content: '', x: 0, y: 0, nestedWithin: parentId },
     onSubmit: async (values: ScrapFormData) => {
       await api.createScrap({
@@ -253,7 +253,7 @@ export default function NestedScrapPage(): React.JSX.Element {
     }
   });
 
-  const editScrapForm = useFormWithSubmit<ScrapFormData>({
+  const updateScrapForm = useFormWithSubmit<ScrapFormData>({
     initialValues: { content: '', x: 0, y: 0, visible: true, nestedWithin: parentId },
     onSubmit: async (values: ScrapFormData) => {
       // Use fullscreenModal for inline editing
@@ -300,7 +300,7 @@ export default function NestedScrapPage(): React.JSX.Element {
       setIsShiftPressed(false);
     } else if (isShiftPressed && session && !isHoveringScrap && !isMoveMode) {
       const coords: Position = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, nestedScraps);
-      newScrapForm.setValues({
+      createScrapForm.setValues({
         content: '',
         x: coords.x,
         y: coords.y,
@@ -410,7 +410,7 @@ export default function NestedScrapPage(): React.JSX.Element {
               const buttonCenterX = window.scrollX + window.innerWidth / 2;
               const buttonCenterY = window.scrollY + window.innerHeight / 2;
               const coords = CanvasUtils.pageToCanvasCoordinates(buttonCenterX, buttonCenterY, nestedScraps);
-              newScrapForm.setValues({ content: '', x: coords.x, y: coords.y, visible: true, nestedWithin: parentId });
+              createScrapForm.setValues({ content: '', x: coords.x, y: coords.y, visible: true, nestedWithin: parentId });
               newScrapModal.open();
             }}
           />
@@ -455,7 +455,7 @@ export default function NestedScrapPage(): React.JSX.Element {
                   visible: scrap.visible,
                   nestedWithin: parentId
                 };
-                editScrapForm.setInitialValues(formData);
+                updateScrapForm.setInitialValues(formData);
                 _setOriginalEditScrapForm(formData);
                 fullscreenModal.open(scrap);
                 window.history.pushState(null, '', `${window.location.pathname}#${scrap.code}`);
@@ -473,7 +473,7 @@ export default function NestedScrapPage(): React.JSX.Element {
           isOpen={fullscreenModal.isOpen}
           scrap={fullscreenModal.data}
           pathPrefix={window.location.pathname}
-          form={editScrapForm}
+          form={updateScrapForm}
           onClose={() => fullscreenModal.close()}
           onVisibilityToggle={async () => {
             const newVisibility = !fullscreenModal.data!.visible;
@@ -499,7 +499,7 @@ export default function NestedScrapPage(): React.JSX.Element {
       {/* New Scrap Modal */}
       <CreateScrapModal
         isOpen={newScrapModal.isOpen}
-        form={newScrapForm}
+        form={createScrapForm}
         onClose={() => newScrapModal.close()}
         FroalaEditor={FroalaEditor}
       />
@@ -509,7 +509,7 @@ export default function NestedScrapPage(): React.JSX.Element {
         isOpen={editScrapModal.isOpen}
         scrap={editScrapModal.data}
         pathPrefix={window.location.pathname}
-        form={editScrapForm}
+        form={updateScrapForm}
         onClose={() => editScrapModal.close()}
         onVisibilityToggle={() => {
           if (!editScrapModal.data) return;

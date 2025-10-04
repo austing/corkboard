@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AdminLayout from '@/components/layout/admin-layout';
-import PermissionCheck from '@/components/auth/permission-check';
+import PermissionCheck from '@/guards/PermissionCheck';
 import AddUserModal from '@/components/admin/add-user-modal';
 import EditUserModal from '@/components/admin/edit-user-modal';
 import { TrashIcon } from '@heroicons/react/24/outline';
