@@ -47,7 +47,7 @@ export function ScrapHeader({
           {/* Nest button and count - always show if nestedCount is available */}
           {scrap.nestedCount !== undefined && (
             <NestButton
-              scrapId={scrap.id}
+              scrapCode={scrap.code}
               nestedCount={scrap.nestedCount}
               size={nestButtonSize}
               isHovered={isHovered}

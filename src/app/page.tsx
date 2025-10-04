@@ -383,7 +383,6 @@ export default function HomePage(): React.JSX.Element {
       <div
         className="bg-transparent"
         style={{
-          minWidth: '100vw',
           minHeight: '100vh',
           width: canvasSize.width > 0 ? `${canvasSize.width}px` : 'auto',
           height: canvasSize.height > 0 ? `${canvasSize.height}px` : 'auto',
