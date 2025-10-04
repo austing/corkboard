@@ -77,6 +77,10 @@ export class CanvasUtils {
     const canvasWidth = bounds.maxX - bounds.minX + (2 * padding);
     const canvasHeight = bounds.maxY - bounds.minY + (2 * padding);
 
-    return { width: canvasWidth, height: canvasHeight };
+    // Ensure canvas is at least viewport size for better UX
+    return {
+      width: Math.max(canvasWidth, window.innerWidth),
+      height: Math.max(canvasHeight, window.innerHeight)
+    };
   }
 }
