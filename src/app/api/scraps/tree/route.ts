@@ -85,9 +85,17 @@ export async function GET() {
     const scrapMap = new Map(processedScraps.map(s => [s.id, s]));
     const rootNodes: TreeNode[] = [];
 
+    // Calculate distance from (0,0) to top-left corner of scrap
+    function distanceFromOrigin(scrap: typeof processedScraps[0]): number {
+      return Math.sqrt(scrap.x * scrap.x + scrap.y * scrap.y);
+    }
+
     // Helper function to build tree recursively
     function buildTree(parentId: string | null, depth: number): TreeNode[] {
       const children = processedScraps.filter(s => s.nestedWithin === parentId);
+
+      // Sort children by distance from origin (closest first)
+      children.sort((a, b) => distanceFromOrigin(a) - distanceFromOrigin(b));
 
       return children.map(scrap => {
         const childNodes = buildTree(scrap.id, depth + 1);
@@ -104,6 +112,10 @@ export async function GET() {
 
     // Build trees starting from root scraps (nestedWithin === null)
     const rootScraps = processedScraps.filter(s => s.nestedWithin === null);
+
+    // Sort root scraps by distance from origin
+    rootScraps.sort((a, b) => distanceFromOrigin(a) - distanceFromOrigin(b));
+
     rootScraps.forEach(scrap => {
       const childNodes = buildTree(scrap.id, 1);
       rootNodes.push({
