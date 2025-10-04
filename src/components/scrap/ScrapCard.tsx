@@ -37,6 +37,8 @@ interface ScrapCardProps {
   isOwner?: boolean;
   /** Whether the mouse is hovering over this scrap */
   isHovered?: boolean;
+  /** Whether this scrap is highlighted from an anchor link */
+  isHighlighted?: boolean;
   /** Path prefix for nested page links */
   pathPrefix?: string;
   /** Click handler */
@@ -54,6 +56,7 @@ export function ScrapCard({
   isMoving = false,
   isOwner = false,
   isHovered = false,
+  isHighlighted = false,
   pathPrefix = '',
   onClick,
   onMouseEnter,
@@ -75,9 +78,11 @@ export function ScrapCard({
     if (isInvisibleScrap) {
       // All invisible scraps use the same styling; only owners can interact
       const hoverClass = isOwner ? 'hover:opacity-100 hover:shadow-xl' : '';
-      return `${config.theme.invisible.bg} ${config.theme.invisible.text} border border-gray-300 opacity-80 ${hoverClass}`;
+      const highlightClass = isHighlighted ? 'border-indigo-500 border-4' : 'border-gray-300';
+      return `${config.theme.invisible.bg} ${config.theme.invisible.text} border ${highlightClass} opacity-80 ${hoverClass}`;
     }
-    return 'bg-white border border-gray-200 hover:shadow-xl';
+    const highlightClass = isHighlighted ? 'border-indigo-500 border-4' : 'border-gray-200';
+    return `bg-white border ${highlightClass} hover:shadow-xl`;
   };
 
   return (
@@ -116,6 +121,7 @@ export function ScrapCard({
         userName={scrap.userName}
         userEmail={scrap.userEmail}
         createdAt={scrap.createdAt}
+        updatedAt={scrap.updatedAt}
         size="small"
       />
     </div>

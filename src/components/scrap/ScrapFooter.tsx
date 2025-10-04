@@ -22,6 +22,8 @@ interface ScrapFooterProps {
   userEmail?: string | null;
   /** When the scrap was created */
   createdAt?: Date | number | null;
+  /** When the scrap was last modified */
+  updatedAt?: Date | number | null;
   /** Size variant - small for cards, large for modals */
   size?: 'small' | 'large';
   /** Additional CSS classes */
@@ -32,23 +34,35 @@ export function ScrapFooter({
   userName,
   userEmail,
   createdAt,
+  updatedAt,
   size = 'small',
   className = '',
 }: ScrapFooterProps) {
   const textSize = size === 'small' ? 'text-xs' : 'text-sm';
   const paddingClass = size === 'small' ? 'border-t pt-2' : '';
 
+  // Use updatedAt if available, otherwise fall back to createdAt
+  const displayDate = updatedAt || createdAt;
+
   // If no data is available (redacted for invisible scraps), don't show footer
-  if (!userEmail && !userName && !createdAt) {
+  if (!userEmail && !userName && !displayDate) {
     return null;
   }
 
   const authorName = userName || userEmail || '';
 
+  // Format date with time in 24-hour format
+  const formatDateTime = (date: Date | number) => {
+    const d = new Date(date);
+    const dateStr = d.toLocaleDateString();
+    const timeStr = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+    return `${dateStr} ${timeStr}`;
+  };
+
   return (
     <div className={`${textSize} text-gray-500 flex justify-between items-center ${paddingClass} ${className}`}>
       <div>{authorName}</div>
-      <div>{createdAt ? new Date(createdAt).toLocaleDateString() : ''}</div>
+      <div>{displayDate ? formatDateTime(displayDate) : ''}</div>
     </div>
   );
 }

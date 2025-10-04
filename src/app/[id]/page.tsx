@@ -44,6 +44,7 @@ export default function NestedScrapPage(): React.JSX.Element {
   const [isHoveringScrap, setIsHoveringScrap] = useState<boolean>(false);
   const [isMoveMode, setIsMoveMode] = useState<boolean>(false);
   const [movingScrap, setMovingScrap] = useState<Scrap | null>(null);
+  const [highlightedScrapCode, setHighlightedScrapCode] = useState<string | null>(null);
 
   // Modal management using useModal hook
   const fullscreenModal = useModal<Scrap>(null, {
@@ -178,23 +179,12 @@ export default function NestedScrapPage(): React.JSX.Element {
               inline: 'center'
             });
           }
-          // Initialize edit form with scrap data
-          const formData: ScrapFormData = {
-            content: targetScrap.content,
-            x: targetScrap.x,
-            y: targetScrap.y,
-            visible: targetScrap.visible,
-            nestedWithin: parentId
-          };
-          updateScrapForm.setInitialValues(formData);
-          _setOriginalEditScrapForm(formData);
-          setTimeout(() => {
-            fullscreenModal.open(targetScrap);
-          }, 500);
+          // Highlight the scrap instead of opening modal
+          setHighlightedScrapCode(hash);
         }
       }
     } else if (nestedScraps.length === 0 && !loading) {
-      setCanvasSize({ width: Math.max(window.innerWidth, 1000), height: Math.max(window.innerHeight, 800) });
+      setCanvasSize({ width: window.innerWidth, height: window.innerHeight });
     }
   }, [nestedScraps, loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -214,20 +204,8 @@ export default function NestedScrapPage(): React.JSX.Element {
               inline: 'center'
             });
           }
-          // Initialize edit form with scrap data
-          const formData: ScrapFormData = {
-            content: targetScrap.content,
-            x: targetScrap.x,
-            y: targetScrap.y,
-            visible: targetScrap.visible,
-            nestedWithin: parentId
-          };
-          updateScrapForm.setInitialValues(formData);
-          _setOriginalEditScrapForm(formData);
-          // Open the modal
-          setTimeout(() => {
-            fullscreenModal.open(targetScrap);
-          }, 500); // Delay to let scroll complete
+          // Highlight the scrap instead of opening modal
+          setHighlightedScrapCode(hash);
         }
       }
     };
@@ -292,6 +270,11 @@ export default function NestedScrapPage(): React.JSX.Element {
   };
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>): void => {
+    // Clear highlight when clicking anywhere
+    if (highlightedScrapCode) {
+      setHighlightedScrapCode(null);
+    }
+
     if (isMoveMode && movingScrap) {
       const coords: Position = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, nestedScraps);
       updateScrapPosition(movingScrap.id, coords.x, coords.y);
@@ -443,6 +426,7 @@ export default function NestedScrapPage(): React.JSX.Element {
             index={index}
             isMoving={movingScrap?.id === scrap.id}
             isOwner={session?.user?.id === scrap.userId}
+            isHighlighted={highlightedScrapCode === scrap.code}
             pathPrefix={window.location.pathname}
             onClick={() => {
               if (fullscreenModal.data?.id === scrap.id) {

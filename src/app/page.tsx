@@ -40,6 +40,7 @@ export default function HomePage(): React.JSX.Element {
   const [hoveredScrapId, setHoveredScrapId] = useState<string | null>(null);
   const [isMoveMode, setIsMoveMode] = useState<boolean>(false);
   const [movingScrap, setMovingScrap] = useState<Scrap | null>(null);
+  const [highlightedScrapCode, setHighlightedScrapCode] = useState<string | null>(null);
 
   // Modal management using useModal hook
   const fullscreenModal = useModal<Scrap>(null, {
@@ -79,19 +80,8 @@ export default function HomePage(): React.JSX.Element {
             inline: 'center'
           });
         }
-        // Initialize edit form with scrap data
-        const formData: ScrapFormData = {
-          content: targetScrap.content,
-          x: targetScrap.x,
-          y: targetScrap.y,
-          visible: targetScrap.visible,
-        };
-        updateScrapForm.setInitialValues(formData);
-        setOriginalEditScrapForm(formData);
-        // Open the modal
-        setTimeout(() => {
-          fullscreenModal.open(targetScrap);
-        }, 500); // Delay to let scroll complete
+        // Highlight the scrap instead of opening modal
+        setHighlightedScrapCode(hash);
       }
     }
   }, [scraps]);
@@ -281,6 +271,11 @@ export default function HomePage(): React.JSX.Element {
   }
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>): void => {
+    // Clear highlight when clicking anywhere
+    if (highlightedScrapCode) {
+      setHighlightedScrapCode(null);
+    }
+
     if (isMoveMode && movingScrap) {
       const coords: Position = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, scraps);
       updateScrapPosition(movingScrap.id, coords.x, coords.y);
@@ -289,9 +284,9 @@ export default function HomePage(): React.JSX.Element {
       setIsShiftPressed(false);
     } else if (isShiftPressed && session && !isHoveringScrap && !isMoveMode) {
       const coords: Position = CanvasUtils.pageToCanvasCoordinates(e.pageX, e.pageY, scraps);
-      createScrapForm.setValues({ 
-        content: '', 
-        x: coords.x, 
+      createScrapForm.setValues({
+        content: '',
+        x: coords.x,
         y: coords.y,
         visible: true
       });
@@ -421,6 +416,7 @@ export default function HomePage(): React.JSX.Element {
             isMoving={movingScrap?.id === scrap.id}
             isOwner={session?.user?.id === scrap.userId}
             isHovered={hoveredScrapId === scrap.id}
+            isHighlighted={highlightedScrapCode === scrap.code}
             onClick={() => {
               if (fullscreenModal.data?.id === scrap.id) {
                 fullscreenModal.close();
