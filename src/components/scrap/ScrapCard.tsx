@@ -83,7 +83,7 @@ export function ScrapCard({
       const highlightClass = isHighlighted ? `${config.theme.accent.border} border-4` : 'border-gray-300';
       return `${config.theme.invisible.bg} ${config.theme.invisible.text} border ${highlightClass} opacity-80 hover:opacity-100 hover:shadow-xl`;
     }
-    const highlightClass = isHighlighted ? `${config.theme.accent.border} border-4` : 'border-gray-200';
+    const highlightClass = isHighlighted ? `${config.theme.accent.border} border-4` : 'border-indigo-400';
     return `${config.theme.visible.bg} ${config.theme.visible.text} border ${highlightClass} hover:shadow-xl`;
   };
 

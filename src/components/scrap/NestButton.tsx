@@ -24,18 +24,6 @@ export function NestButton({ scrapId, nestedCount, size = 'small', isHovered = f
 
   return (
     <div className="inline-flex items-center gap-1">
-      {/* +Nest button - only visible on hover/modal when count is 0 */}
-      {shouldShowAddButton && (
-        <Link
-          href={`/${scrapId}`}
-          onClick={onClick}
-          className={`inline-flex items-center gap-0.5 rounded-full font-medium cursor-pointer bg-gray-200 text-gray-700 hover:bg-gray-300 ${sizeClasses}`}
-        >
-          <PlusIcon className={iconSize} />
-          Nest
-        </Link>
-      )}
-
       {/* Nest count badge - always visible when count > 0, shows "Nest {n}" */}
       {nestedCount > 0 && (
         <Link
@@ -45,6 +33,21 @@ export function NestButton({ scrapId, nestedCount, size = 'small', isHovered = f
         >
           <span>Nest</span>
           <span>({nestedCount})</span>
+        </Link>
+      )}
+      {/* +Nest button - only visible on hover/modal when count is 0 */}
+      {shouldShowAddButton && (
+        <Link
+          href={`/${scrapId}`}
+          onClick={onClick}
+          className={`inline-flex items-center gap-0.5 rounded-full font-medium cursor-pointer bg-gray-200 text-gray-700 hover:bg-gray-300 ${sizeClasses}`}
+        >
+          <PlusIcon className={iconSize} />
+            {nestedCount === 0 ? (
+              <span>Nest</span>
+            ) : (
+              <span>Scrap</span>
+            )}
         </Link>
       )}
     </div>

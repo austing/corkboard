@@ -32,17 +32,20 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => {
+    // Handle trailing slash - check both with and without
+    return pathname === path || pathname === `${path}/` || (path === '/' && pathname === path);
+  };
 
   return (
-    <div className="fixed top-4 left-4 right-4 z-[100] flex items-center justify-between bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-3">
+    <div className="fixed top-4 left-4 right-4 z-[100] flex items-center justify-between bg-white/90 backdrop-blur-sm rounded-sm shadow-sm border border-indigo-500 p-3">
       {/* Left side - Navigation links */}
       <div className="flex items-center space-x-0">
         <Link
           href="/"
           className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
             isActive('/')
-              ? 'bg-indigo-100 text-indigo-700'
+              ? 'bg-indigo-100 text-gray-800'
               : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
           }`}
           title="Home"
@@ -54,7 +57,7 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
           href="/tree"
           className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
             isActive('/tree')
-              ? 'bg-indigo-100 text-indigo-700'
+              ? 'bg-indigo-100 text-gray-800'
               : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
           }`}
           title="Tree View"
