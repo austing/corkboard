@@ -4505,3 +4505,306 @@ _**Agent (claude-sonnet-4-5-20250929)**_
 
 Excellent! All tests pass. Now let's commit:
 
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Commit removal of public endpoint
+
+`git add -A && git commit -m "$(cat <<'EOF'
+Remove redundant /api/scraps/public endpoint
+
+Since /api/scraps now handles both authenticated and unauthenticated
+requests by checking session and redacting content appropriately, the
+separate /api/scraps/public endpoint is no longer needed.
+
+Changes:
+- Deleted src/app/api/scraps/public/route.ts
+- Updated api.fetchScraps() to remove authenticated parameter
+- Changed to single endpoint /api/scraps for all requests
+- Updated page.tsx to call api.fetchScraps() without parameter
+
+This simplifies the API surface and reduces code duplication.
+
+All 324 tests passing.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"`
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Verify commit succeeded
+
+`git status`
+
+Result:
+
+```
+[modularity 9752272] Remove redundant /api/scraps/public endpoint
+ 4 files changed, 333 insertions(+), 70 deletions(-)
+ delete mode 100644 src/app/api/scraps/public/route.ts
+```
+
+Result:
+
+```
+On branch modularity
+nothing to commit, working tree clean
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Perfect! I've fixed the issue. The problem was that:
+
+1. **The frontend was using `/api/scraps/public`** for unauthenticated users, which I had forgotten to update
+2. That endpoint was returning full content without redaction
+
+## What I Fixed:
+
+✅ **Removed** the redundant `/api/scraps/public` endpoint entirely  
+✅ **Unified** to use single `/api/scraps` endpoint for all requests  
+✅ **Updated** the API client to remove the `authenticated` parameter  
+✅ **Updated** page.tsx to call `api.fetchScraps()` without the parameter  
+
+Now when not-logged-in users access the site, they'll see:
+- All scraps in their positions (gray, non-interactive boxes)
+- Only: id, code, x, y, visible, nestedWithin, createdAt, updatedAt, nestedCount
+- Redacted: content, userId, userName, userEmail
+
+All 324 tests passing.
+
+---
+
+_**User**_
+
+Why are the invisible scraps styled using a different component than the invisible scrap that is slightly brown? The only difference should be that they have no text within them
+
+---
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+You're right - they should use the same styling. Let me look at how invisible scraps are currently styled:
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Read** `./src/components/scrap/ScrapCard.tsx`
+
+Result:
+
+```
+62→  // Check if scrap content is redacted (empty content, null user data = not logged in OR invisible non-owner)
+    63→  const isRedacted = scrap.content === '' && scrap.userId === null;
+    64→  // Invisible scraps that user doesn't own should not be clickable
+    65→  const isInvisibleNonOwner = !scrap.visible && !isOwner;
+    66→  const isClickable = !isRedacted && !isInvisibleNonOwner;
+    67→
+    68→  // Determine card styling based on state
+    69→  const getCardClassName = () => {
+    70→    if (isMoving) {
+    71→      return `${config.theme.moving.bg} ${config.theme.moving.text} border ${config.theme.moving.border}`;
+    72→    }
+    73→    if (!scrap.visible && isOwner) {
+    74→      return `${config.theme.invisible.bg} ${config.theme.invisible.text} border border-gray-600 opacity-40 hover:opacity-100 hover:shadow-xl invert`;
+    75→    }
+    76→    if (isRedacted || isInvisibleNonOwner) {
+    77→      // Redacted scraps (not logged in or non-owner invisible): no hover effect, no pointer
+    78→      return 'bg-gray-100 border border-gray-300 opacity-30';
+    79→    }
+    80→    return 'bg-white border border-gray-200 hover:shadow-xl';
+    81→  };
+    82→
+    83→  return (
+    84→    <div
+    85→      id={scrap.code}
+    86→      className={`absolute shadow-lg rounded-lg p-4 max-w-sm transition-shadow ${isClickable ? 'cursor-pointer' : 'cursor-default'} ${getCardClassName()}`}
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+I see the issue. Line 73-74 shows that **owner's invisible scraps** get the brownish styling (`config.theme.invisible`), but line 76-78 shows that **redacted/non-owner invisible scraps** get gray styling. Let me check what the invisible theme looks like:
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Read** `./corkboard.config.ts`
+
+Result:
+
+```
+1→export interface CorkboardConfig {
+     2→  panels: {
+     3→    admin: {
+     4→      title: string;
+     5→      path: string;
+     6→    };
+     7→    content: {
+     8→      title: string;
+     9→      path: string;
+    10→    };
+    11→  };
+    12→  app: {
+    13→    name: string;
+    14→    description: string;
+    15→  };
+    16→  theme: {
+    17→    primary: {
+    18→      bg: string;
+    19→      hover: string;
+    20→      text: string;
+    21→    };
+    22→    invisible: {
+    23→      bg: string;
+    24→      text: string;
+    25→    };
+    26→    moving: {
+    27→      bg: string;
+    28→      text: string;
+    29→      border: string;
+    30→    };
+    31→  };
+    32→}
+    33→
+    34→const config: CorkboardConfig = {
+    35→  panels: {
+    36→    admin: {
+    37→      title: "Admin Panel",
+    38→      path: "/admin"
+    39→    },
+    40→    content: {
+    41→      title: "Scraps and Settings",
+    42→      path: "/studio"
+    43→    }
+    44→  },
+    45→  app: {
+    46→    name: "Corkboard",
+    47→    description: "A collaborative content management platform"
+    48→  },
+    49→  theme: {
+    50→    primary: {
+    51→      bg: "bg-indigo-600",
+    52→      hover: "hover:bg-indigo-700",
+    53→      text: "text-indigo-600"
+    54→    },
+    55→    invisible: {
+    56→      bg: "bg-gray-800",
+    57→      text: "text-white"
+    58→    },
+    59→    moving: {
+    60→      bg: "bg-amber-100",
+    61→      text: "text-amber-900",
+    62→      border: "border-amber-400"
+    63→    }
+    64→  }
+    65→};
+    66→
+    67→export default config;
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+I see - the brownish color you're seeing is actually the `bg-gray-800` with `invert` filter applied (line 74 in ScrapCard). The redacted scraps should use the same styling but just have empty content. Let me fix this:
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Edit**
+
+Result:
+
+```
+The file /Users/austin/Coding/claudeland/corkboard/src/components/scrap/ScrapCard.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    58→  onClick,
+    59→  onMouseEnter,
+    60→  onMouseLeave,
+    61→}: ScrapCardProps) {
+    62→  // Check if scrap content is redacted (empty content, null user data = not logged in OR invisible non-owner)
+    63→  const isRedacted = scrap.content === '' && scrap.userId === null;
+    64→  // Invisible scraps that user doesn't own should not be clickable
+    65→  const isInvisibleNonOwner = !scrap.visible && !isOwner;
+    66→  const isClickable = !isRedacted && !isInvisibleNonOwner;
+    67→
+    68→  // Determine card styling based on state
+    69→  const getCardClassName = () => {
+    70→    if (isMoving) {
+    71→      return `${config.theme.moving.bg} ${config.theme.moving.text} border ${config.theme.moving.border}`;
+    72→    }
+    73→    // All invisible scraps (owner, non-owner, or redacted) use the same invisible styling
+    74→    // The only difference is owners can interact with theirs
+    75→    if (!scrap.visible || isRedacted) {
+    76→      const hoverClass = isOwner ? 'hover:opacity-100 hover:shadow-xl' : '';
+    77→      return `${config.theme.invisible.bg} ${config.theme.invisible.text} border border-gray-600 opacity-40 ${hoverClass} invert`;
+    78→    }
+    79→    return 'bg-white border border-gray-200 hover:shadow-xl';
+    80→  };
+    81→
+    82→  return (
+    83→    <div
+    84→      id={scrap.code}
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Good catch! Let me further simplify by not repeating the styling code:
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Edit**
+
+Result:
+
+```
+The file /Users/austin/Coding/claudeland/corkboard/src/components/scrap/ScrapCard.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    64→  // Invisible scraps that user doesn't own should not be clickable
+    65→  const isInvisibleNonOwner = !scrap.visible && !isOwner;
+    66→  const isClickable = !isRedacted && !isInvisibleNonOwner;
+    67→
+    68→  // Determine card styling based on state
+    69→  const isInvisibleScrap = !scrap.visible || isRedacted;
+    70→
+    71→  const getCardClassName = () => {
+    72→    if (isMoving) {
+    73→      return `${config.theme.moving.bg} ${config.theme.moving.text} border ${config.theme.moving.border}`;
+    74→    }
+    75→    if (isInvisibleScrap) {
+    76→      // All invisible scraps use the same styling; only owners can interact
+    77→      const hoverClass = isOwner ? 'hover:opacity-100 hover:shadow-xl' : '';
+    78→      return `${config.theme.invisible.bg} ${config.theme.invisible.text} border border-gray-600 opacity-40 ${hoverClass} invert`;
+    79→    }
+    80→    return 'bg-white border border-gray-200 hover:shadow-xl';
+    81→  };
+    82→
+    83→  return (
+    84→    <div
+    85→      id={scrap.code}
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Run tests to verify changes
+
+`npm run test 2>&1 | tail -20`
+
+Result:
+
+```
+160 |           return true;
+      161 |         } catch (error) {
+    > 162 |           console.warn('localStorage quota exceeded or not available');
+          |                   ^
+      163 |           return false;
+      164 |         }
+      165 |       };
+
+      at warn (tests/browser/compatibility.test.ts:162:19)
+      at Object.safeSetItem (tests/browser/compatibility.test.ts:167:22)
+
+PASS tests/utils/keyboard.test.ts
+PASS src/app/api/__tests__/profile.test.ts
+PASS tests/accessibility/a11y.test.tsx
+
+Test Suites: 19 passed, 19 total
+Tests:       12 skipped, 324 passed, 336 total
+Snapshots:   0 total
+Time:        3.963 s
+Ran all test suites.
+```
+

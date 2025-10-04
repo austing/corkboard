@@ -66,16 +66,16 @@ export function ScrapCard({
   const isClickable = !isRedacted && !isInvisibleNonOwner;
 
   // Determine card styling based on state
+  const isInvisibleScrap = !scrap.visible || isRedacted;
+
   const getCardClassName = () => {
     if (isMoving) {
       return `${config.theme.moving.bg} ${config.theme.moving.text} border ${config.theme.moving.border}`;
     }
-    if (!scrap.visible && isOwner) {
-      return `${config.theme.invisible.bg} ${config.theme.invisible.text} border border-gray-600 opacity-40 hover:opacity-100 hover:shadow-xl invert`;
-    }
-    if (isRedacted || isInvisibleNonOwner) {
-      // Redacted scraps (not logged in or non-owner invisible): no hover effect, no pointer
-      return 'bg-gray-100 border border-gray-300 opacity-30';
+    if (isInvisibleScrap) {
+      // All invisible scraps use the same styling; only owners can interact
+      const hoverClass = isOwner ? 'hover:opacity-100 hover:shadow-xl' : '';
+      return `${config.theme.invisible.bg} ${config.theme.invisible.text} border border-gray-600 opacity-40 ${hoverClass} invert`;
     }
     return 'bg-white border border-gray-200 hover:shadow-xl';
   };
