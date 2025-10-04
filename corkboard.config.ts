@@ -53,8 +53,8 @@ const config: CorkboardConfig = {
       text: "text-indigo-600"
     },
     invisible: {
-      bg: "bg-gray-800",
-      text: "text-white"
+      bg: "bg-[#efece6]",
+      text: "text-gray-800"
     },
     moving: {
       bg: "bg-amber-100",

@@ -75,7 +75,7 @@ export function ScrapCard({
     if (isInvisibleScrap) {
       // All invisible scraps use the same styling; only owners can interact
       const hoverClass = isOwner ? 'hover:opacity-100 hover:shadow-xl' : '';
-      return `${config.theme.invisible.bg} ${config.theme.invisible.text} border border-gray-600 opacity-40 ${hoverClass} invert`;
+      return `${config.theme.invisible.bg} ${config.theme.invisible.text} border border-gray-300 opacity-80 ${hoverClass}`;
     }
     return 'bg-white border border-gray-200 hover:shadow-xl';
   };
