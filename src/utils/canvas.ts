@@ -63,20 +63,20 @@ export class CanvasUtils {
   }
 
   static calculateCanvasSize(
-    scraps: ScrapWithUser[], 
+    scraps: ScrapWithUser[],
     padding: number = this.DEFAULT_PADDING
   ): Size {
     if (scraps.length === 0) {
-      return { 
-        width: Math.max(window.innerWidth, 1000), 
-        height: Math.max(window.innerHeight, 800) 
+      return {
+        width: window.innerWidth,
+        height: window.innerHeight
       };
     }
 
     const bounds = this.getCanvasBounds(scraps);
     const canvasWidth = bounds.maxX - bounds.minX + (2 * padding);
     const canvasHeight = bounds.maxY - bounds.minY + (2 * padding);
-    
+
     return { width: canvasWidth, height: canvasHeight };
   }
 }

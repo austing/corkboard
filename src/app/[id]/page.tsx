@@ -424,8 +424,8 @@ export default function NestedScrapPage(): React.JSX.Element {
 
         {/* Empty state */}
         {nestedScraps.length === 0 && !loading && (
-          <div className="flex items-center justify-center min-h-[50vh] text-center">
-            <div className="text-gray-500">
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-gray-500 text-center max-w-md">
               <div className="text-lg mb-2">No nested scraps yet</div>
               <div className="text-sm">
                 {session ? 'Create the first nested scrap by clicking the + button or holding Shift and clicking' : 'Sign in to create nested scraps'}
