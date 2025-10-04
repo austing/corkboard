@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useModal } from '../../hooks/useModal';
@@ -12,7 +12,6 @@ import { api, type Scrap } from '../../lib/api';
 import { CanvasUtils } from '../../utils/canvas';
 import { ScrapPermissions } from '../../utils/permissions';
 import { CursorIndicator } from '../../components/canvas/CursorIndicator';
-import { CanvasHeader } from '../../components/canvas/CanvasHeader';
 import { CreateButton } from '../../components/canvas/CreateButton';
 import { ErrorMessage } from '../../components/elements/ErrorMessage';
 import { ScrapCard } from '../../components/scrap/ScrapCard';
@@ -30,7 +29,6 @@ const FroalaEditor = dynamic(() => import('../components/FroalaEditor'), {
 export default function NestedScrapPage(): React.JSX.Element {
   const { data: session } = useSession();
   const params = useParams();
-  const router = useRouter();
   const parentId = params.id as string;
 
   const [parentScrap, setParentScrap] = useState<Scrap | null>(null);
@@ -346,20 +344,6 @@ export default function NestedScrapPage(): React.JSX.Element {
 
   return (
     <>
-      {/* Navigation header */}
-      <CanvasHeader
-        mode="nested"
-        scrapCount={nestedScraps.length}
-        parentScrap={parentScrap}
-        onNavigateToParent={() => {
-          if (parentScrap.nestedWithin) {
-            router.push(`/${parentScrap.nestedWithin}#${parentScrap.code}`);
-          } else {
-            router.push(`/#${parentScrap.code}`);
-          }
-        }}
-      />
-
       {/* Custom cursor indicators */}
       <CursorIndicator
         visible={isShiftPressed && !!session && !isMoveMode}

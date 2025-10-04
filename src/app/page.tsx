@@ -10,7 +10,6 @@ import { api, type Scrap } from '../lib/api';
 import { CanvasUtils } from '../utils/canvas';
 import { ScrapPermissions } from '../utils/permissions';
 import { CursorIndicator } from '../components/canvas/CursorIndicator';
-import { CanvasHeader } from '../components/canvas/CanvasHeader';
 import { CreateButton } from '../components/canvas/CreateButton';
 import { ErrorMessage } from '../components/elements/ErrorMessage';
 import { ScrapCard } from '../components/scrap/ScrapCard';
