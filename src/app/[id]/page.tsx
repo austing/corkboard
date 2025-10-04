@@ -42,6 +42,7 @@ export default function NestedScrapPage(): React.JSX.Element {
   const [isShiftPressed, setIsShiftPressed] = useState<boolean>(false);
   const [cursorPosition, setCursorPosition] = useState<Position>({ x: 0, y: 0 });
   const [isHoveringScrap, setIsHoveringScrap] = useState<boolean>(false);
+  const [hoveredScrapId, setHoveredScrapId] = useState<string | null>(null);
   const [isMoveMode, setIsMoveMode] = useState<boolean>(false);
   const [movingScrap, setMovingScrap] = useState<Scrap | null>(null);
   const [highlightedScrapCode, setHighlightedScrapCode] = useState<string | null>(null);
@@ -426,6 +427,7 @@ export default function NestedScrapPage(): React.JSX.Element {
             index={index}
             isMoving={movingScrap?.id === scrap.id}
             isOwner={session?.user?.id === scrap.userId}
+            isHovered={hoveredScrapId === scrap.id}
             isHighlighted={highlightedScrapCode === scrap.code}
             pathPrefix={window.location.pathname}
             onClick={() => {
@@ -445,8 +447,14 @@ export default function NestedScrapPage(): React.JSX.Element {
                 window.history.pushState(null, '', `${window.location.pathname}#${scrap.code}`);
               }
             }}
-            onMouseEnter={() => setIsHoveringScrap(true)}
-            onMouseLeave={() => setIsHoveringScrap(false)}
+            onMouseEnter={() => {
+              setIsHoveringScrap(true);
+              setHoveredScrapId(scrap.id);
+            }}
+            onMouseLeave={() => {
+              setIsHoveringScrap(false);
+              setHoveredScrapId(null);
+            }}
           />
         ))}
       </div>

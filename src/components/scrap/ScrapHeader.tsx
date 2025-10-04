@@ -36,7 +36,7 @@ export function ScrapHeader({
         <div className="flex items-center gap-1.5">
           <a
             href={`${pathPrefix}#${scrap.code}`}
-            className={`${codeSize} font-mono font-bold text-gray-800 hover:text-indigo-600`}
+            className={`${codeSize} font-mono font-bold ${config.theme.primary.text} hover:text-indigo-800`}
             title={`Anchor to ${scrap.code}`}
             onClick={(e) => e.stopPropagation()}
           >
