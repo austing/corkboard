@@ -3,9 +3,28 @@ import { users, roles, permissions, userRoles, rolePermissions } from './schema'
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
+import Database from 'better-sqlite3';
 
 export async function seedDatabase() {
   console.log('🌱 Seeding database...');
+
+  // Run migrations first to ensure tables exist
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  if (isDevelopment) {
+    const dbPath = process.env.DATABASE_URL?.replace('file:', '') || './sqlite.db';
+    const sqlite = new Database(dbPath);
+    const { drizzle } = require('drizzle-orm/better-sqlite3');
+    const migrateDb = drizzle(sqlite);
+
+    try {
+      console.log('📦 Running migrations...');
+      migrate(migrateDb, { migrationsFolder: './drizzle' });
+      console.log('✅ Migrations complete');
+    } catch (err) {
+      console.log('ℹ️  Migrations already applied or not needed');
+    }
+  }
 
   // Create default permissions
   const defaultPermissions = [
