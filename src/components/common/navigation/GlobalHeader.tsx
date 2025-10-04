@@ -41,7 +41,7 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
   const getTreeLink = () => {
     // If on a nest page (/{id}), link to tree view of that nest
     const nestMatch = pathname.match(/^\/([^\/]+)\/?$/);
-    if (nestMatch && nestMatch[1] !== 'tree' && nestMatch[1] !== 'latest' && nestMatch[1] !== 'studio' && nestMatch[1] !== 'profile') {
+    if (nestMatch && nestMatch[1] !== 'scrap-tree' && nestMatch[1] !== 'scrap-latest' && nestMatch[1] !== 'scrap-studio') {
       return `/${nestMatch[1]}/tree/`;
     }
     // If already on a nested tree page, stay there
@@ -50,11 +50,11 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
       return `/${nestedTreeMatch[1]}/tree/`;
     }
     // Default to root tree
-    return '/tree/';
+    return '/scrap-tree/';
   };
 
   const treeLink = getTreeLink();
-  const isTreeActive = pathname.includes('/tree');
+  const isTreeActive = pathname.includes('/tree') || pathname.includes('/scrap-tree');
 
   return (
     <div className="fixed top-4 left-4 right-4 z-[100] flex items-center justify-between bg-white/90 backdrop-blur-sm rounded-sm shadow-sm border border-indigo-500 p-3">
@@ -90,9 +90,9 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
       <div className="flex items-center space-x-2">
         {isAuthenticated && (
           <Link
-            href="/studio"
+            href="/scrap-studio"
             className={`inline-flex items-center p-2 rounded-md transition-colors ${
-              pathname.startsWith('/studio')
+              pathname.startsWith('/scrap-studio')
                 ? 'bg-indigo-100 text-gray-800'
                 : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
             }`}

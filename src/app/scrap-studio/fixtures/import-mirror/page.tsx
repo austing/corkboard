@@ -116,7 +116,7 @@ export default function ImportMirrorPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto py-8 px-4">
         <Link
-          href="/studio/fixtures"
+          href="/scrap-studio/fixtures"
           className="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-800 mb-6"
         >
           <ArrowLeftIcon className="h-4 w-4 mr-1" />

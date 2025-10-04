@@ -68,7 +68,7 @@ export default function FixturesPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link
-              href="/studio/fixtures/generate-mirror"
+              href="/scrap-studio/fixtures/generate-mirror"
               className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
             >
               <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
@@ -76,7 +76,7 @@ export default function FixturesPage() {
             </Link>
 
             <Link
-              href="/studio/fixtures/import-mirror"
+              href="/scrap-studio/fixtures/import-mirror"
               className="flex items-center justify-center px-4 py-3 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 transition-colors"
             >
               <ArrowUpTrayIcon className="h-5 w-5 mr-2" />
@@ -106,7 +106,7 @@ export default function FixturesPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link
-              href="/studio/fixtures/generate-update"
+              href="/scrap-studio/fixtures/generate-update"
               className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
             >
               <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
@@ -114,7 +114,7 @@ export default function FixturesPage() {
             </Link>
 
             <Link
-              href="/studio/fixtures/import-update"
+              href="/scrap-studio/fixtures/import-update"
               className="flex items-center justify-center px-4 py-3 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-700 bg-white hover:bg-green-50 transition-colors"
             >
               <ArrowUpTrayIcon className="h-5 w-5 mr-2" />

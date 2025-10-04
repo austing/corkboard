@@ -24,15 +24,15 @@ interface StudioLayoutProps {
 }
 
 const navigation = [
-  { name: 'my scraps', href: '/studio', icon: DocumentTextIcon },
-  { name: 'create scrap', href: '/studio/new', icon: PlusIcon },
-  { name: 'fixtures', href: '/studio/fixtures', icon: ArrowsRightLeftIcon },
-  { name: 'me', href: '/profile', icon: UserCircleIcon },
+  { name: 'my scraps', href: '/scrap-studio', icon: DocumentTextIcon },
+  { name: 'create scrap', href: '/scrap-studio/new', icon: PlusIcon },
+  { name: 'fixtures', href: '/scrap-studio/fixtures', icon: ArrowsRightLeftIcon },
+  { name: 'me', href: '/scrap-studio/profile', icon: UserCircleIcon },
 ];
 
 const adminNavigation = [
-  { name: 'users', href: '/studio/users', icon: UserGroupIcon, resource: 'users', action: 'read' },
-  { name: 'roles', href: '/studio/roles', icon: ShieldCheckIcon, resource: 'roles', action: 'read' },
+  { name: 'users', href: '/scrap-studio/users', icon: UserGroupIcon, resource: 'users', action: 'read' },
+  { name: 'roles', href: '/scrap-studio/roles', icon: ShieldCheckIcon, resource: 'roles', action: 'read' },
 ];
 
 export default function StudioLayout({ children }: StudioLayoutProps) {
