@@ -20,8 +20,8 @@ export async function GET(
       await requirePermission(userId, 'scraps', 'read');
     }
 
-    // First, try to find parent scrap by code (short 10-char code)
-    let parentScrap = await db
+    // Find parent scrap by code (short 10-char code)
+    const parentScrap = await db
       .select({
         id: scraps.id,
         code: scraps.code,
@@ -32,25 +32,10 @@ export async function GET(
       .where(eq(scraps.code, id))
       .limit(1);
 
-    // If not found by code, try by ID (for backward compatibility)
-    if (!parentScrap[0]) {
-      parentScrap = await db
-        .select({
-          id: scraps.id,
-          code: scraps.code,
-          visible: scraps.visible,
-          userId: scraps.userId,
-        })
-        .from(scraps)
-        .where(eq(scraps.id, id))
-        .limit(1);
-    }
-
     if (!parentScrap[0]) {
       return NextResponse.json({ error: 'Parent scrap not found' }, { status: 404 });
     }
 
-    // Use the actual parent ID for nested queries
     const parentId = parentScrap[0].id;
 
     // Get all scraps nested within this parent scrap
