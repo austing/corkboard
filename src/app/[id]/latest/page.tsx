@@ -5,9 +5,9 @@
  * Shows scraps in a vertical column layout (latest first).
  *
  * @example
- * Route: /nest-PARENT_CODE/latest
+ * Route: /PARENT_ID/latest
  * ```tsx
- * // Accessed via /nest-{parentCode}/latest
+ * // Accessed via /{parentId}/latest
  * <NestedLatestPage />
  * ```
  */
@@ -25,7 +25,7 @@ import { LatestView } from '@/components/scrapnest/views/LatestView';
 export default function NestedLatestPage(): React.JSX.Element {
   const { data: session } = useSession();
   const params = useParams();
-  const parentCode = params.code as string;
+  const parentId = params.id as string;
 
   const [parentScrap, setParentScrap] = useState<Scrap | null>(null);
   const [scraps, setScraps] = useState<Scrap[]>([]);
@@ -33,10 +33,10 @@ export default function NestedLatestPage(): React.JSX.Element {
   const [error, setError] = useState<string>('');
 
   const fetchScraps = useCallback(async (): Promise<void> => {
-    if (!parentCode) return;
+    if (!parentId) return;
 
     try {
-      const data = await api.fetchNestedScraps(parentCode);
+      const data = await api.fetchNestedScraps(parentId);
       setParentScrap(data.parentScrap);
 
       const filteredScraps = session?.user?.id
@@ -62,7 +62,7 @@ export default function NestedLatestPage(): React.JSX.Element {
     } finally {
       setLoading(false);
     }
-  }, [parentCode, session?.user?.id]);
+  }, [parentId, session?.user?.id]);
 
   useEffect(() => {
     fetchScraps();
@@ -75,8 +75,8 @@ export default function NestedLatestPage(): React.JSX.Element {
       error={error}
       onRefresh={fetchScraps}
       parentScrap={parentScrap}
-      parentId={parentCode}
-      pathPrefix={`/nest-${parentCode}/latest`}
+      parentId={parentId}
+      pathPrefix={`/${parentId}/latest`}
       loadingText="Loading latest scraps..."
       title={parentScrap ? `Latest: Nested in ${parentScrap.code} - Corkboard` : 'Latest - Corkboard'}
     />

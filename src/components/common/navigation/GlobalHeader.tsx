@@ -39,15 +39,15 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
 
   // Determine tree link based on current route
   const getTreeLink = () => {
-    // If on a nest page (/nest-{code}), link to tree view of that nest
-    const nestMatch = pathname.match(/^\/nest-([^\/]+)\/?$/);
-    if (nestMatch) {
-      return `/nest-${nestMatch[1]}/tree/`;
+    // If on a nest page (/{id}), link to tree view of that nest
+    const nestMatch = pathname.match(/^\/([^\/]+)\/?$/);
+    if (nestMatch && nestMatch[1] !== 'scrap-tree' && nestMatch[1] !== 'scrap-latest' && nestMatch[1] !== 'scrap-studio') {
+      return `/${nestMatch[1]}/tree/`;
     }
     // If already on a nested tree page, stay there
-    const nestedTreeMatch = pathname.match(/^\/nest-([^\/]+)\/tree\/?$/);
+    const nestedTreeMatch = pathname.match(/^\/([^\/]+)\/tree\/?$/);
     if (nestedTreeMatch) {
-      return `/nest-${nestedTreeMatch[1]}/tree/`;
+      return `/${nestedTreeMatch[1]}/tree/`;
     }
     // Default to root tree
     return '/scrap-tree/';

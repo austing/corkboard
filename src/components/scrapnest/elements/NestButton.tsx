@@ -27,7 +27,7 @@ export function NestButton({ scrapCode, nestedCount, size = 'small', isHovered =
       {/* Nest count badge - always visible when count > 0, shows "Nest {n}" */}
       {nestedCount > 0 && (
         <Link
-          href={`/nest-${scrapCode}`}
+          href={`/${scrapCode}`}
           onClick={onClick}
           className={`inline-flex items-center gap-1 rounded-full font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200 cursor-pointer ${badgeSize}`}
         >
@@ -38,7 +38,7 @@ export function NestButton({ scrapCode, nestedCount, size = 'small', isHovered =
       {/* +Nest button - only visible on hover/modal when count is 0 */}
       {shouldShowAddButton && (
         <Link
-          href={`/nest-${scrapCode}`}
+          href={`/${scrapCode}`}
           onClick={onClick}
           className={`inline-flex items-center gap-0.5 rounded-full font-medium cursor-pointer bg-gray-200 text-gray-700 hover:bg-gray-300 ${sizeClasses}`}
         >

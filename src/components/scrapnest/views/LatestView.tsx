@@ -130,10 +130,10 @@ export function LatestView({
 
   const getScrapLink = (scrap: Scrap) => {
     if (parentId) {
-      return `/nest-${parentId}#${scrap.code}`;
+      return `/${parentId}#${scrap.code}`;
     }
     if (scrap.nestedWithin) {
-      return `/nest-${scrap.nestedWithin}#${scrap.code}`;
+      return `/${scrap.nestedWithin}#${scrap.code}`;
     }
     return `/#${scrap.code}`;
   };
@@ -185,7 +185,7 @@ export function LatestView({
           <div className="bg-white/90 backdrop-blur-sm rounded-sm shadow-sm border border-gray-300 px-4 py-2">
             {parentScrap ? (
               <Link
-                href={parentScrap.nestedWithin ? `/nest-${parentScrap.nestedWithin}#${parentScrap.code}` : `/#${parentScrap.code}`}
+                href={parentScrap.nestedWithin ? `/${parentScrap.nestedWithin}#${parentScrap.code}` : `/#${parentScrap.code}`}
                 className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
               >
                 {parentScrap.code}

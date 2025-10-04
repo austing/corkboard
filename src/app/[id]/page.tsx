@@ -10,7 +10,7 @@ import { CanvasView } from '@/components/scrapnest/views/CanvasView';
 export default function NestedScrapPage(): React.JSX.Element {
   const { data: session } = useSession();
   const params = useParams();
-  const parentCode = params.code as string;
+  const parentId = params.id as string;
 
   const [parentScrap, setParentScrap] = useState<Scrap | null>(null);
   const [nestedScraps, setNestedScraps] = useState<Scrap[]>([]);
@@ -18,10 +18,10 @@ export default function NestedScrapPage(): React.JSX.Element {
   const [error, setError] = useState<string>('');
 
   const fetchNestedScraps = useCallback(async (): Promise<void> => {
-    if (!parentCode) return;
+    if (!parentId) return;
 
     try {
-      const data = await api.fetchNestedScraps(parentCode);
+      const data = await api.fetchNestedScraps(parentId);
       setParentScrap(data.parentScrap);
       const filteredScraps = session?.user?.id
         ? ScrapPermissions.filterViewableScraps(data.nestedScraps, session.user.id)
@@ -40,7 +40,7 @@ export default function NestedScrapPage(): React.JSX.Element {
     } finally {
       setLoading(false);
     }
-  }, [parentCode, session?.user?.id]);
+  }, [parentId, session?.user?.id]);
 
   useEffect(() => {
     fetchNestedScraps();
@@ -53,7 +53,7 @@ export default function NestedScrapPage(): React.JSX.Element {
       error={error}
       onRefresh={fetchNestedScraps}
       parentScrap={parentScrap}
-      parentId={parentCode}
+      parentId={parentId}
       loadingText="Loading nested scraps..."
       title={parentScrap ? `Nested in ${parentScrap.code} - Corkboard` : 'Corkboard'}
     />

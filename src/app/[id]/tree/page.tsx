@@ -5,9 +5,9 @@
  * Shows scraps sorted by distance from origin in vertical column layout.
  *
  * @example
- * Route: /nest-PARENT_CODE/tree
+ * Route: /PARENT_ID/tree
  * ```tsx
- * // Accessed via /nest-{parentCode}/tree
+ * // Accessed via /{parentId}/tree
  * <NestedTreePage />
  * ```
  */
@@ -25,7 +25,7 @@ import { TreeView, type TreeNode } from '@/components/scrapnest/views/TreeView';
 export default function NestedTreePage(): React.JSX.Element {
   const { data: session } = useSession();
   const params = useParams();
-  const parentCode = params.code as string;
+  const parentId = params.id as string;
 
   const [parentScrap, setParentScrap] = useState<Scrap | null>(null);
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
@@ -37,10 +37,10 @@ export default function NestedTreePage(): React.JSX.Element {
   };
 
   const fetchTreeData = useCallback(async (): Promise<void> => {
-    if (!parentCode) return;
+    if (!parentId) return;
 
     try {
-      const data = await api.fetchNestedScraps(parentCode);
+      const data = await api.fetchNestedScraps(parentId);
       setParentScrap(data.parentScrap);
 
       // Build tree structure from flat nested scraps
@@ -72,7 +72,7 @@ export default function NestedTreePage(): React.JSX.Element {
     } finally {
       setLoading(false);
     }
-  }, [parentCode, session?.user?.id]);
+  }, [parentId, session?.user?.id]);
 
   useEffect(() => {
     fetchTreeData();
@@ -85,7 +85,7 @@ export default function NestedTreePage(): React.JSX.Element {
       error={error}
       onRefresh={fetchTreeData}
       parentScrap={parentScrap}
-      pathPrefix={`/nest-${parentCode}/tree`}
+      pathPrefix={`/${parentId}/tree`}
       loadingText="Loading tree view..."
       title={parentScrap ? `Tree: Nested in ${parentScrap.code} - Corkboard` : 'Tree - Corkboard'}
     />
