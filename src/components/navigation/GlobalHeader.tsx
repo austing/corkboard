@@ -91,7 +91,11 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
         {isAuthenticated && (
           <Link
             href="/studio"
-            className="inline-flex items-center text-gray-600 hover:text-gray-800 p-2 rounded-md hover:bg-gray-100 transition-colors"
+            className={`inline-flex items-center p-2 rounded-md transition-colors ${
+              pathname.startsWith('/studio')
+                ? 'bg-indigo-100 text-gray-800'
+                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+            }`}
             title="Settings"
           >
             <Cog6ToothIcon className="h-4 w-4" />

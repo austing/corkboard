@@ -29,10 +29,10 @@ export default function StudioLayout({ children }: StudioLayoutProps) {
   const pathname = usePathname();
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className="w-64 bg-indigo-800">
-        <div className="flex flex-col h-full">
+      <div className="w-64 mt-4 ml-4 mb-4 bg-indigo-800 rounded-sm shadow-sm">
+        <div className="flex flex-col h-full rounded-sm overflow-hidden">
           <div className="flex items-center h-16 flex-shrink-0 px-4 bg-indigo-900">
             <h1 className="text-xl font-semibold text-white">Studio</h1>
           </div>
@@ -61,7 +61,7 @@ export default function StudioLayout({ children }: StudioLayoutProps) {
 
       {/* Main content */}
       <div className="flex-1 bg-gray-100">
-        <main className="p-8">
+        <main className="p-8 mt-4">
           {children}
         </main>
       </div>
