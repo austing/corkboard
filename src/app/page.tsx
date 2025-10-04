@@ -12,7 +12,6 @@ import { ScrapPermissions } from '../utils/permissions';
 import { CursorIndicator } from '../components/canvas/CursorIndicator';
 import { CanvasHeader } from '../components/canvas/CanvasHeader';
 import { CreateButton } from '../components/canvas/CreateButton';
-import { ActionButtons } from '../components/elements/ActionButtons';
 import { ErrorMessage } from '../components/elements/ErrorMessage';
 import { ScrapCard } from '../components/scrap/ScrapCard';
 import { CreateScrapModal } from '../components/scrap/CreateScrapModal';
@@ -390,9 +389,6 @@ export default function HomePage(): React.JSX.Element {
             }}
           />
         )}
-
-        {/* Action buttons (Settings/Sign In/Sign Out) */}
-        <ActionButtons isAuthenticated={!!session} />
 
         {/* Error message */}
         <ErrorMessage message={_error} />

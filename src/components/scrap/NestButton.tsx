@@ -42,7 +42,7 @@ export function NestButton({ scrapId, nestedCount, size = 'small', isHovered = f
           className={`inline-flex items-center gap-1 rounded-full font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200 cursor-pointer ${badgeSize}`}
         >
           <span>Nest</span>
-          <span>{nestedCount}</span>
+          <span>({nestedCount})</span>
         </Link>
       )}
     </div>
