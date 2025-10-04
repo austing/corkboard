@@ -87,8 +87,8 @@ export async function GET(request: NextRequest) {
           nestedWithin: scrap.nestedWithin,
           userName: null, // Redacted
           userEmail: null, // Redacted
-          createdAt: null, // Redacted
-          updatedAt: null, // Redacted
+          createdAt: scrap.createdAt,
+          updatedAt: scrap.updatedAt,
           nestedCount: nestedCounts.find(nc => nc.scrapId === scrap.id)?.count || 0
         };
       }

@@ -3457,3 +3457,280 @@ _**Agent (claude-sonnet-4-5-20250929)**_
 
 Perfect! All tests pass. Now let me commit these changes:
 
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Commit logged-out user redaction changes
+
+`git add -A && git commit -m "$(cat <<'EOF'
+Redact ALL scraps for not-logged-in users (show only position/ID)
+
+API Changes:
+- When no auth token present, redact ALL scraps regardless of visibility
+- Returns only: id, code, x, y, visible, nestedWithin, nestedCount
+- Redacts: content, userId, userName, userEmail, createdAt, updatedAt
+- Applied to all scrap GET endpoints (main, [id], nested)
+
+Frontend Changes:
+- Detect redacted scraps (empty content + null userId)
+- Treat redacted scraps same as invisible non-owner scraps
+- No click, no hover, no pointer, gray background with opacity
+- All scraps visible on canvas but non-interactive for logged-out users
+
+All 324 tests passing.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"`
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Verify commit succeeded
+
+`git status`
+
+Result:
+
+```
+[modularity 7b48c47] Redact ALL scraps for not-logged-in users (show only position/ID)
+ 5 files changed, 446 insertions(+), 9 deletions(-)
+```
+
+Result:
+
+```
+On branch modularity
+nothing to commit, working tree clean
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Done! I've updated the system so that not-logged-in users see all scraps on the canvas as invisible placeholders:
+
+## Changes Made
+
+### API (No Auth Token)
+When there's no authentication token, the API now redacts **ALL** scraps and returns only:
+- ✅ `id` - scrap identifier
+- ✅ `code` - scrap code for anchoring
+- ✅ `x`, `y` - position coordinates
+- ✅ `visible` - visibility flag
+- ✅ `nestedWithin` - nesting relationship
+- ✅ `nestedCount` - count of nested scraps
+
+Redacted fields (set to `null` or empty):
+- ❌ `content` - empty string
+- ❌ `userId`, `userName`, `userEmail` - null
+- ❌ `createdAt`, `updatedAt` - null
+
+### Frontend
+- Detects redacted scraps by checking `content === '' && userId === null`
+- Displays all scraps in their positions but as non-interactive gray boxes
+- Same styling as invisible non-owner scraps: gray background, 30% opacity, no hover, no click
+
+This allows not-logged-in users to see the layout of the corkboard while keeping content private.
+
+---
+
+_**User**_
+
+Actually, you should include createdAt and updatedAt
+
+---
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Edit**
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Edit**
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Edit**
+
+Result:
+
+```
+The file /Users/austin/Coding/claudeland/corkboard/src/app/api/scraps/route.ts has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    73→      const isOwner = userId && scrap.userId === userId;
+    74→      const isInvisible = !scrap.visible;
+    75→      const isLoggedOut = !userId;
+    76→
+    77→      // If user is not logged in, redact ALL scraps (show only position and ID)
+    78→      if (isLoggedOut) {
+    79→        return {
+    80→          id: scrap.id,
+    81→          code: scrap.code,
+    82→          content: '', // Redacted
+    83→          x: scrap.x,
+    84→          y: scrap.y,
+    85→          visible: scrap.visible,
+    86→          userId: null, // Redacted
+    87→          nestedWithin: scrap.nestedWithin,
+    88→          userName: null, // Redacted
+    89→          userEmail: null, // Redacted
+    90→          createdAt: scrap.createdAt,
+    91→          updatedAt: scrap.updatedAt,
+    92→          nestedCount: nestedCounts.find(nc => nc.scrapId === scrap.id)?.count || 0
+    93→        };
+    94→      }
+    95→
+    96→      // If scrap is invisible and user is not the owner, redact sensitive data
+    97→      if (isInvisible && !isOwner) {
+    98→        return {
+    99→          id: scrap.id,
+   100→          code: scrap.code,
+   101→          content: '', // Redacted
+   102→          x: scrap.x,
+   103→          y: scrap.y,
+   104→          visible: scrap.visible,
+   105→          userId: null, // Redacted
+   106→          nestedWithin: scrap.nestedWithin,
+   107→          userName: null, // Redacted
+   108→          userEmail: null, // Redacted
+   109→          createdAt: null, // Redacted
+   110→          updatedAt: null, // Redacted
+   111→          nestedCount: nestedCounts.find(nc => nc.scrapId === scrap.id)?.count || 0
+   112→        };
+   113→      }
+   114→
+   115→      return {
+   116→        ...scrap,
+   117→        nestedCount: nestedCounts.find(nc => nc.scrapId === scrap.id)?.count || 0
+```
+
+Result:
+
+```
+The file /Users/austin/Coding/claudeland/corkboard/src/app/api/scraps/[id]/route.ts has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    53→    const isOwner = userId && scrap[0].userId === userId;
+    54→    const isInvisible = !scrap[0].visible;
+    55→    const isLoggedOut = !userId;
+    56→
+    57→    // If user is not logged in, redact ALL scraps (show position, ID, and dates)
+    58→    let scrapWithCount;
+    59→    if (isLoggedOut) {
+    60→      scrapWithCount = {
+    61→        id: scrap[0].id,
+    62→        code: scrap[0].code,
+    63→        content: '', // Redacted
+    64→        x: scrap[0].x,
+    65→        y: scrap[0].y,
+    66→        visible: scrap[0].visible,
+    67→        userId: null, // Redacted
+    68→        nestedWithin: scrap[0].nestedWithin,
+    69→        userName: null, // Redacted
+    70→        userEmail: null, // Redacted
+    71→        createdAt: scrap[0].createdAt,
+    72→        updatedAt: scrap[0].updatedAt,
+    73→        nestedCount: nestedCountResult[0]?.count || 0
+    74→      };
+    75→    } else if (isInvisible && !isOwner) {
+    76→      // If scrap is invisible and user is not the owner, redact sensitive data
+    77→      scrapWithCount = {
+    78→        id: scrap[0].id,
+    79→        code: scrap[0].code,
+    80→        content: '', // Redacted
+    81→        x: scrap[0].x,
+    82→        y: scrap[0].y,
+    83→        visible: scrap[0].visible,
+    84→        userId: null, // Redacted
+    85→        nestedWithin: scrap[0].nestedWithin,
+    86→        userName: null, // Redacted
+    87→        userEmail: null, // Redacted
+    88→        createdAt: null, // Redacted
+    89→        updatedAt: null, // Redacted
+    90→        nestedCount: nestedCountResult[0]?.count || 0
+    91→      };
+    92→    } else {
+    93→      scrapWithCount = {
+    94→        ...scrap[0],
+    95→        nestedCount: nestedCountResult[0]?.count || 0
+    96→      };
+```
+
+Result:
+
+```
+The file /Users/austin/Coding/claudeland/corkboard/src/app/api/scraps/[id]/nested/route.ts has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    74→      const isOwner = userId && scrap.userId === userId;
+    75→      const isInvisible = !scrap.visible;
+    76→      const nestedCount = nestedCounts.find(nc => nc.scrapId === scrap.id)?.count || 0;
+    77→
+    78→      // If user is not logged in, redact ALL scraps (show position, ID, and dates)
+    79→      if (isLoggedOut) {
+    80→        return {
+    81→          id: scrap.id,
+    82→          code: scrap.code,
+    83→          content: '', // Redacted
+    84→          x: scrap.x,
+    85→          y: scrap.y,
+    86→          visible: scrap.visible,
+    87→          userId: null, // Redacted
+    88→          nestedWithin: scrap.nestedWithin,
+    89→          userName: null, // Redacted
+    90→          userEmail: null, // Redacted
+    91→          createdAt: scrap.createdAt,
+    92→          updatedAt: scrap.updatedAt,
+    93→          nestedCount
+    94→        };
+    95→      }
+    96→
+    97→      // If scrap is invisible and user is not the owner, redact sensitive data
+    98→      if (isInvisible && !isOwner) {
+    99→        return {
+   100→          id: scrap.id,
+   101→          code: scrap.code,
+   102→          content: '', // Redacted
+   103→          x: scrap.x,
+   104→          y: scrap.y,
+   105→          visible: scrap.visible,
+   106→          userId: null, // Redacted
+   107→          nestedWithin: scrap.nestedWithin,
+   108→          userName: null, // Redacted
+   109→          userEmail: null, // Redacted
+   110→          createdAt: null, // Redacted
+   111→          updatedAt: null, // Redacted
+   112→          nestedCount
+   113→        };
+   114→      }
+   115→
+   116→      return {
+   117→        ...scrap,
+   118→        nestedCount
+```
+
+_**Agent (claude-sonnet-4-5-20250929)**_
+
+Tool use: **Bash** Run tests to verify changes
+
+`npm run test 2>&1 | tail -20`
+
+Result:
+
+```
+{
+          permission: 'users:update_self',
+          resource: 'users',
+          action: 'update_self'
+        }
+      ]
+
+      at log (src/lib/permissions.ts:21:13)
+
+PASS tests/utils/keyboard.test.ts
+(node:32209) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS tests/utils/canvas.test.ts
+PASS tests/accessibility/a11y.test.tsx
+
+Test Suites: 19 passed, 19 total
+Tests:       12 skipped, 324 passed, 336 total
+Snapshots:   0 total
+Time:        8.997 s
+Ran all test suites.
+```
+
