@@ -182,7 +182,8 @@ export default function NestedScrapPage(): React.JSX.Element {
         }
       }
     } else if (nestedScraps.length === 0 && !loading) {
-      setCanvasSize({ width: window.innerWidth, height: window.innerHeight });
+      // No scraps - set minimal canvas size
+      setCanvasSize({ width: Math.max(window.innerWidth, 1000), height: Math.max(window.innerHeight, 800) });
     }
   }, [nestedScraps, loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
