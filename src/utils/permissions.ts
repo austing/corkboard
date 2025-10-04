@@ -4,8 +4,8 @@ export class ScrapPermissions {
   /**
    * Check if a user can edit a specific scrap
    */
-  static canEdit(scrap: ScrapWithUser, userId?: string): boolean {
-    if (!userId) return false;
+  static canEdit(scrap: ScrapWithUser | null, userId?: string): boolean {
+    if (!scrap || !userId) return false;
     return scrap.userId === userId;
   }
 
