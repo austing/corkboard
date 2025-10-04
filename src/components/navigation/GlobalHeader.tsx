@@ -37,6 +37,25 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
     return pathname === path || pathname === `${path}/` || (path === '/' && pathname === path);
   };
 
+  // Determine tree link based on current route
+  const getTreeLink = () => {
+    // If on a nest page (/{id}), link to tree view of that nest
+    const nestMatch = pathname.match(/^\/([^\/]+)\/?$/);
+    if (nestMatch && nestMatch[1] !== 'tree' && nestMatch[1] !== 'latest') {
+      return `/${nestMatch[1]}/tree/`;
+    }
+    // If already on a nested tree page, stay there
+    const nestedTreeMatch = pathname.match(/^\/([^\/]+)\/tree\/?$/);
+    if (nestedTreeMatch) {
+      return `/${nestedTreeMatch[1]}/tree/`;
+    }
+    // Default to root tree
+    return '/tree/';
+  };
+
+  const treeLink = getTreeLink();
+  const isTreeActive = pathname.includes('/tree');
+
   return (
     <div className="fixed top-4 left-4 right-4 z-[100] flex items-center justify-between bg-white/90 backdrop-blur-sm rounded-sm shadow-sm border border-indigo-500 p-3">
       {/* Left side - Navigation links */}
@@ -54,9 +73,9 @@ export function GlobalHeader({ isAuthenticated }: GlobalHeaderProps) {
         </Link>
 
         <Link
-          href="/tree"
+          href={treeLink}
           className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            isActive('/tree')
+            isTreeActive
               ? 'bg-indigo-100 text-gray-800'
               : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
           }`}
