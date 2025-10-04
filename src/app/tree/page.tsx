@@ -30,8 +30,8 @@ interface TreeResponse {
 
 const CARD_WIDTH = 320; // 20rem (w-80) in pixels
 const CARD_HEIGHT = 320; // 20rem (h-80) in pixels
-const HORIZONTAL_SPACING = 60;
-const VERTICAL_SPACING = 80;
+const HORIZONTAL_SPACING = 80; // Space between levels
+const VERTICAL_SPACING = 40; // Space between siblings
 
 export default function TreePage(): React.JSX.Element {
   const { data: session } = useSession();
@@ -100,39 +100,35 @@ export default function TreePage(): React.JSX.Element {
     }
   };
 
-  // Calculate positions for tree layout
+  // Calculate positions for tree layout - vertical siblings, horizontal nesting
   const calculateTreeLayout = () => {
     const positions: Map<string, { x: number; y: number }> = new Map();
-    let currentX = HORIZONTAL_SPACING;
+    let currentY = VERTICAL_SPACING;
 
-    function layoutNode(node: TreeNode, depth: number): number {
-      const y = depth * (CARD_HEIGHT + VERTICAL_SPACING) + VERTICAL_SPACING;
+    function layoutNode(node: TreeNode, x: number, startY: number): number {
+      // Place this node at the current position
+      positions.set(node.scrap.id, { x, y: startY });
 
       if (node.children.length === 0) {
-        // Leaf node - place at current X position
-        positions.set(node.scrap.id, { x: currentX, y });
-        currentX += CARD_WIDTH + HORIZONTAL_SPACING;
-        return currentX - HORIZONTAL_SPACING - CARD_WIDTH / 2;
+        // Leaf node - return next Y position for siblings
+        return startY + CARD_HEIGHT + VERTICAL_SPACING;
       } else {
-        // Internal node - place between children
-        const childPositions: number[] = [];
+        // Has children - layout children to the right
+        const childX = x + CARD_WIDTH + HORIZONTAL_SPACING;
+        let childY = startY;
+
         node.children.forEach(child => {
-          const childCenterX = layoutNode(child, depth + 1);
-          childPositions.push(childCenterX);
+          childY = layoutNode(child, childX, childY);
         });
 
-        // Place parent centered above children
-        const leftmost = childPositions[0];
-        const rightmost = childPositions[childPositions.length - 1];
-        const centerX = (leftmost + rightmost) / 2;
-
-        positions.set(node.scrap.id, { x: centerX - CARD_WIDTH / 2, y });
-        return centerX;
+        // Return the maximum Y used (either by this node or its children)
+        return Math.max(startY + CARD_HEIGHT + VERTICAL_SPACING, childY);
       }
     }
 
+    // Layout each root node vertically
     treeData.forEach(rootNode => {
-      layoutNode(rootNode, 0);
+      currentY = layoutNode(rootNode, HORIZONTAL_SPACING, currentY);
     });
 
     return positions;
@@ -154,7 +150,7 @@ export default function TreePage(): React.JSX.Element {
     };
   };
 
-  // Render connection lines
+  // Render connection lines - from right edge center to left edge center
   const renderConnections = (positions: Map<string, { x: number; y: number }>) => {
     const lines: JSX.Element[] = [];
 
@@ -162,23 +158,23 @@ export default function TreePage(): React.JSX.Element {
       const parentPos = positions.get(node.scrap.id);
       if (!parentPos) return;
 
-      const parentCenterX = parentPos.x + CARD_WIDTH / 2;
-      const parentBottomY = parentPos.y + CARD_HEIGHT;
+      const parentRightX = parentPos.x + CARD_WIDTH;
+      const parentCenterY = parentPos.y + CARD_HEIGHT / 2;
 
       node.children.forEach(child => {
         const childPos = positions.get(child.scrap.id);
         if (!childPos) return;
 
-        const childCenterX = childPos.x + CARD_WIDTH / 2;
-        const childTopY = childPos.y;
+        const childLeftX = childPos.x;
+        const childCenterY = childPos.y + CARD_HEIGHT / 2;
 
         lines.push(
           <line
             key={`${node.scrap.id}-${child.scrap.id}`}
-            x1={parentCenterX}
-            y1={parentBottomY}
-            x2={childCenterX}
-            y2={childTopY}
+            x1={parentRightX}
+            y1={parentCenterY}
+            x2={childLeftX}
+            y2={childCenterY}
             stroke="#9ca3af"
             strokeWidth="2"
           />
