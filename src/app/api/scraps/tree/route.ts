@@ -19,6 +19,7 @@ export interface TreeNode {
     updatedAt: Date;
     userName: string | null;
     userEmail: string | null;
+    nestedCount: number;
   };
   children: TreeNode[];
   depth: number;
@@ -88,19 +89,29 @@ export async function GET() {
     function buildTree(parentId: string | null, depth: number): TreeNode[] {
       const children = processedScraps.filter(s => s.nestedWithin === parentId);
 
-      return children.map(scrap => ({
-        scrap,
-        children: buildTree(scrap.id, depth + 1),
-        depth,
-      }));
+      return children.map(scrap => {
+        const childNodes = buildTree(scrap.id, depth + 1);
+        return {
+          scrap: {
+            ...scrap,
+            nestedCount: childNodes.length
+          },
+          children: childNodes,
+          depth,
+        };
+      });
     }
 
     // Build trees starting from root scraps (nestedWithin === null)
     const rootScraps = processedScraps.filter(s => s.nestedWithin === null);
     rootScraps.forEach(scrap => {
+      const childNodes = buildTree(scrap.id, 1);
       rootNodes.push({
-        scrap,
-        children: buildTree(scrap.id, 1),
+        scrap: {
+          ...scrap,
+          nestedCount: childNodes.length
+        },
+        children: childNodes,
         depth: 0,
       });
     });
